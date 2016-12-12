@@ -15,6 +15,7 @@ import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 public class Test {
 
@@ -74,8 +75,8 @@ public class Test {
 	 */
 	public void testGet() throws Exception{
 		String[] ids = getIdsDataGob();//creamos el array con todas las IDs de los datasheet a bajar de datos.gob.es	
-		
-		for(int i = 0; i<ids.length; i++){//recorremos el array
+
+		for(int i = 0; i<ids.length; i++){//recorremos el array 
 			//Obtenemos el JSON con la URL de los datasheet que coinciden con el criterio de busqueda
 			StringBuilder result = new StringBuilder();
 			URL url = new URL("http://datos.gob.es/apidata/catalog/distribution/dataset/"+ids[i]+"?_sort=-title&_pageSize=10&_page=0");
@@ -88,19 +89,26 @@ public class Test {
 				result.append(line);
 			}
 			rd.close();
+
+			//guardamos los enlaces a los datasheets
 			JSONObject jsonObj = new JSONObject(result.toString());
 			JSONArray urls = (JSONArray) ((JSONObject)jsonObj.get("result")).get("items");
 
-			//Accedemos a la URL del datasheet mas reciente y obtenemos la URL de descarga
-			Document doc = Jsoup.connect(urls.get(0).toString()).get();
-			Element table = doc.select("table").first();
-			Element td = table.select("td").first();
-			Element a = td.select("a").first();
-			String link = a.attr("href");
+			for(int j = 0; j<urls.length(); j++){
+				//Accedemos a las URL de los datasheets
+				Document doc = Jsoup.connect(urls.get(j).toString()).get();
+				Element table = doc.select("table").first();
+				Elements td = table.select("td");
+				if(td.get(1).text().equals("CSV")){//cogemos solo los CSV
+					Element a = td.get(0).select("a").first();
+					String link  = a.attr("href");
 
-			//Descargamos fichero con datos
-			File csv = new File(".\\documents\\"+ids[i].split("-",2)[1]+".csv");
-			FileUtils.copyURLToFile(new URL(link), csv);	
+					//Descargamos fichero con datos
+					File csv = new File(".\\documents\\"+link.substring(link.lastIndexOf('/') + 1));
+					FileUtils.copyURLToFile(new URL(link), csv);
+					System.out.println("Se ha descargado "+link.substring(link.lastIndexOf('/') + 1)+".");
+				}
+			}
 		}
 	}
 }
