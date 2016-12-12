@@ -1,2 +1,14 @@
 l01280796-padron-municipal-historico
 l01280796-distritos-y-barrios-informacion-de-perimetro-superficie-y-geografica
+l01280796-cementerios-de-madrid
+l01280796-inventario-de-bienes-muebles-e-inmuebles-del-ayuntamiento-de-madrid
+l01280796-catastro-datos-catastrales-estadisticos-a-nivel-de-distrito-y-barrio
+l01280796-elecciones-ayuntamiento-de-madrid-1983-2015
+l01280796-museos-de-la-ciudad-de-madrid
+l01280796-policia-municipal-datos-estadisticos-actuaciones-policia-municipal
+l01280796-madrid-salud-relacion-de-centros-municipales
+l01280796-instalaciones-accesibles-no-municipales
+l01280796-mercados-municipales-locales-comerciales-nombres-comerciales-y-actividades
+l01280796-instalaciones-municipales-con-zonas-wifi-gratuitas
+l01280796-centros-de-la-escuela-oficial-de-idiomas-en-madrid
+l01280796-zonas-ser-distintivos-y-parquimetros

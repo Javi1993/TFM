@@ -93,13 +93,16 @@ public class Test {
 			//guardamos los enlaces a los datasheets
 			JSONObject jsonObj = new JSONObject(result.toString());
 			JSONArray urls = (JSONArray) ((JSONObject)jsonObj.get("result")).get("items");
-
+			
 			for(int j = 0; j<urls.length(); j++){
 				//Accedemos a las URL de los datasheets
 				Document doc = Jsoup.connect(urls.get(j).toString()).get();
 				Element table = doc.select("table").first();
 				Elements td = table.select("td");
-				if(td.get(1).text().equals("CSV")){//cogemos solo los CSV
+				
+				//VER CUANDO SON XLS Y XML!! PASAR A CSV TRAS DESCARGAR LOS XLS 
+				//(SI NO HA DESCARGADO EL MISMO EN FORMATO CSV TAMBIEN) CON ALGUNA FUNCION EN JAVA
+				if(td.get(1).text().equals("CSV")||td.get(1).text().equals("XLS")){//cogemos solo los CSV
 					Element a = td.get(0).select("a").first();
 					String link  = a.attr("href");
 
@@ -110,5 +113,6 @@ public class Test {
 				}
 			}
 		}
+		System.out.println("Descarga finalizada.");
 	}
 }
