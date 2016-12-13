@@ -11,6 +11,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -74,13 +75,29 @@ public class Test {
 	 * @param tr
 	 * @return
 	 */
-	private int checkCSVFormat(Elements tr) {
+	private int checkExtension(Elements tr, String format) {
 		for(Element t:tr){
-			if(t.select("th").text().equals("Formato") && t.select("td").text().equals("CSV")){
+			if(t.select("th").text().equals("Formato") && t.select("td").text().equals(format)){
 				return tr.indexOf(t);
 			}
 		}
 		return -1;
+	}
+
+	/**
+	 * 
+	 * @param urls
+	 * @param j
+	 * @return
+	 * @throws IOException
+	 * @throws JSONException
+	 */
+	private Elements getRows(JSONArray urls, int j) throws IOException, JSONException {
+		Document doc = Jsoup.connect(urls.get(j).toString()).get();
+		Element content = doc.select("div#content").first();
+		Element table = content.select("table").first();
+		Elements tr = table.select("tr");
+		return tr;
 	}
 
 	/**
@@ -94,7 +111,7 @@ public class Test {
 		for(int i = 0; i<ids.length; i++){//recorremos el array 
 			//Obtenemos el JSON con la URL de los datasheet que coinciden con el criterio de busqueda
 			StringBuilder result = new StringBuilder();
-			URL url = new URL("http://datos.gob.es/apidata/catalog/distribution/dataset/"+ids[i]+"?_sort=-title&_pageSize=5&_page=0");
+			URL url = new URL("http://datos.gob.es/apidata/catalog/distribution/dataset/"+ids[i]+"?_sort=-title&_pageSize=10&_page=0");
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Content-Type", "application/json");
@@ -108,30 +125,21 @@ public class Test {
 			//guardamos los enlaces a los datasheets
 			JSONObject jsonObj = new JSONObject(result.toString());
 			JSONArray urls = (JSONArray) ((JSONObject)jsonObj.get("result")).get("items");
-
-			for(int j = 0; j<urls.length(); j++){
-				//Accedemos a las URL de los datasheets
-				Document doc = Jsoup.connect(urls.get(j).toString()).get();
-				Element content = doc.select("div#content").first();
-				Element table = content.select("table").first();
-				Elements tr = table.select("tr");
-
-				//VER CUANDO SON XLS Y XML!! PASAR A CSV TRAS DESCARGAR LOS XLS 
-				//(SI NO HA DESCARGADO EL MISMO EN FORMATO CSV TAMBIEN) CON ALGUNA FUNCION EN JAVA
-				if(checkCSVFormat(tr)>=0){//cogemos solo los CSV
-					for(Element t:tr){
-						if(t.select("th").text().equals("URL")){
-							String link  = t.select("td").select("a").attr("href");//cogemos el link de descargs
-							//Descargamos fichero de datos
-							File csv = new File(".\\documents\\"+link.substring(link.lastIndexOf('/') + 1));
-							FileUtils.copyURLToFile(new URL(link), csv);
-							System.out.println("Se ha descargado "+link.substring(link.lastIndexOf('/') + 1)+".");
-						}
+			for(int j = 0; j<urls.length(); j++){		
+				Elements tr = getRows(urls, j);//Accedemos a las URL de los datasheets
+				int pos = checkExtension(tr, "CSV");
+				if(pos>=0){//cogemos solo los CSV
+					if(tr.get(pos-1).select("th").text().equals("URL")){
+						String link  = tr.get(pos-1).select("td").select("a").attr("href");//cogemos el link de descargs
+						//Descargamos fichero de datos
+						File csv = new File(".\\documents\\"+link.substring(link.lastIndexOf('/') + 1));
+						FileUtils.copyURLToFile(new URL(link), csv);
+						System.out.println("Se ha descargado "+link.substring(link.lastIndexOf('/') + 1)+".");
+						break;
 					}
-				}else{
-					//hacer BUSCAR OTRO FORMATO ALTERNATIVO A CSV
 				}
 			}
+			//VER XLS, SI NO ENTRA EN EL IF DE CSV Y SALE DEL BUCLE HACER UNA IGUAL PARA QUE GUARDE EL PRIMER XLS QUE COJA
 		}
 		System.out.println("Descarga finalizada.");
 	}
