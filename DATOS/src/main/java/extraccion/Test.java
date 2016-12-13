@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
@@ -22,7 +23,7 @@ public class Test {
 
 	public static void main (String[] args) throws Exception{
 		Test t = new Test();
-		t.testGet();
+		t.getDatosGobEs();
 	}
 
 	/**
@@ -61,7 +62,6 @@ public class Test {
 			lnr.close();
 			return nlines;
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -86,61 +86,94 @@ public class Test {
 
 	/**
 	 * 
-	 * @param urls
-	 * @param j
+	 * @param url
 	 * @return
-	 * @throws IOException
-	 * @throws JSONException
 	 */
-	private Elements getRows(JSONArray urls, int j) throws IOException, JSONException {
-		Document doc = Jsoup.connect(urls.get(j).toString()).get();
-		Element content = doc.select("div#content").first();
-		Element table = content.select("table").first();
-		Elements tr = table.select("tr");
+	private Elements getRows(String url) {
+		Elements tr = null;
+		try {
+			Document doc = Jsoup.connect(url).get();
+			Element content = doc.select("div#content").first();
+			Element table = content.select("table").first();
+			tr = table.select("tr");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		return tr;
 	}
 
 	/**
 	 * 
-	 * @throws Exception
 	 */
-	public void testGet() throws Exception
-	{
-		String[] ids = getIdsDataGob();//creamos el array con todas las IDs de los datasheet a bajar de datos.gob.es	
+	public void getDatosGobEs(){
+		try{
+			String[] ids = getIdsDataGob();//creamos el array con todas las IDs de los datasheet a bajar de datos.gob.es	
+			if(ids!=null){
+				for(int i = 0; i<ids.length; i++){//recorremos el array 
+					//Obtenemos el JSON con la URL de los datasheet que coinciden con el criterio de busqueda
+					StringBuilder result = new StringBuilder();
+					URL url = new URL("http://datos.gob.es/apidata/catalog/distribution/dataset/"+ids[i]+"?_sort=-title&_pageSize=10&_page=0");
+					HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+					conn.setRequestMethod("GET");
+					conn.setRequestProperty("Content-Type", "application/json");
+					BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+					String line;
+					while ((line = rd.readLine()) != null) {
+						result.append(line);
+					}
+					rd.close();
 
-		for(int i = 0; i<ids.length; i++){//recorremos el array 
-			//Obtenemos el JSON con la URL de los datasheet que coinciden con el criterio de busqueda
-			StringBuilder result = new StringBuilder();
-			URL url = new URL("http://datos.gob.es/apidata/catalog/distribution/dataset/"+ids[i]+"?_sort=-title&_pageSize=10&_page=0");
-			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-			conn.setRequestMethod("GET");
-			conn.setRequestProperty("Content-Type", "application/json");
-			BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-			String line;
-			while ((line = rd.readLine()) != null) {
-				result.append(line);
+					//guardamos los enlaces a los datasheets
+					JSONObject jsonObj = new JSONObject(result.toString());
+					JSONArray urls = (JSONArray) ((JSONObject)jsonObj.get("result")).get("items");
+
+					if(!downloadDS(urls, "CSV")){//comprobamos si lo tienen en CSV
+						downloadDS(urls, "XLS");//sino se baja version en XLS
+						//CONSIDERAR OTRAS VERSIONES COMO XML, TEXT PLAIN ETC
+					}
+				}
+				System.out.println("Descarga finalizada.");
 			}
-			rd.close();
+		}catch (JSONException e) {
+			e.printStackTrace();
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
-			//guardamos los enlaces a los datasheets
-			JSONObject jsonObj = new JSONObject(result.toString());
-			JSONArray urls = (JSONArray) ((JSONObject)jsonObj.get("result")).get("items");
-			for(int j = 0; j<urls.length(); j++){		
-				Elements tr = getRows(urls, j);//Accedemos a las URL de los datasheets
-				int pos = checkExtension(tr, "CSV");
-				if(pos>=0){//cogemos solo los CSV
-					if(tr.get(pos-1).select("th").text().equals("URL")){
-						String link  = tr.get(pos-1).select("td").select("a").attr("href");//cogemos el link de descargs
-						//Descargamos fichero de datos
-						File csv = new File(".\\documents\\"+link.substring(link.lastIndexOf('/') + 1));
-						FileUtils.copyURLToFile(new URL(link), csv);
-						System.out.println("Se ha descargado "+link.substring(link.lastIndexOf('/') + 1)+".");
-						break;
+	/**
+	 * 
+	 * @param urls
+	 * @param format
+	 * @return
+	 */
+	private boolean downloadDS(JSONArray urls, String format){
+		try{
+			for(int j = 0; j<urls.length(); j++){//recorremos las URLs de los datasheet para el tema actual	
+				Elements tr = getRows(urls.get(j).toString());//Accedemos a las URL de los datasheets
+				if(!tr.isEmpty()){
+					int pos = checkExtension(tr, format);
+					if(pos>=0){//es CSV
+						if(tr.get(pos-1).select("th").text().equals("URL")){
+							String link  = tr.get(pos-1).select("td").select("a").attr("href");//cogemos el link de descargs
+							//Descargamos fichero de datos
+							File csv = new File(".\\documents\\"+link.substring(link.lastIndexOf('/') + 1));
+							FileUtils.copyURLToFile(new URL(link), csv);
+							System.out.println("Se ha descargado "+link.substring(link.lastIndexOf('/') + 1)+".");
+							return true;
+						}
 					}
 				}
 			}
-			//VER XLS, SI NO ENTRA EN EL IF DE CSV Y SALE DEL BUCLE HACER UNA IGUAL PARA QUE GUARDE EL PRIMER XLS QUE COJA
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		System.out.println("Descarga finalizada.");
+		return false;
 	}
 }
