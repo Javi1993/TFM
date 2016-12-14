@@ -123,6 +123,12 @@ public class Test {
 					}
 					rd.close();
 
+					/*
+					 * ACTUALMENTE COGE UNICAMENTE UN DATASHEET POR ID! 
+					 * PUEDE DARSE EL CASO DE QUE HAYA VARIOS CON INFO DIFERENTE EN EL MISMO ID (VER COMO HACER)
+					 * COMPARAR NOMBRES Y DESCARTAR CUANDO SEAN IGUALES/PARECIDOS
+					 */
+					
 					//guardamos los enlaces a los datasheets
 					JSONObject jsonObj = new JSONObject(result.toString());
 					JSONArray urls = (JSONArray) ((JSONObject)jsonObj.get("result")).get("items");
