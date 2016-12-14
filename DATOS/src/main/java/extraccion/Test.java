@@ -10,7 +10,10 @@ import java.io.LineNumberReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.EnumUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,6 +27,21 @@ public class Test {
 	public static void main (String[] args) throws Exception{
 		Test t = new Test();
 		t.getDatosGobEs();
+	}
+
+	public enum Meses {
+		ENERO,
+		FEBRERO,
+		MARZO,
+		ABRIL,
+		MAYO,
+		JUNIO,
+		JULIO,
+		AGOSTO,
+		SEPTIEMBRE,
+		OCTUBRE,
+		NOVIEMBRE,
+		DICIEMBRE;
 	}
 
 	/**
@@ -102,6 +120,28 @@ public class Test {
 		return tr;
 	}
 
+	private String getTitle(String url) {
+		String title = "";
+		try {
+			Document doc = Jsoup.connect(url).get();
+			Element content = doc.select("div#content").first();
+			title = content.select("h1").first().text();
+			if(Integer.parseInt(title)>=0){
+				return "..:anio:..";
+			}
+			return "";
+		}catch (NumberFormatException e) {//limpiamos titulo si tiene numero para no coger de otras fechas
+			title = title.replaceAll("\\d|\\s|\\.","");
+			if(EnumUtils.isValidEnum(Meses.class, title.toUpperCase())){
+				return "..:mes:..";
+			}
+			return title;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return title;
+	}
+
 	/**
 	 * 
 	 */
@@ -123,12 +163,6 @@ public class Test {
 					}
 					rd.close();
 
-					/*
-					 * ACTUALMENTE COGE UNICAMENTE UN DATASHEET POR ID! 
-					 * PUEDE DARSE EL CASO DE QUE HAYA VARIOS CON INFO DIFERENTE EN EL MISMO ID (VER COMO HACER)
-					 * COMPARAR NOMBRES Y DESCARTAR CUANDO SEAN IGUALES/PARECIDOS
-					 */
-					
 					//guardamos los enlaces a los datasheets
 					JSONObject jsonObj = new JSONObject(result.toString());
 					JSONArray urls = (JSONArray) ((JSONObject)jsonObj.get("result")).get("items");
@@ -157,29 +191,44 @@ public class Test {
 	 */
 	private boolean downloadDS(JSONArray urls, String format){
 		try{
-			for(int j = 0; j<urls.length(); j++){//recorremos las URLs de los datasheet para el tema actual	
-				Elements tr = getRows(urls.get(j).toString());//Accedemos a las URL de los datasheets
-				if(!tr.isEmpty()){
+			List<String> titulos = new ArrayList<>();
+			for(int j = 0; j<urls.length(); j++){//recorremos las URLs de los datasheet para el ID actual	
+				Elements tr = getRows(urls.get(j).toString());//cogemos la tabla de datos del datasheet (formato y URL)
+				String title = getTitle(urls.get(j).toString());//cogemos el titulo del datasheet actual
+				if(!tr.isEmpty()&&!title.equals("")){
 					int pos = checkExtension(tr, format);
-					if(pos>=0){//es CSV
+					if(pos>=0&&checkTitleList(titulos, title)){//es el formato deseado y no se ha descargado uno con el mismo nombre de diferente fecha
 						if(tr.get(pos-1).select("th").text().equals("URL")){
 							String link  = tr.get(pos-1).select("td").select("a").attr("href");//cogemos el link de descargs
 							//Descargamos fichero de datos
 							File csv = new File(".\\documents\\"+link.substring(link.lastIndexOf('/') + 1));
 							FileUtils.copyURLToFile(new URL(link), csv);
 							System.out.println("Se ha descargado "+link.substring(link.lastIndexOf('/') + 1)+".");
-							return true;
+							titulos.add(title);
 						}
 					}
+				}else{
+					System.out.println("BOLRRAR");
 				}
 			}
+			if(!titulos.isEmpty()){ 
+				titulos.clear();
+				return true; 
+			}
 		} catch (JSONException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return false;
+	}
+
+	private boolean checkTitleList(List<String> titulos, String title){
+		for(String t:titulos){
+			if(t.equals(title)){
+				return false;
+			}
+		}
+		return true;
 	}
 }
