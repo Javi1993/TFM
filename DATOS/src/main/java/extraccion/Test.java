@@ -170,6 +170,7 @@ public class Test {
 					if(!downloadDS(urls, "CSV")){//comprobamos si lo tienen en CSV
 						downloadDS(urls, "XLS");//sino se baja version en XLS
 						//CONSIDERAR OTRAS VERSIONES COMO XML, TEXT PLAIN ETC
+						//VER APARACAMIENTOS SER y EMT PORQUE SOLO DEBERIA CXOGER 1 AL TENER ESE NOMBRE
 					}
 				}
 				System.out.println("Descarga finalizada.");

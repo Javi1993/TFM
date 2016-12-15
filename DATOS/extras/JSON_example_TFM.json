@@ -1,0 +1,88 @@
+{
+  "distric_id" : 1,
+  "distric_name" : "name",
+  "barrios" : [
+    {
+      "barrio_id":1,
+      "barrio_name":"name",
+      "cod_postal":11111,
+      "superficie(m2)":1,
+      "perimetro(m)":1,
+      "padron": [
+        {
+          "edad_id": 1,
+          "masc_num_spain":1,
+          "fem_num_spain":1,
+          "masc_num_ext":1,
+          "fem_num_ext":1
+        },
+        {"edad_id_N":1,
+           "...":"..."}
+        ],
+        "zonas":[
+        {
+          "pk_ID": 1,
+          "actividad_id":"tipo (de momento: Cementerios, museos(turismo.csv),centro salud, inst no-muni (ESTE INCLUYE pk de otros pequeños), mecados municipales, escuela Ofi de idiomas,centros educacion, areas infantiles, areas de mayores, templos catolicos, puntos limpios",
+          "sub_actividad_id":"considerar, ejemplo: para mercados o museos el tipo",
+          "nombre":"name",
+          "desc":"desc",
+          "horario":"desc de horario",
+          "trasnporte":"desc de lineas",
+          "telefono":1212,
+          "email":"email@email.com",
+          "geo": {
+           "type": "Point",
+            "coordinates": [1.1, 1.1]
+          }
+        },
+        {"tipo_ID":"tipo",
+         "...":"..."}
+        ],
+        "elecciones":[
+        {
+          "censo":1,
+          "año":1,
+          "votos":[
+            {
+              "partido":"partido",
+              "num":1
+            }
+            ]
+        }
+        ]
+    },
+    {"barrio_id_N":1,
+      "...":"..."}
+  ],
+  "policia":[
+    {
+      "detenciones(DATASET MENSUAL)":1,
+      "accidentes(con/sin heridos)(DATASET MENSUAL)":[1,1]
+    }
+  ],
+  "aparcamiento":[
+    {
+      "color":"",
+      "cantidad_linea":1,
+      "cantidad_bateria":1
+    },
+    {"color":"",
+    "...":"..."}
+  ],
+  "aire(VER SI HACER DIARIO o TR)":[
+    {
+      "num":1,
+      "nombre":"nombre",
+      "contaminantes":[
+        {
+          "id":"NO2",
+          "valor":1
+        }
+      ],
+      "geo": {
+        "type": "Point",
+          "coordinates": [1.1, 1.1]
+        }
+    }
+  ]
+}
