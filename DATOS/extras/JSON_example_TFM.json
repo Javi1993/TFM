@@ -22,7 +22,7 @@
         "zonas":[
         {
           "pk_ID": 1,
-          "actividad_id":"tipo (de momento: Cementerios, museos(turismo.csv),centro salud, inst no-muni (ESTE INCLUYE pk de otros pequeños), mecados municipales, escuela Ofi de idiomas,centros educacion, areas infantiles, areas de mayores, templos catolicos, puntos limpios",
+          "actividad_id":"tipo (de momento: Cementerios, museos(turismo.csv),centro salud, inst no-muni (ESTE INCLUYE pk de otros pequeños), mecados municipales, escuela Ofi de idiomas,centros educacion, areas infantiles, areas de mayores, templos no catolicos, puntos limpios, polideportivos, salas estudio,farmacia guardia, sedes investifgacion, centros discapacidad, atencion social, instalaciones deport muni, contenedores pilas, cont. ropa, templos catolicos, juntas, centro culturales muni, ofi correos, ofi DNI, atencion ciudadano(linea madrid), escuelas infantiles, parques y jardines, oficina de empleo, parkings publicos, embajadas y consulados, atencion social, servicios sociales, teatros, cine, salas concierto, centro atencion medica, atencion mujeres, ...",
           "sub_actividad_id":"considerar, ejemplo: para mercados o museos el tipo",
           "nombre":"name",
           "desc":"desc",
@@ -30,14 +30,32 @@
           "trasnporte":"desc de lineas",
           "telefono":1212,
           "email":"email@email.com",
-          "geo": {
+          "geo(TENER EN CUENTA LAS QUE VIENEN EN ED50.ZONA30 para cambio a WGS84": {
            "type": "Point",
             "coordinates": [1.1, 1.1]
           }
         },
-        {"tipo_ID":"tipo",
+        {"pk_ID":1,
          "...":"..."}
         ],
+        "plazas_aparcamiento":[
+        {
+          "color":"color",
+          "cantidad_linea":1,
+          "cantidad_bateria":1
+        },
+        {"color":"",
+        "...":"..."}
+        ],
+        "plazas_aparcamiento_minusvalidos": {
+          "cantidad_linea":1,
+          "cantidad_bateria":1,
+          "cantidad_no-especificado":1
+        },
+        "paradas_taxi": {
+          "cantidad_linea":1,
+          "cantidad_bateria":1
+        },
         "elecciones":[
         {
           "censo":1,
@@ -57,17 +75,20 @@
   "policia":[
     {
       "detenciones(DATASET MENSUAL)":1,
-      "accidentes(con/sin heridos)(DATASET MENSUAL)":[1,1]
+      "accidentes(con/sin heridos)(DATASET MENSUAL)":[1,1],
+      "multas(MENSUAL)(SOLO AGENTE MOVILIDAD,las que vienen con GEO)":
+      {
+        "lugar":"lugar",
+        "motivos": [
+        {
+          "motivo":"motivo_desc",
+          "num_multa":1,
+          "cantidad_eur_total":1,
+          "cantidad_puntos":1
+        }
+        ]
+      }
     }
-  ],
-  "aparcamiento":[
-    {
-      "color":"",
-      "cantidad_linea":1,
-      "cantidad_bateria":1
-    },
-    {"color":"",
-    "...":"..."}
   ],
   "aire(VER SI HACER DIARIO o TR)":[
     {
@@ -84,5 +105,35 @@
           "coordinates": [1.1, 1.1]
         }
     }
-  ]
+  ],
+  "acustico (FUSIONAR CON AIRE SI SE PUEDE))":[
+    {
+      "num":1,
+      "nombre":"nombre",
+      "valores(VER Q SE MIDE, si hay m�s de 1)":[
+        {
+          "id":"dB",
+          "valor":1
+        }
+      ],
+      "geo": {
+        "type": "Point",
+          "coordinates": [1.1, 1.1]
+        }
+    }
+  ],
+  "fuentes_potables":[
+    {
+      "id":1,
+      "estado":"estado",
+      "geo": {
+        "type": "Point",
+          "coordinates": [1.1, 1.1]
+      }
+    }
+  ],
+  "animales_domesticos":{
+    "num_caninos":1,
+    "num_felinos":1
+  }
 }

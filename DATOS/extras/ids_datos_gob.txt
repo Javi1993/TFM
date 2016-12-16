@@ -27,7 +27,7 @@ l01280796-deportes-centros-deportivos-municipales-polideportivos
 l01280796-salas-de-estudio-y-lectura
 l01280796-farmacias-de-guardia
 l01280796-sedes-institutos-de-investigacion
-l01280796-censo-de-locales-y-sus-actividades
+//l01280796-censo-de-locales-y-sus-actividades
 l01280796-centros-para-personas-con-discapacidad
 l01280796-centros-de-servicios-sociales-municipales
 l01280796-taxi-reservas-de-paradas-en-via-publica
@@ -41,6 +41,7 @@ l01280796-multas-de-circulacion
 l01280796-centros-culturales-municipales
 l01280796-fuentes-de-agua-potable
 l01280796-sedes-oficinas-de-correos
+l01280796-sedes-oficinas-de-elaboracion-de-dni-y-pasaporte
 l01280796-oficinas-de-linea-madrid
 l01280796-contaminacion-acustica-estaciones-de-medida
 l01280796-escuelas-infantiles-municipales
@@ -48,11 +49,11 @@ l01280796-parques-y-jardines
 l01280796-oficinas-de-la-agencia-municipal-de-empleo
 l01280796-aparcamientos-publicos-municipales
 l01280796-embajadas-y-consulados
-l01280796-taxi-modelos-de-vehiculos-autorizados
+//l01280796-taxi-modelos-de-vehiculos-autorizados
 l01280796-censo-de-animales-domesticos-por-distrito
 l01280796-sedes-centros-de-atencion-social
 l01280796-centros-para-personas-sin-hogar
 l01280796-salas-de-espectaculos-artisticos-teatros-cines-filmotecas-auditorios-y-salas-de-conciertos
 l01280796-sedes-centros-de-atencion-medica
 l01280796-puntos-de-atencion-a-mujeres
-l01280796-monumentos-de-la-ciudad-de-madrid
+//l01280796-monumentos-de-la-ciudad-de-madrid
