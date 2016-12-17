@@ -5,7 +5,7 @@
     {
       "barrio_id":1,
       "barrio_name":"name",
-      "cod_postal":11111,
+      "cod_postal":[11111, 3333, 2222],
       "superficie(m2)":1,
       "perimetro(m)":1,
       "padron": [
