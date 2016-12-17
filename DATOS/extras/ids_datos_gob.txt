@@ -2,7 +2,7 @@ l01280796-padron-municipal
 l01280796-distritos-y-barrios-informacion-de-perimetro-superficie-y-geografica
 l01280796-cementerios-de-madrid
 //l01280796-inventario-de-bienes-muebles-e-inmuebles-del-ayuntamiento-de-madrid
-//l01280796-catastro-datos-catastrales-estadisticos-a-nivel-de-distrito-y-barrio
+l01280796-catastro-datos-catastrales-estadisticos-a-nivel-de-distrito-y-barrio
 l01280796-elecciones-ayuntamiento-de-madrid-1983-2015
 l01280796-museos-de-la-ciudad-de-madrid
 l01280796-policia-municipal-datos-estadisticos-actuaciones-policia-municipal
@@ -27,7 +27,7 @@ l01280796-deportes-centros-deportivos-municipales-polideportivos
 l01280796-salas-de-estudio-y-lectura
 l01280796-farmacias-de-guardia
 l01280796-sedes-institutos-de-investigacion
-//l01280796-censo-de-locales-y-sus-actividades
+l01280796-censo-de-locales-y-sus-actividades
 l01280796-centros-para-personas-con-discapacidad
 l01280796-centros-de-servicios-sociales-municipales
 l01280796-taxi-reservas-de-paradas-en-via-publica
@@ -37,7 +37,7 @@ l01280796-contenedores-de-pilas-en-marquesinas-de-autobus
 l01280796-contenedores-de-ropa-oficiales-del-ayuntamiento-de-madrid
 l01280796-templos-e-iglesias-catolicas
 l01280796-juntas-municipales-de-distrito
-l01280796-multas-de-circulacion
+l01280796-multas-de-circulacion-detalle
 l01280796-centros-culturales-municipales
 l01280796-fuentes-de-agua-potable
 l01280796-sedes-oficinas-de-correos

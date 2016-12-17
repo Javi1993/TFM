@@ -19,10 +19,23 @@
         {"edad_id_N":1,
            "...":"..."}
         ],
-        "zonas":[
+      "catastro": [
+        {
+          "uso": "uso",
+          "num_inmuebles":1,
+          "anio_med":1,
+          "superficie_total":1,
+          "superficie_media":1,
+          "valor_total_Ä":1,
+          "valor_medio_Ä":1
+        },
+        {"uso":1,
+           "...":"..."}
+        ],
+      "zonas":[
         {
           "pk_ID": 1,
-          "actividad_id":"tipo (de momento: Cementerios, museos(turismo.csv),centro salud, inst no-muni (ESTE INCLUYE pk de otros peque√±os), mecados municipales, escuela Ofi de idiomas,centros educacion, areas infantiles, areas de mayores, templos no catolicos, puntos limpios, polideportivos, salas estudio,farmacia guardia, sedes investifgacion, centros discapacidad, atencion social, instalaciones deport muni, contenedores pilas, cont. ropa, templos catolicos, juntas, centro culturales muni, ofi correos, ofi DNI, atencion ciudadano(linea madrid), escuelas infantiles, parques y jardines, oficina de empleo, parkings publicos, embajadas y consulados, atencion social, servicios sociales, teatros, cine, salas concierto, centro atencion medica, atencion mujeres, ...",
+          "actividad_id":"tipo (de momento: Cementerios, museos(turismo.csv),centro salud, inst no-muni (ESTE INCLUYE pk de otros peque√±os), mecados municipales, escuela Ofi de idiomas,centros educacion, areas infantiles, areas de mayores, templos no catolicos, puntos limpios, polideportivos, salas estudio,farmacia guardia, sedes investifgacion, centros discapacidad, atencion social, instalaciones deport muni, templos catolicos, juntas, centro culturales muni, ofi correos, ofi DNI, atencion ciudadano(linea madrid), escuelas infantiles, parques y jardines, oficina de empleo, parkings publicos, embajadas y consulados, atencion social, servicios sociales, teatros, cine, salas concierto, centro atencion medica, atencion mujeres, ...",
           "sub_actividad_id":"considerar, ejemplo: para mercados o museos el tipo",
           "nombre":"name",
           "desc":"desc",
@@ -38,7 +51,19 @@
         {"pk_ID":1,
          "...":"..."}
         ],
-        "plazas_aparcamiento":[
+      "parquimetros":[
+        {
+          "matricula_id":"matricula",
+          "fecha de alta":"date",
+          "geo(TENER EN CUENTA LAS QUE VIENEN EN ED50.ZONA30 para cambio a WGS84": {
+           "type": "Point",
+            "coordinates": [1.1, 1.1]
+          }
+        },
+        {"matricula_id":"",
+        "...":"..."}
+        ],
+      "plazas_aparcamiento(COGER LAS QUE TENGAN LA GEO, el otro csv no vale)":[
         {
           "color":"color",
           "cantidad_linea":1,
@@ -47,16 +72,16 @@
         {"color":"",
         "...":"..."}
         ],
-        "plazas_aparcamiento_minusvalidos": {
+      "plazas_aparcamiento_minusvalidos": {
           "cantidad_linea":1,
           "cantidad_bateria":1,
           "cantidad_no-especificado":1
         },
-        "paradas_taxi": {
+      "paradas_taxi": {
           "cantidad_linea":1,
           "cantidad_bateria":1
         },
-        "elecciones":[
+      "elecciones":[
         {
           "censo":1,
           "a√±o":1,
@@ -126,6 +151,16 @@
     {
       "id":1,
       "estado":"estado",
+      "geo": {
+        "type": "Point",
+          "coordinates": [1.1, 1.1]
+      }
+    }
+  ],
+  "contenedores":[
+    {
+      "tipo":"ropa/pilas marquesinas",
+      "lineas(solo si pilas)":"lineas",
       "geo": {
         "type": "Point",
           "coordinates": [1.1, 1.1]
