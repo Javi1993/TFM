@@ -43,6 +43,7 @@
           "trasnporte":"desc de lineas",
           "telefono":1212,
           "email":"email@email.com",
+          "cod_postal":1111,
           "geo(TENER EN CUENTA LAS QUE VIENEN EN ED50.ZONA30 para cambio a WGS84": {
            "type": "Point",
             "coordinates": [1.1, 1.1]
