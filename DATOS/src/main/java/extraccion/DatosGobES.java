@@ -268,7 +268,7 @@ public class DatosGobES {
 							//Descargamos fichero de datos
 							File csv = new File(".\\documents\\"+link.substring(link.lastIndexOf('/') + 1));
 //														System.out.println(link);
-							FileUtils.copyURLToFile(new URL(link), csv, 2000, 10000);
+							FileUtils.copyURLToFile(new URL(link), csv, 5000, 30000);
 							System.out.println("Se ha descargado "+link.substring(link.lastIndexOf('/') + 1)+".");
 							titulos.add(title);
 							dataSets.add(link.substring(link.lastIndexOf('/') + 1));

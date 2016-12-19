@@ -18,7 +18,7 @@ public class Limpieza {
 					File src = new File(folder+File.separator+fileEntry.getName());
 					CsvReader products = new CsvReader(folder+File.separator+fileEntry.getName(), ';');
 					products.readHeaders();
-					if(products.getHeaders()[0].equals("PK")){
+					if(products.getHeaders()[0].equals("PK")){//archivos formato PK
 						products.close();	
 						File dest = new File(folder+File.separator+"PK_FORMAT"+File.separator+fileEntry.getName());
 						FileUtils.copyFile(src, dest);
@@ -27,20 +27,38 @@ public class Limpieza {
 						boolean barrio = false;
 						boolean distrito = false;
 						for(int i = 0; i<products.getHeaders().length; i++){
-							if(products.getHeaders()[i].toLowerCase().contains("barrio")){
-								barrio = true;
+							if(!barrio||!distrito){
+								if(products.getHeaders()[i].toLowerCase().contains("barrio")){
+									barrio = true;
+								}
+								if(products.getHeaders()[i].toLowerCase().contains("distrito")){
+									distrito = true;
+								}
+							}else{
 								break;
-							}else if(products.getHeaders()[i].toLowerCase().contains("distrito")){
-								distrito = true;
 							}
 						}
-						if(!barrio&&distrito){
+						if(!barrio&&distrito){//archivos con solo distrito
 							products.close();	
 							File dest = new File(folder+File.separator+"DISTRICT_FORMAT"+File.separator+fileEntry.getName());
 							FileUtils.copyFile(src, dest);
 							FileUtils.forceDelete(src);
+						}else if(barrio&&distrito){
+							products.close();	
+							File dest = new File(folder+File.separator+"DISTRICT_BARRIO_FORMAT"+File.separator+fileEntry.getName());
+							FileUtils.copyFile(src, dest);
+							FileUtils.forceDelete(src);
+						}else if(barrio&&!distrito){
+							products.close();	
+							File dest = new File(folder+File.separator+"BARRIO_FORMAT"+File.separator+fileEntry.getName());
+							FileUtils.copyFile(src, dest);
+							FileUtils.forceDelete(src);
+						}else{
+							products.close();	
+							File dest = new File(folder+File.separator+"UNKNOW_FORMAT"+File.separator+fileEntry.getName());
+							FileUtils.copyFile(src, dest);
+							FileUtils.forceDelete(src);
 						}
-						products.close();	
 					}
 				}
 			}
@@ -60,9 +78,9 @@ public class Limpieza {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public static void main(String[] args)  {
-//		Preprocesamiento pre = new Preprocesamiento();
-//		pre.separacionCarpetas(".\\documents");
+		Limpieza pre = new Limpieza();
+		pre.separacionCarpetas(".\\documents");
 	}
 }
