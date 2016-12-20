@@ -29,15 +29,12 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import preprocesamiento.Almacenar;
 import preprocesamiento.Limpieza;
 
 public class DatosGobES {
 
-	public static void main (String[] args) throws Exception{
-		DatosGobES t = new DatosGobES();
-		t.getDatosGobEs();
-	}
-
+	private String path = File.separator+"documents";
 	private enum Meses {
 		ENERO,
 		FEBRERO,
@@ -220,8 +217,9 @@ public class DatosGobES {
 					}
 				}
 				System.out.println("Descarga finalizada.");
-								Limpieza pre = new Limpieza();
-								pre.separacionCarpetas(".\\documents");
+				Limpieza pre = new Limpieza();
+				pre.separacionCarpetas(path);
+				Almacenar alm = new Almacenar();
 
 
 
@@ -303,5 +301,10 @@ public class DatosGobES {
 			}
 		}
 		return true;
+	}
+	
+	public static void main (String[] args) throws Exception{
+		DatosGobES t = new DatosGobES();
+		t.getDatosGobEs();
 	}
 }

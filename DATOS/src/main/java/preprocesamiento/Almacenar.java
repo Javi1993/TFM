@@ -8,10 +8,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -29,158 +32,149 @@ import com.mongodb.client.MongoDatabase;
 
 public class Almacenar {
 
-	//	private HashMap<String, List<String>> ID_datasets;
+	private HashMap<String, List<String>> ID_datasets;
 
 	private MongoClient client;
 	private MongoDatabase database;
 	private MongoCollection<Document> collection;
 
 
-	public Almacenar(/*HashMap<String, List<String>> ID_datasets*/){
+	public Almacenar(HashMap<String, List<String>> ID_datasets){
 		//		client = new MongoClient("localhost", 27017);//conectamos
 		//		database = client.getDatabase("tfm");//elegimos bbdd
 		//		collection = database.getCollection("distritos");//tomamos la coleccion de estaciones de aire
 
-		//		this.ID_datasets = ID_datasets;
-		//		generarColeccion();
+		this.ID_datasets = ID_datasets;
+		generarColeccion();
+	}
+	
+	public Almacenar(){
+		
 	}
 
 	/**
 	 * @throws IOException 
 	 * 
 	 */
-	private void generarColeccion() throws IOException{
+	private void generarColeccion(){
 		//collection.drop();
-
-
-		//EMPEZAR COGIENDO DE PK Y [GENERANDO BVARRIOS Y DISTRTIOS EN BASE A LOS LUGARES, luego ya meter lad ID de dist y barrio en los que tengan ese valor)
-		File folder = new File(".\\documents\\PK_FORMAT");
-		List<Document> distritos = new ArrayList<Document>();
-		for (File fileEntry : folder.listFiles()) {
-			if (!fileEntry.isDirectory()) {
-				CsvReader distritos_zonas = new CsvReader(fileEntry.getAbsolutePath(),';');
-				distritos_zonas.readHeaders();
-				int index = 0;
-				int[] dist_barrio_index = null;
-				while (distritos_zonas.readRecord()){
-					if( (dist_barrio_index = buscarDistritoBarrioInfo(distritos_zonas)) !=null ){
-						if(distritos_zonas.get("PK").equals("4569832"))
-						{
-							System.out.println(fileEntry.getName());
-						}
-						if(distritos.isEmpty() || (index = buscarDistrito_Barrio(distritos, distritos_zonas.get(dist_barrio_index[0]), "nombre"))<0){//distrito nuevo
-							Document dist = new Document().append("nombre", distritos_zonas.get(dist_barrio_index[0]));
-
-							List<Document> barrios = new ArrayList<Document>();
-							barrios.add(completarBarrioNuevo(distritos_zonas, dist_barrio_index[1]));
-							dist.append("barrios", barrios);
-							
-							distritos.add(dist);	
-						}else{//ese distrito ya esta guardado
-							Document dist = distritos.get(index);
-							List<Document> barrios = (List<Document>) dist.get("barrios");
-							if(buscarDistrito_Barrio(barrios, distritos_zonas.get(dist_barrio_index[1]), "nombre")>=0){//barrio ya existente
-								//								Document barrio = new Document()
-								//										.append("id_barrio",  distritos_barrios.get("COD_BARRIO"))//VER SI ES ESTE CODIGO O EL DE DIST_BARRIO
-								//										.append("nombre", distritos_barrios.get("DESC_BARRIO"));
-								//								barrios.add(barrio);
-								//								dist.replace("barrios", (List<Document>) dist.get("barrios"), barrios);
-								//								distritos.remove(index);//actualizamos
-								//								distritos.add(dist);
-								//SI EL BARRIO EXISTE SE AÑADE UNA NUEVA ZONA(PK), AUMENTAR CP y AÑADIR A LISTA NUEVA ZONA(PK)
-							}else{//barrio nuevo
-								Document doc = completarBarrioNuevo(distritos_zonas, dist_barrio_index[1]);
-								//								System.out.println(doc.toJson());
-								barrios.add(doc);
+		try{
+			//************************************************************************
+			File folder = new File(".\\documents\\PK_FORMAT");
+			List<Document> distritos = new ArrayList<Document>();
+			for (File fileEntry : folder.listFiles()) {
+				if (!fileEntry.isDirectory()) {
+					CsvReader distritos_zonas = new CsvReader(fileEntry.getAbsolutePath(),';');
+					distritos_zonas.readHeaders();
+					int index = 0;
+					int[] dist_barrio_index = null;
+					while (distritos_zonas.readRecord()){
+						//						if(distritos_zonas.get("PK").equals("4672")){
+						//							System.out.println(fileEntry.getName());
+						//						}
+						if( (dist_barrio_index = buscarDistritoBarrioInfo(distritos_zonas)) !=null ){//obtenemos la posicion de las cabeceras nombre distrito y barrio
+							if(distritos.isEmpty() || (index = buscarDistrito_Barrio(distritos, distritos_zonas.get(dist_barrio_index[0]), "nombre"))<0){//distrito nuevo
+								Document dist = new Document().append("nombre", distritos_zonas.get(dist_barrio_index[0]));//cogemos el documento del distrito
+								List<Document> barrios = new ArrayList<Document>();//lista de barrios del sitrito
+								Document barrio = completarBarrioNuevo(distritos_zonas, dist_barrio_index[1]);//completamos la info del barrio con su zona asociada
+								if(!barrio.get("nombre").equals("")){//el formato es correcto, lo añadimos a la lista de barrios
+									barrios.add(barrio);
+								}
+								dist.append("barrios", barrios);
+								distritos.add(dist);	
+							}else{//el distrito ya esta guardado
+								Document dist = distritos.get(index);//cogemos el documento del distrito
+								List<Document> barrios = (List<Document>) dist.get("barrios");//cogemos su lista de barrios asociada al distrito
+								int index_b = 0;
+								if(!barrios.isEmpty() && (index_b = buscarDistrito_Barrio(barrios, distritos_zonas.get(dist_barrio_index[1]), "nombre"))>=0){//barrio ya existente
+									Document barrio = barrios.get(index_b);
+									((Set<Integer>)barrio.get("codigo_postal")).add(Integer.parseInt(buscarValor(distritos_zonas, "codigo postal", "number")));
+									((List<Document>) barrio.get("zonas")).add(addZona(distritos_zonas));
+									barrios.remove(index_b);
+									barrios.add(barrio);
+									//SI EL BARRIO EXISTE SE AÑADE UNA NUEVA ZONA(PK), AUMENTAR CP (FALTA ESTO) y AÑADIR A LISTA NUEVA ZONA(PK)
+								}else{//barrio nuevo
+									Document barrio = completarBarrioNuevo(distritos_zonas, dist_barrio_index[1]);
+									if(!barrio.get("nombre").equals("")){//el formato es correcto, lo añadimos a la lista de barrios
+										barrios.add(barrio);
+									}
+								}
 								dist.replace("barrios", (List<Document>) dist.get("barrios"), barrios);
 								distritos.remove(index);//actualizamos
-								distritos.add(dist);
+								distritos.add(dist);//añade distrito actualizado
 							}
 						}
 					}
 				}
 			}
+
+			//PK SOLO ESTA PARTE DE ARRIBA, hacer resto!!!!!!!!!!!! ***********************************
+
+			System.out.println(distritos.get(0).toJson());
+			//collection.insertMany(distritos);//insertamos los distritos
+		}catch (IOException e) {
+			e.printStackTrace();
 		}
-
-		//PK SOLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO ESTA PARTE DE ARRIBA!!!!!!!!!!!!
-
-
-
-
-
-		//		CsvReader distritos_barrios = new CsvReader(".\\documents\\DISTRICT_BARRIO_FORMAT\\200076-1-padron.csv",';');
-		//		distritos_barrios.readHeaders();
-		//
-		//		//		private List<Document> distritos;
-		//		List<Document> distritos = new ArrayList<Document>();
-		//		int index = 0;
-		//		while (distritos_barrios.readRecord()){
-		//			if(distritos.isEmpty() || (index = buscarDistrito_Barrio(distritos, distritos_barrios.get("COD_DISTRITO"), "_id"))<0){
-		//				Document dist = new Document("_id", distritos_barrios.get("COD_DISTRITO"))
-		//						.append("nombre", distritos_barrios.get("DESC_DISTRITO"));
-		//				List<Document> barrios = new ArrayList<>();
-		//				barrios.add((new Document()
-		//						.append("id_barrio",  distritos_barrios.get("COD_BARRIO"))//VER SI ES ESTE CODIGO O EL DE DIST_BARRIO
-		//						.append("nombre", distritos_barrios.get("DESC_BARRIO"))));
-		//				dist.append("barrios", barrios);
-		//				distritos.add(dist);		
-		//			}else{
-		//				Document dist = distritos.get(index);
-		//				List<Document> barrios = (List<Document>) dist.get("barrios");//VER SI ASI VALE O HAY QUE MACHACAR LISTA EN DIST!!
-		//				if(buscarDistrito_Barrio(barrios, distritos_barrios.get("COD_BARRIO"), "id_barrio")<0){
-		//				Document barrio = new Document()
-		//						.append("id_barrio",  distritos_barrios.get("COD_BARRIO"))//VER SI ES ESTE CODIGO O EL DE DIST_BARRIO
-		//						.append("nombre", distritos_barrios.get("DESC_BARRIO"));
-		//				barrios.add(barrio);
-		//				dist.replace("barrios", (List<Document>) dist.get("barrios"), barrios);
-		//				distritos.remove(index);//actualizamos
-		//				distritos.add(dist);
-		//				}
-		//			}
-		//			//TERMINAR AÑADIENDO PADRON!! VER ARCHIVO CON SIGNIFICADO ID EDAD ETC
-		//		}
-		//		distritos_barrios.close();
-		System.out.println(distritos.get(0).toJson());
-		//collection.insertMany(distritos);//insertamos los distritos
 	}
 
-	private Document completarBarrioNuevo(CsvReader distritos_barrios, int i) {
+	private Document completarBarrioNuevo(CsvReader distritos_zonas, int i) {
 		try{
 			Document barrio = new Document()
 					.append("id_barrio", "")
-					.append("nombre", distritos_barrios.get(i))
-					.append("codigo_postal",  new ArrayList<Integer>(){{
-						add(Integer.parseInt(buscarValor(distritos_barrios, "codigo postal")));}})
-					.append("superfice (m2)", Double.parseDouble(buscarValor(distritos_barrios, "superfice")))
-					.append("perimetro (m)", Double.parseDouble(buscarValor(distritos_barrios, "perimetro")));
+					.append("nombre", distritos_zonas.get(i))
+					.append("codigo_postal",  new HashSet<Integer>(){{
+						add(Integer.parseInt(buscarValor(distritos_zonas, "codigo postal", "number")));}})
+					.append("superfice (m2)", Double.parseDouble(buscarValor(distritos_zonas, "superfice", "number")))
+					.append("perimetro (m)", Double.parseDouble(buscarValor(distritos_zonas, "perimetro", "number")));
 
 			List<Document> zonas = new ArrayList<Document>();
-			zonas.add(new Document()
-					.append("PK", Integer.parseInt(buscarValor(distritos_barrios, "PK")))
-					.append("actividad", "Poner con meaningcloud, sobre name archivo")
-					.append("sub-actividad", "Poner con meaningcloud, sobre name archivo")
-					.append("nombre", buscarValor(distritos_barrios, "nombre"))
-					.append("descripcion", buscarValor(distritos_barrios, "descripcion"))
-					.append("horario", buscarValor(distritos_barrios, "horario"))
-					.append("transporte", buscarValor(distritos_barrios, "transporte"))
-					.append("telefono", buscarValor(distritos_barrios, "telefono"))
-					.append("email", buscarValor(distritos_barrios, "email"))
-					.append("codigo_postal", Integer.parseInt(buscarValor(distritos_barrios, "codigo postal")))
-					.append("geo", new Document("type","Point")
-							.append("coordinates", new ArrayList<Double>(){{
-								add(Double.parseDouble(buscarValor(distritos_barrios, "longitud").replaceAll(",", "")));
-								add(Double.parseDouble(buscarValor(distritos_barrios, "latitud").replaceAll(",", "")));}})));
-								barrio.append("zonas", zonas);
-								return barrio;
+			zonas.add(addZona(distritos_zonas));
+			barrio.append("zonas", zonas);
+			return barrio;
 		}catch (IOException e) {
 			e.printStackTrace();
 			return null;
 		}
 	}
 
-	private String buscarValor(CsvReader distritos_barrios, String aprox) {
+	private Document addZona(CsvReader distritos_zonas) {
+		Document zonaPK = new Document()
+				.append("PK", Integer.parseInt(buscarValor(distritos_zonas, "PK", "number")))
+				.append("actividad", bucarTopic())
+				.append("sub-actividad", "")
+				.append("nombre", buscarValor(distritos_zonas, "nombre", "text"))
+				.append("descripcion", buscarValor(distritos_zonas, "descripcion", "text"))
+				.append("horario", buscarValor(distritos_zonas, "horario", "text"))
+				.append("transporte", buscarValor(distritos_zonas, "transporte", "text"))
+				.append("telefono", buscarValor(distritos_zonas, "telefono", "text"))
+				.append("email", buscarValor(distritos_zonas, "email", "text"))
+				.append("codigo_postal", Integer.parseInt(buscarValor(distritos_zonas, "codigo postal", "number")))
+				.append("geo", new Document("type","Point")
+						.append("coordinates", new ArrayList<Double>(){{
+							add(Double.parseDouble(buscarValor(distritos_zonas, "longitud", "text").replaceAll(",", "")));
+							add(Double.parseDouble(buscarValor(distritos_zonas, "latitud", "text").replaceAll(",", "")));}}));
+		return limpiarDoc(zonaPK);
+	}
+
+	private String bucarTopic() {
+		
+		return null;
+	}
+
+	private Document limpiarDoc(Document doc) {
+		Document aux = new Document(doc);
+		for(String label:doc.keySet()){
+			String value = doc.get(label).toString();
+			if(value.equals("")||value.equals("0")){
+				aux.remove(label);
+			}
+		}
+		return aux;
+	}
+
+	private String buscarValor(CsvReader distritos_zonas, String aprox, String tipo) {
 		try{
-			String[] headers = distritos_barrios.getHeaders();
+			String[] headers = distritos_zonas.getHeaders();
 			double max = 0.0;
 			double aux = 0.0;
 			String header = null;
@@ -190,8 +184,17 @@ public class Almacenar {
 					header = headers[i];
 				}
 			}
-			if(!distritos_barrios.get(header).equals("")){
-				return distritos_barrios.get(header);
+			String value = distritos_zonas.get(header);
+			if(!value.equals("")){
+				if(tipo.equals("number")){//cogemos solo la parte numerica
+					value = value.replaceAll("\\s+","");
+					Pattern p = Pattern.compile("(\\d+)");
+					Matcher m = p.matcher(value);
+					if (m.find()) {
+						return m.group(1);
+					}
+				}
+				return value.trim();
 			}else{
 				return "0";
 			}
@@ -261,6 +264,15 @@ public class Almacenar {
 	public static void main(String[] args) throws JSONException, FileNotFoundException, IOException, ParseException  {
 		Almacenar alm = new Almacenar();
 		alm.generarColeccion();
+
+		//		Pattern p = Pattern.compile("(\\d+)");
+		//		Matcher m = p.matcher("SN - 28040");
+		//		Integer j = null;
+		//		if (m.find()) {
+		//			j = Integer.valueOf(m.group(1));
+		//		}
+		//		System.out.println(j);
+
 		//		String a = "02";
 		//		System.out.println(Integer.parseInt(a));
 		//alm.client.close();
