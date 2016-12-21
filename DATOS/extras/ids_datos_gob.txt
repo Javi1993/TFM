@@ -7,7 +7,9 @@ l01280796-elecciones-ayuntamiento-de-madrid-1983-2015
 l01280796-museos-de-la-ciudad-de-madrid
 l01280796-policia-municipal-datos-estadisticos-actuaciones-policia-municipal
 l01280796-madrid-salud-relacion-de-centros-municipales
+//estas dos de abajo pueden sobrar al incluir repetidas 
 l01280796-instalaciones-accesibles-no-municipales
+l01280796-instalaciones-accesibles-municipales
 //l01280796-mercados-municipales-locales-comerciales-nombres-comerciales-y-actividades
 l01280796-mercados-municipales
 //l01280796-instalaciones-municipales-con-zonas-wifi-gratuitas (NO TIENE CONTENIDO)
@@ -57,3 +59,23 @@ l01280796-salas-de-espectaculos-artisticos-teatros-cines-filmotecas-auditorios-y
 l01280796-sedes-centros-de-atencion-medica
 l01280796-puntos-de-atencion-a-mujeres
 //l01280796-monumentos-de-la-ciudad-de-madrid
+l01280796-agenda-de-actividades-deportivas
+l01280796-oficinas-de-registro
+l01280796-centros-municipales-de-ensenanzas-artisticas
+l01280796-mercadillos-en-la-via-publica
+l01280796-fundaciones
+l01280796-puntos-de-informacion-turistica
+l01280796-sedes-comunidad-de-madrid
+l01280796-sedes-bibliotecas-especializadas-universitarias-y-nacionales
+l01280796-sedes-oficinas-de-la-agencia-tributaria-estatal
+l01280796-sedes-administracion-de-justicia
+l01280796-entidades-de-participacion-ciudadana-asociaciones
+l01280796-oficina-municipal-de-informacion-al-consumidor
+l01280796-centros-municipales-de-mayores
+l01280796-radares
+l01280796-edificios-de-caracter-monumental
+l01280796-centros-de-dia
+l01280796-bibliotecas-y-bibliobuses-en-la-ciudad-de-madrid
+l01280796-universidades-colegios-mayores-residencias-universitarias-y-otros
+l01280796-oficinas-de-turismo-en-madrid
+l01280796-sedes-administracion-central

@@ -16,6 +16,7 @@ package preprocesamiento.meaningcloud;
  */
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -36,7 +37,7 @@ import org.w3c.dom.*;
  */
 public class ClassClient {
 
-	public String[] tematicaDataset(String ID){
+	public List<String> tematicaDataset(String ID){
 		// We define the variables needed to call the API
 		String api = "http://api.meaningcloud.com/class-1.1";
 		String key = "67d2d31e37c2ba1d032188b1233f19bf";
@@ -44,6 +45,7 @@ public class ClassClient {
 		//		String model = "IPTC_es";  // IPTC_es/IPTC_en/IPTC_fr/IPTC_it/IPTC_ca/EUROVOC_es_ca/BusinessRep_es/BusinessRepShort_es
 		//USAR  IPTC_es y coger por relevancia!
 		//SINO DEVUELVE NADA COGER OTRA QUE SI E IGUAL, X RELEVANCIA
+		List<String> topicsFinal = new ArrayList<String>() ;
 		try{
 
 			Post post = new Post (api);
@@ -52,40 +54,43 @@ public class ClassClient {
 			post.addParameter("of", "json");
 			//String response = post.getResponse();
 
-			String[] topicsFinal = new String[2] ;
-			String[] topicsAux = new String[2];
-			if(!(topicsAux = busquedaModelo(post, "IPTC_es"))[1].equals("")){
-				topicsFinal[0] = topicsAux[0];
-				topicsFinal[1] = topicsAux[1];
-				return topicsFinal;
-			}else if(topicsAux[0].equals("")){
-				topicsFinal[0]=topicsAux[0];
-				//seguir
-			}
 			
-//			System.out.println(topics[0]+" _ "+topics[1]);
-			//VER recibirTweet del otro trabajo para casos donde la respuesta este vacia 
-			//debido al tipo de analisis
-
+			String[] tiposModel = new String[]{"IPTC_es","SocialMedia_es","EUROVOC_es_ca"};//checkear 2º y 3º
+			for(int i = 0; i<tiposModel.length||topicsFinal.size()<2; i++){
+				List<String> topicsAux = busquedaModelo(post, tiposModel[i]);//pasarle aqui
+				if(topicsAux.size()>=2){
+					topicsFinal.add(topicsAux.get(0));
+					if(topicsFinal.size()<2){
+						topicsFinal.add(topicsAux.get(1));
+					}
+					return topicsFinal;
+				}else if(topicsAux.size()>0){
+					topicsFinal.add(topicsAux.get(0));
+					if(topicsFinal.size()>=2){
+						return topicsFinal;
+					}
+				}
+			}
 		}catch (IOException e) {
 			e.printStackTrace();
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return null;
+		return topicsFinal;
 	}
 
-	private String[] busquedaModelo(Post post, String model) throws UnsupportedEncodingException, JSONException, IOException {
+	private List<String> busquedaModelo(Post post, String model) throws UnsupportedEncodingException, JSONException, IOException {
 		post.addParameter("model", model);
+
 		JSONObject jsonObj = new JSONObject(post.getResponse());
 		JSONArray categorias = (JSONArray)jsonObj.get("category_list");
-		String[] topics = new String[]{"",""};
-		for(int i = 0; i<categorias.length()||!topics[1].equals(""); i++){
-			if(topics[0].equals("")){
-				topics[0] = ((JSONObject)categorias.get(i)).get("label").toString().split("-")[0];
-			}else if(!topics[0].equals(((JSONObject)categorias.get(i)).get("label").toString().split("-")[0])){
-				topics[1] = ((JSONObject)categorias.get(i)).get("label").toString().split("-")[0];
+		List<String> topics = new ArrayList<String>();
+		for(int i = 0; i<categorias.length()||topics.size()>=2; i++){
+			if(topics.isEmpty()){
+				topics.add(((JSONObject)categorias.get(i)).get("label").toString().split("-")[0]);
+			}else if(!topics.get(0).equals(((JSONObject)categorias.get(i)).get("label").toString().split("-")[0])){
+				topics.add(((JSONObject)categorias.get(i)).get("label").toString().split("-")[0]);
 			}
 		}
 		return topics;
@@ -94,8 +99,9 @@ public class ClassClient {
 	public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
 
 		ClassClient cc = new ClassClient();
-		cc.tematicaDataset("l01280796-salas-de-espectaculos-artisticos-teatros-cines-filmotecas-auditorios-y-salas-de-conciertos");
-
+		List<String> ja = cc.tematicaDataset("l01280796-salas-de-espectaculos-artisticos-teatros-cines-filmotecas-auditorios-y-salas-de-conciertos");
+		System.out.println(ja.get(0));
+		System.out.println(ja.get(1));
 
 
 		// Show response
