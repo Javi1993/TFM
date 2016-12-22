@@ -44,12 +44,12 @@ public class Almacenar {
 
 
 	public Almacenar(HashMap<String, List<String>> ID_datasets){
-		//		client = new MongoClient("localhost", 27017);//conectamos
-		//		database = client.getDatabase("tfm");//elegimos bbdd
-		//		collection = database.getCollection("distritos");//tomamos la coleccion de estaciones de aire
+				client = new MongoClient("localhost", 27017);//conectamos
+				database = client.getDatabase("tfm");//elegimos bbdd
+				collection = database.getCollection("distritos");//tomamos la coleccion de estaciones de aire
 
 		this.ID_datasets = ID_datasets;
-		generarColeccion();
+		generarDistritosBarrios();
 	}
 
 	public Almacenar(){
@@ -75,7 +75,8 @@ public class Almacenar {
 		return campos;
 	}
 	
-	public List<Document> generarDistritosBarrios(){
+	private List<Document> generarDistritosBarrios(){
+		collection.drop();
 		File dir = new File("./documents/DISTRICT_BARRIO_FORMAT/");
 		FileFilter fileFilter = new WildcardFileFilter("*padron.csv");
 		try{
@@ -94,10 +95,10 @@ public class Almacenar {
 			while (distritos_barrios.readRecord()){//recorremos el CSV
 				int index = 0;//posicion en la lista del distrito
 				if( (dist_barrio_index = buscarDistritoBarrioInfo(distritos_barrios)) !=null ){//obtenemos la posicion de las cabeceras nombre distrito y barrio
-					if(distritos.isEmpty() || (index = buscarDistrito_Barrio(distritos, distritos_barrios.get(dist_barrio_index[0]), "nombre"))<0){//distrito nuevo
-						Document dist = new Document("_id", distritos_barrios.get("COD_DISTRITO")).append("nombre", distritos_barrios.get(dist_barrio_index[0]));//cogemos el documento del distrito
+					if(distritos.isEmpty() || (index = buscarDistrito_Barrio(distritos, distritos_barrios.get(dist_barrio_index[0]).trim(), "nombre"))<0){//distrito nuevo
+						Document dist = new Document("_id", distritos_barrios.get("COD_DISTRITO")).append("nombre", distritos_barrios.get(dist_barrio_index[0]).trim());//cogemos el documento del distrito
 						List<Document> barrios = new ArrayList<Document>();//lista de barrios del sitrito
-						Document bar = new Document("_id", distritos_barrios.get("COD_BARRIO")).append("nombre", distritos_barrios.get(dist_barrio_index[1]));
+						Document bar = new Document("_id", distritos_barrios.get("COD_BARRIO")).append("nombre", distritos_barrios.get(dist_barrio_index[1]).trim());
 						if(!bar.get("nombre").equals("")&&!bar.get("_id").equals("")){//el formato es correcto, lo añadimos a la lista de barrios
 							List<Document> padron = new ArrayList<Document>();
 							padron.add(addNewAgePadron(distritos_barrios, attrPadron));
@@ -110,13 +111,13 @@ public class Almacenar {
 						Document dist = distritos.get(index);//cogemos el documento del distrito
 						List<Document> barrios = (List<Document>) dist.get("barrios");//cogemos su lista de barrios asociada al distrito
 						int index_b = 0;//posicion en la lista del barrio						
-						if(!barrios.isEmpty() && (index_b = buscarDistrito_Barrio(barrios, distritos_barrios.get(dist_barrio_index[1]), "nombre"))>=0){//ya contiene ese barrio
+						if(!barrios.isEmpty() && (index_b = buscarDistrito_Barrio(barrios, distritos_barrios.get(dist_barrio_index[1]).trim(), "nombre"))>=0){//ya contiene ese barrio
 							Document bar = barrios.get(index_b);
 							List<Document> padron = (List<Document>) bar.get("padron");
 							if(padron!=null){
 								boolean cambiado = false;
 								for(Document pad:padron){
-									if(pad.getDouble("cod_edad").toString().equals(Double.parseDouble((buscarValor(distritos_barrios, "cod_edad", "0"))))){
+									if(pad.getDouble("cod_edad")==Double.parseDouble((buscarValor(distritos_barrios, "cod_edad", "0")))){
 										//actualizar padron
 										for(String label:attrPadron){
 											if(!label.split("&&")[0].equals("cod_edad")){
@@ -146,7 +147,7 @@ public class Almacenar {
 							distritos.add(dist);
 							//añadir si no se actualizo, meter boolean o algo
 						}else{//no tiene el barrio
-							Document bar = new Document("_id", distritos_barrios.get("COD_BARRIO")).append("nombre", distritos_barrios.get(dist_barrio_index[1]));
+							Document bar = new Document("_id", distritos_barrios.get("COD_BARRIO")).append("nombre", distritos_barrios.get(dist_barrio_index[1]).trim());
 							if(!bar.get("nombre").equals("")&&!bar.get("_id").equals("")){//el formato es correcto, lo añadimos a la lista de barrios
 								List<Document> padron = new ArrayList<Document>();
 								padron.add(addNewAgePadron(distritos_barrios, attrPadron));
@@ -163,6 +164,7 @@ public class Almacenar {
 			}
 			System.out.println(distritos.size());
 			System.out.println(distritos.get(0).toJson());
+			collection.insertMany(distritos);//insertamos los distritos
 			return distritos;
 		}catch (Exception e) {
 			e.printStackTrace();
@@ -388,7 +390,7 @@ public class Almacenar {
 
 	private int buscarDistrito_Barrio(List<Document> distritos_barrios, String code, String id){
 		for(Document dist_bar:distritos_barrios){
-			if(dist_bar.get(id).toString().equals(code)){
+			if(dist_bar.get(id).equals(code)){
 				return distritos_barrios.indexOf(dist_bar);
 			}
 		}
@@ -406,9 +408,9 @@ public class Almacenar {
 	}
 
 	public static void main(String[] args) throws JSONException, FileNotFoundException, IOException, ParseException  {
-		Almacenar alm = new Almacenar();
+		Almacenar alm = new Almacenar(null);
 		//		alm.generarColeccion();
-		alm.generarDistritosBarrios();
+//		alm.generarDistritosBarrios();
 
 		//		Pattern p = Pattern.compile("(\\d+)");
 		//		Matcher m = p.matcher("SN - 28040");

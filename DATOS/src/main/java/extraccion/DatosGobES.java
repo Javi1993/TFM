@@ -34,7 +34,7 @@ import preprocesamiento.Limpieza;
 
 public class DatosGobES {
 
-	private String path = File.separator+"documents";
+	private String path = "."+File.separator+"documents";
 	private enum Meses {
 		ENERO,
 		FEBRERO,
@@ -219,7 +219,7 @@ public class DatosGobES {
 				System.out.println("Descarga finalizada.");
 				Limpieza pre = new Limpieza();
 				pre.separacionCarpetas(path);
-				Almacenar alm = new Almacenar();
+				Almacenar alm = new Almacenar(ID_datasets);
 
 
 
