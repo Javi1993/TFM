@@ -1,6 +1,6 @@
 {
-  "distric_id" : 1,
-  "distric_name" : "name",
+  "_id" : 1,
+  "nombre" : "name",
   "barrios" : [
     {
       "barrio_id":1,
@@ -10,13 +10,13 @@
       "perimetro(m)":1,
       "padron": [
         {
-          "edad_id": 1,
-          "masc_num_spain":1,
-          "fem_num_spain":1,
-          "masc_num_ext":1,
-          "fem_num_ext":1
+          "cod_edad": 1,
+          "n_españoles_hombres":1,
+          "n_extranjeros_hombres":1,
+          "n_españoles_mujeres":1,
+          "n_extranjeros_mujeres":1
         },
-        {"edad_id_N":1,
+        {"cod_edad":1,
            "...":"..."}
         ],
       "catastro": [

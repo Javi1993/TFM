@@ -2,9 +2,12 @@ package preprocesamiento;
 
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -17,6 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.json.JSONException;
@@ -47,9 +51,144 @@ public class Almacenar {
 		this.ID_datasets = ID_datasets;
 		generarColeccion();
 	}
-	
+
 	public Almacenar(){
-		
+
+	}
+
+	private List<String> getCamposBarrios(String partOfJSON){
+		List<String> campos = new ArrayList<String>();
+		try {
+			byte[] encoded = Files.readAllBytes(Paths.get("./extras/JSON_example_TFM.json"));
+			Document JSON = new Document().parse(new String(encoded, "ISO-8859-1"));
+			
+			//modificar para acceder a la lista en ujna sola linea saltando niveles
+			List<Document> docs = (List<Document>) JSON.get("barrios");//cambiar
+			List<Document> docsA = (List<Document>) docs.get(0).get(partOfJSON);
+			Document doc = docsA.get(0);
+			for(String label:doc.keySet()){
+				campos.add(label+"&&"+doc.get(label));
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return campos;
+	}
+	
+	public List<Document> generarDistritosBarrios(){
+		File dir = new File("./documents/DISTRICT_BARRIO_FORMAT/");
+		FileFilter fileFilter = new WildcardFileFilter("*padron.csv");
+		try{
+			CsvReader distritos_barrios = new CsvReader (dir.listFiles(fileFilter)[0].getAbsolutePath(), ';');
+			distritos_barrios.readHeaders();
+			List<Document> distritos = new ArrayList<>();
+			List<String> attrPadron = getCamposBarrios("padron");
+//			List<String> attrPadron = new ArrayList<String>(){{ //LEER DE JSON!! COGER FICHERO E IR A PADRON Y COGER SUS VALORES
+//				add("cod_edad&&number");
+//				add("n_españoles_hombres&&number");
+//				add("n_extranjeros_hombres&&number");
+//				add("n_españoles_mujeres&&number");
+//				add("n_extranjeros_mujeres&&number");//cambiar separador
+//			}};
+			int[] dist_barrio_index = null;
+			while (distritos_barrios.readRecord()){//recorremos el CSV
+				int index = 0;//posicion en la lista del distrito
+				if( (dist_barrio_index = buscarDistritoBarrioInfo(distritos_barrios)) !=null ){//obtenemos la posicion de las cabeceras nombre distrito y barrio
+					if(distritos.isEmpty() || (index = buscarDistrito_Barrio(distritos, distritos_barrios.get(dist_barrio_index[0]), "nombre"))<0){//distrito nuevo
+						Document dist = new Document("_id", distritos_barrios.get("COD_DISTRITO")).append("nombre", distritos_barrios.get(dist_barrio_index[0]));//cogemos el documento del distrito
+						List<Document> barrios = new ArrayList<Document>();//lista de barrios del sitrito
+						Document bar = new Document("_id", distritos_barrios.get("COD_BARRIO")).append("nombre", distritos_barrios.get(dist_barrio_index[1]));
+						if(!bar.get("nombre").equals("")&&!bar.get("_id").equals("")){//el formato es correcto, lo añadimos a la lista de barrios
+							List<Document> padron = new ArrayList<Document>();
+							padron.add(addNewAgePadron(distritos_barrios, attrPadron));
+							bar.append("padron", padron);
+							barrios.add(bar);
+						}
+						dist.append("barrios", barrios);
+						distritos.add(dist);	
+					}else{//ya existe distrito, añadimos barrio
+						Document dist = distritos.get(index);//cogemos el documento del distrito
+						List<Document> barrios = (List<Document>) dist.get("barrios");//cogemos su lista de barrios asociada al distrito
+						int index_b = 0;//posicion en la lista del barrio						
+						if(!barrios.isEmpty() && (index_b = buscarDistrito_Barrio(barrios, distritos_barrios.get(dist_barrio_index[1]), "nombre"))>=0){//ya contiene ese barrio
+							Document bar = barrios.get(index_b);
+							List<Document> padron = (List<Document>) bar.get("padron");
+							if(padron!=null){
+								boolean cambiado = false;
+								for(Document pad:padron){
+									if(pad.getDouble("cod_edad").toString().equals(Double.parseDouble((buscarValor(distritos_barrios, "cod_edad", "0"))))){
+										//actualizar padron
+										for(String label:attrPadron){
+											if(!label.split("&&")[0].equals("cod_edad")){
+												String valor;
+												if((valor = buscarValor(distritos_barrios, label.split("&&")[0], label.split("&&")[1]))!=null){
+													if(pad.get(label.split("&&")[0])!=null){
+														pad.replace(label.split("&&")[0], pad.getDouble(label.split("&&")[0])+Double.valueOf(valor));
+													}else{//todavia no se tomo valores para ese tipo
+														pad.append(label.split("&&")[0], Double.valueOf(valor));
+													}
+												}
+											}
+										}
+										cambiado=true;
+										break;
+									}
+								}
+								if(!cambiado){
+									padron.add(addNewAgePadron(distritos_barrios, attrPadron));
+								}
+							}
+							bar.replace("padron", padron);
+							barrios.remove(index_b);
+							barrios.add(bar);
+							dist.replace("barrios", barrios);
+							distritos.remove(index);
+							distritos.add(dist);
+							//añadir si no se actualizo, meter boolean o algo
+						}else{//no tiene el barrio
+							Document bar = new Document("_id", distritos_barrios.get("COD_BARRIO")).append("nombre", distritos_barrios.get(dist_barrio_index[1]));
+							if(!bar.get("nombre").equals("")&&!bar.get("_id").equals("")){//el formato es correcto, lo añadimos a la lista de barrios
+								List<Document> padron = new ArrayList<Document>();
+								padron.add(addNewAgePadron(distritos_barrios, attrPadron));
+								bar.append("padron", padron);
+								barrios.add(bar);
+							}
+							//							dist.append("barrios", barrios);
+							dist.replace("barrios", barrios);
+							distritos.remove(index);//actualizamos
+							distritos.add(dist);//añade distrito actualizado
+						}
+					}
+				}
+			}
+			System.out.println(distritos.size());
+			System.out.println(distritos.get(0).toJson());
+			return distritos;
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	/**
+	 * Genera un Document para un cod_edad del padron de un barrio
+	 * @param distritos_barrios - CsV con datos
+	 * @param attrPadron - Atributos a buscar
+	 * @return Document con los datos
+	 */
+	private Document addNewAgePadron(CsvReader distritos_barrios, List<String> attrPadron) {
+		Document pad = new Document();
+		String attr;
+		for(String label:attrPadron){
+			if((attr = buscarValor(distritos_barrios, label.split("&&")[0], label.split("&&")[1]))!=null){
+				if(StringUtils.isNumeric(label.split("&&")[1])){
+					pad.append(label.split("&&")[0], Double.parseDouble(attr));
+				}else{
+					pad.append(label.split("&&")[0], attr);
+				}
+			}
+		}
+		return pad;
 	}
 
 	/**
@@ -58,6 +197,11 @@ public class Almacenar {
 	 */
 	private void generarColeccion(){
 		//collection.drop();
+		
+		//CAMBIAR!! TODOS LOS DISTRITOS Y BARRIOS YA EXISTEN!! SOLO
+		//INSERTAR LOS PK EN EL BARRIO CORRESPONDIENTE
+		
+		
 		try{
 			//************************************************************************
 			File folder = new File(".\\documents\\PK_FORMAT");
@@ -157,7 +301,7 @@ public class Almacenar {
 	}
 
 	private String bucarTopic() {
-		
+
 		return null;
 	}
 
@@ -179,14 +323,14 @@ public class Almacenar {
 			double aux = 0.0;
 			String header = null;
 			for(int i = 0; i<headers.length; i++){
-				if( (aux = similarity(headers[i], aprox)) > max && aux > 0.66){
+				if( (aux = similarity(headers[i], aprox)) > max && aux > 0.60){
 					max = aux;
 					header = headers[i];
 				}
 			}
 			String value = distritos_zonas.get(header);
 			if(!value.equals("")){
-				if(tipo.equals("number")){//cogemos solo la parte numerica
+				if(StringUtils.isNumeric(tipo)){//cogemos solo la parte numerica
 					value = value.replaceAll("\\s+","");
 					Pattern p = Pattern.compile("(\\d+)");
 					Matcher m = p.matcher(value);
@@ -196,7 +340,7 @@ public class Almacenar {
 				}
 				return value.trim();
 			}else{
-				return "0";
+				return null;
 			}
 		}catch (IOException e) {
 			e.printStackTrace();
@@ -225,10 +369,10 @@ public class Almacenar {
 		try{
 			String[] headers = distritos_barrios.getHeaders();
 			for(int i = 0; (i<headers.length)&&(cnt<2); i++){
-				if(headers[i].toLowerCase().equals("distrito")){
+				if(headers[i].toLowerCase().equals("distrito")||headers[i].toLowerCase().equals("desc_distrito")){
 					dist_barrio_Index[0] = i;
 					cnt++;
-				}else if(headers[i].toLowerCase().equals("barrio")){
+				}else if(headers[i].toLowerCase().equals("barrio")||headers[i].toLowerCase().equals("desc_barrio")){
 					dist_barrio_Index[1] = i;
 					cnt++;
 				}
@@ -263,7 +407,8 @@ public class Almacenar {
 
 	public static void main(String[] args) throws JSONException, FileNotFoundException, IOException, ParseException  {
 		Almacenar alm = new Almacenar();
-		alm.generarColeccion();
+		//		alm.generarColeccion();
+		alm.generarDistritosBarrios();
 
 		//		Pattern p = Pattern.compile("(\\d+)");
 		//		Matcher m = p.matcher("SN - 28040");
@@ -276,9 +421,9 @@ public class Almacenar {
 		//		String a = "02";
 		//		System.out.println(Integer.parseInt(a));
 		//alm.client.close();
-		//				String a = "cod_POSTAL";
-		//				String b = "codigo postal";
-		//				System.out.println(similarityBorrar(a, b));
+		//						String a = "n_españoles_hombres";
+		//						String b = "EspanolesHombres";
+		//						System.out.println(similarityBorrar(a, b));
 		// omp parallel for schedule(dynamic)
 		//        for (int i = 2; i < 20; i += 3) {
 		//            System.out.println("  @" + i);

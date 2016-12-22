@@ -54,7 +54,7 @@ public class ClassClient {
 			post.addParameter("of", "json");
 			//String response = post.getResponse();
 
-			
+
 			String[] tiposModel = new String[]{"IPTC_es","SocialMedia_es","EUROVOC_es_ca"};//checkear 2º y 3º
 			for(int i = 0; i<tiposModel.length||topicsFinal.size()<2; i++){
 				List<String> topicsAux = busquedaModelo(post, tiposModel[i]);//pasarle aqui
@@ -82,11 +82,10 @@ public class ClassClient {
 
 	private List<String> busquedaModelo(Post post, String model) throws UnsupportedEncodingException, JSONException, IOException {
 		post.addParameter("model", model);
-
 		JSONObject jsonObj = new JSONObject(post.getResponse());
 		JSONArray categorias = (JSONArray)jsonObj.get("category_list");
 		List<String> topics = new ArrayList<String>();
-		for(int i = 0; i<categorias.length()||topics.size()>=2; i++){
+		for(int i = 0; i<categorias.length(); i++){
 			if(topics.isEmpty()){
 				topics.add(((JSONObject)categorias.get(i)).get("label").toString().split("-")[0]);
 			}else if(!topics.get(0).equals(((JSONObject)categorias.get(i)).get("label").toString().split("-")[0])){
@@ -100,6 +99,7 @@ public class ClassClient {
 
 		ClassClient cc = new ClassClient();
 		List<String> ja = cc.tematicaDataset("l01280796-salas-de-espectaculos-artisticos-teatros-cines-filmotecas-auditorios-y-salas-de-conciertos");
+		System.out.println(ja.size());
 		System.out.println(ja.get(0));
 		System.out.println(ja.get(1));
 
