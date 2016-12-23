@@ -47,16 +47,13 @@ public class ClassClient {
 		//SINO DEVUELVE NADA COGER OTRA QUE SI E IGUAL, X RELEVANCIA
 		List<String> topicsFinal = new ArrayList<String>() ;
 		try{
-
-			Post post = new Post (api);
-			post.addParameter("key", key);
-			post.addParameter("txt", ID);
-			post.addParameter("of", "json");
 			//String response = post.getResponse();
-
-
 			String[] tiposModel = new String[]{"IPTC_es","SocialMedia_es","EUROVOC_es_ca"};//checkear 2º y 3º
 			for(int i = 0; i<tiposModel.length; i++){
+				Post post = new Post (api);
+				post.addParameter("key", key);
+				post.addParameter("txt", ID);
+				post.addParameter("of", "json");
 				List<String> topicsAux = busquedaModelo(post, tiposModel[i], ID);//pasarle aqui
 				if(topicsAux!=null && !topicsAux.isEmpty()){
 					if(topicsAux.size()>=2){
@@ -76,7 +73,6 @@ public class ClassClient {
 		}catch (IOException e) {
 			e.printStackTrace();
 		} catch (JSONException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return topicsFinal;
@@ -87,14 +83,17 @@ public class ClassClient {
 		JSONObject jsonObj = null;
 		try{
 			jsonObj = new JSONObject(post.getResponse());
-			Thread.sleep(500);//espera para que no nos rechace la peticion la API
 			JSONArray categorias = (JSONArray)jsonObj.get("category_list");
 			List<String> topics = new ArrayList<String>();
-			for(int i = 0; i<categorias.length(); i++){
+			for(int i = 0; i<categorias.length() && topics.size()<2; i++){
+				String valor = ((JSONObject)categorias.get(i)).get("label").toString().split("-")[0].trim();
+				if(model.equals("EUROVOC_es_ca")){
+					valor = valor.split("/")[1].replaceAll("[(es)]", "").trim();
+				}
 				if(topics.isEmpty()){
-					topics.add(((JSONObject)categorias.get(i)).get("label").toString().split("-")[0]);
-				}else if(!topics.get(0).equals(((JSONObject)categorias.get(i)).get("label").toString().split("-")[0])){
-					topics.add(((JSONObject)categorias.get(i)).get("label").toString().split("-")[0]);
+					topics.add(valor);
+				}else if(!topics.get(0).equals(valor)){
+					topics.add(valor);
 				}
 			}
 			return topics;

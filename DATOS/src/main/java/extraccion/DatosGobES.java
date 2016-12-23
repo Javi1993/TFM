@@ -50,16 +50,11 @@ public class DatosGobES {
 		DICIEMBRE;
 	}
 
-	private HashMap<String, List<String>> ID_datasets = new HashMap<String, List<String>>();//por cada ID guarda los datasets asociados
-	
-	public HashMap<String, List<String>> getID_datasets(){
-		return this.ID_datasets;
+	private HashMap<String, String> dataset_ID = new HashMap<String, String>();//por cada dataset empareja con su ID
+	private HashMap<String, String> getDataset_ID(){
+		return this.dataset_ID;
 	}
-	
-	private void setID_datasets(String id, List<String> datasets){
-		this.ID_datasets.put(id, datasets);
-	}
-	
+
 	/**
 	 * 
 	 * @return
@@ -122,29 +117,22 @@ public class DatosGobES {
 	 * 
 	 * @param url
 	 * @return
+	 * @throws IOException 
+	 * @throws JSONException 
 	 */
-	private Elements getRows(String url) {
-		Elements tr = null;
+	private Elements getRows(String url) throws IOException, JSONException {
 		UrlValidator defaultValidator = new UrlValidator(); 
 		Document doc = null;
-		try {
-			if (defaultValidator.isValid(url)) {
-				doc = Jsoup.connect(url).get();
-			}else{
-				JSONObject jsonObj = new JSONObject(url);
-				doc = Jsoup.connect(jsonObj.getString("_about")).get();
-			}	
-			Element content = doc.select("div#content").first();
-			Element table = content.select("table").first();
-			tr = table.select("tr");
-		}catch (MalformedURLException e) {
-			e.printStackTrace();
-		}catch (IOException e) {
-			e.printStackTrace();
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-		return tr;
+
+		if (defaultValidator.isValid(url)) {
+			doc = Jsoup.connect(url).get();
+		}else{
+			JSONObject jsonObj = new JSONObject(url);
+			doc = Jsoup.connect(jsonObj.getString("_about")).get();
+		}	
+		Element content = doc.select("div#content").first();
+		Element table = content.select("table").first();
+		return table.select("tr");
 	}
 
 	private String getTitle(String url) {
@@ -219,7 +207,13 @@ public class DatosGobES {
 				System.out.println("Descarga finalizada.");
 				Limpieza pre = new Limpieza();
 				pre.separacionCarpetas(path);
-				Almacenar alm = new Almacenar(ID_datasets);
+//			    Iterator it = getDataset_ID().entrySet().iterator();
+//			    while (it.hasNext()) {
+//			        Map.Entry pair = (Map.Entry)it.next();
+//			        System.out.println(pair.getKey() + " = " + pair.getValue());
+//			        it.remove(); // avoids a ConcurrentModificationException
+//			    }
+				Almacenar alm = new Almacenar(getDataset_ID());
 
 
 
@@ -251,10 +245,8 @@ public class DatosGobES {
 	 * @return
 	 */
 	private boolean downloadDS(JSONArray urls, String format, String ID){
-		String link = null;
 		try{
 			List<String> titulos = new ArrayList<>();
-			List<String> dataSets = new ArrayList<>();
 			for(int j = 0; j<urls.length(); j++){//recorremos las URLs de los datasheet para el ID actual
 				Elements tr = getRows(urls.get(j).toString());//cogemos la tabla de datos del datasheet (formato y URL)
 				String title = getTitle(urls.get(j).toString());//cogemos el titulo del datasheet actual
@@ -262,34 +254,30 @@ public class DatosGobES {
 					int pos = checkExtension(tr, format);
 					if(pos>=0&&checkTitleList(titulos, title)){//es el formato deseado y no se ha descargado uno con el mismo nombre de diferente fecha
 						if(tr.get(pos-1).select("th").text().equals("URL")){
-							link  = tr.get(pos-1).select("td").select("a").attr("href");//cogemos el link de descargs
+							String link  = tr.get(pos-1).select("td").select("a").attr("href");//cogemos el link de descargs
 							//Descargamos fichero de datos
 							File csv = new File(".\\documents\\"+link.substring(link.lastIndexOf('/') + 1));
-//														System.out.println(link);
+							//System.out.println(link);
 							FileUtils.copyURLToFile(new URL(link), csv, 5000, 30000);
 							System.out.println("Se ha descargado "+link.substring(link.lastIndexOf('/') + 1)+".");
 							titulos.add(title);
-							dataSets.add(link.substring(link.lastIndexOf('/') + 1));
+							dataset_ID.put(link.substring(link.lastIndexOf('/') + 1), ID);
 						}
 					}
 				}else{
 					System.out.println("*********************BORRAR**********************");
 				}
 			}
-			if(!titulos.isEmpty()){ 
-				titulos.clear();
-				setID_datasets(ID, dataSets);
-				return true; 
-			}
 		} catch (JSONException e) {
 			e.printStackTrace();
 		} catch (SocketTimeoutException e) {
-			System.err.println("Se ha excedido el tempo para descargar "+link.substring(link.lastIndexOf('/') + 1));
-			e.printStackTrace();
+			System.err.println("Se ha excedido el tiempo para descargar un dataset de la ID '"+ID+"'.");
+			//			e.printStackTrace();
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println("Un dataset de la ID '"+ID+"' está inaccesible en estos momentos.");
+			//			e.printStackTrace();
 		}
 		return false;
 	}
@@ -302,7 +290,7 @@ public class DatosGobES {
 		}
 		return true;
 	}
-	
+
 	public static void main (String[] args) throws Exception{
 		DatosGobES t = new DatosGobES();
 		t.getDatosGobEs();

@@ -38,32 +38,35 @@ import preprocesamiento.meaningcloud.ClassClient;
 
 public class Almacenar {
 
-	private HashMap<String, List<String>> ID_datasets;
+	private HashMap<String, String> dataset_ID;
 
 	private MongoClient client;
 	private MongoDatabase database;
 	private MongoCollection<Document> collection;
 
 
-	public Almacenar(HashMap<String, List<String>> ID_datasets){
-		//				client = new MongoClient("localhost", 27017);//conectamos
-		//				database = client.getDatabase("tfm");//elegimos bbdd
-		//				collection = database.getCollection("distritos");//tomamos la coleccion de estaciones de aire
-
-		this.ID_datasets = ID_datasets;
+	public Almacenar(HashMap<String, String> dataset_ID){
+		this.dataset_ID = dataset_ID;
 		cargarDatos();
 	}
 
 	public Almacenar(){
 
 	}
-
+	
+	private void conDB(){
+		client = new MongoClient("localhost", 27017);//conectamos
+		database = client.getDatabase("tfm");//elegimos bbdd
+		collection = database.getCollection("distritos");//tomamos la coleccion de estaciones de aire
+	}
+	
 	private void cargarDatos(){
 		List<Document> distritos = generarDistritosBarrios();//generamos los 21 distritos y sus barrios en base al padron
 		if(!distritos.isEmpty()&&distritos.size()==21){
+			System.out.println("Estructura basica de distritos y barrios creada.");
 			generarZonas(distritos);//formato PK
 		}else{
-			System.out.println("La carga inicial de distritos es erronea.");
+			System.out.println("La carga inicial de distritos y barrios es erronea.");
 		}
 	}
 
@@ -168,6 +171,9 @@ public class Almacenar {
 			}
 			//			System.out.println(distritos.size());
 			//			System.out.println(distritos.get(0).toJson());
+			//			for(Document d:distritos){
+			//				System.out.println(d.get("_id")+"__"+d.get("nombre"));
+			//			}
 			//			collection.insertMany(distritos);//insertamos los distritos
 			return distritos;
 		}catch (Exception e) {
@@ -203,6 +209,11 @@ public class Almacenar {
 	 */
 	private void generarZonas(List<Document> distritos){
 		try{
+			
+			
+			collection.drop();
+			
+			
 			File folder = new File(".\\documents\\PK_FORMAT");
 			for (File fileEntry : folder.listFiles()) {
 				if (!fileEntry.isDirectory()) {
@@ -210,26 +221,33 @@ public class Almacenar {
 					distritos_zonas.readHeaders();
 					int index = 0;//posicion en la lista del distrito
 					int[] dist_barrio_index = null;
+					List<String> topics = getRol(fileEntry.getName());
 					while (distritos_zonas.readRecord()){
 						if( (dist_barrio_index = buscarDistritoBarrioInfo(distritos_zonas)) !=null ){//obtenemos la posicion de las cabeceras nombre distrito y barrio
 							index = buscarDistrito_Barrio(distritos, distritos_zonas.get(dist_barrio_index[0]).trim(), "nombre");//obtenemos la posicion en la lista del doc del distrito
+							//							System.out.println("INDEX D "+index);
 							if(index>=0){//localizar por coordenadas si no tiene barrio o dist
 								Document dist = distritos.get(index);//cogemos el documento del distrito
 								List<Document> barrios = (List<Document>) dist.get("barrios");//cogemos su lista de barrios asociada al distrito
 								int index_b = buscarDistrito_Barrio(barrios, distritos_zonas.get(dist_barrio_index[1]).trim(), "nombre");//posicion en la lista del barrio
+								//								System.out.println("INDEX B "+index_b);
 								if(index_b>=0){
 									Document barrio = barrios.get(index_b);//cogemos el documento del barrio
-									if(barrio.get("codigo_postal")!=null&&!barrio.get("codigo_postal").equals("")){
-										((Set<Integer>)barrio.get("codigo_postal")).add(Integer.parseInt(buscarValor(distritos_zonas, "codigo_postal", "1")));
-									}else{
-										barrio.append("codigo_postal",  new HashSet<Integer>(){{
-											add(Integer.parseInt(buscarValor(distritos_zonas, "codigo_postal", "number")));}});
+									String cod_postal = buscarValor(distritos_zonas, "codigo_postal", "1");
+									if(cod_postal!=null && !cod_postal.equals("")){
+										if(barrio.get("codigo_postal")!=null&&!barrio.get("codigo_postal").equals("")){
+											//										System.out.println(fileEntry.getName()+"_"+buscarValor(distritos_zonas, "PK", "1")+"_"+buscarValor(distritos_zonas, "codigo_postal", "1"));
+											((Set<Integer>)barrio.get("codigo_postal")).add(Integer.parseInt(cod_postal));
+										}else{
+											barrio.append("codigo_postal",  new HashSet<Integer>(){{
+												add(Integer.parseInt(cod_postal));}});
+										}
 									}
-									if(barrio.get("zonas")!=null&&!barrio.get("zonas").equals("")){
-										((List<Document>) barrio.get("zonas")).add(addZona(distritos_zonas, fileEntry));
+									if(barrio.get("zonas")!=null&&!barrio.get("zonas").equals("")){//ya hay zonas guardadas para ese barrio
+										((List<Document>) barrio.get("zonas")).add(addZona(distritos_zonas, topics));
 									}else{
 										barrio.append("zonas", new ArrayList<Document>(){{
-											add(addZona(distritos_zonas, fileEntry));
+											add(addZona(distritos_zonas, topics));
 										}});
 									}
 									barrios.remove(index_b);
@@ -245,9 +263,16 @@ public class Almacenar {
 			}
 
 			//COMPROBAR PK REPETIDAS y fusionar combinando rol!!
-
-			System.out.println(distritos.get(0).toJson());
-			//			collection.insertMany(distritos);//insertamos los distritos
+			//			System.out.println(distritos.size());
+//			System.out.println(distritos.get(0).toJson());
+			//			System.out.println(distritos.get(1).toJson());
+			//			System.out.println(distritos.get(2).toJson());
+			conDB();
+			collection.insertMany(distritos);//insertamos los distritos
+			client.close();
+			//			for(Document d:distritos){
+			//			System.out.println(d.get("_id")+"__"+d.get("nombre")/*+"__"+((List<Document>) d.get("barrios")).get(0)*/);
+			//		}
 		}catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -273,7 +298,13 @@ public class Almacenar {
 	//		}
 	//	}
 
-	private Document addZona(CsvReader distritos_zonas, File fileEntry) {
+	private List<String> getRol(String nameFile){
+		ClassClient mc = new ClassClient();
+		List<String> topic = mc.tematicaDataset(dataset_ID.get(nameFile));
+		return topic;
+	}
+
+	private Document addZona(CsvReader distritos_zonas, List<String> topics) {
 		List<String> attrZonas = getCamposBarrios("zonas");
 		Document zona = new Document();
 		String attr = null;
@@ -286,26 +317,8 @@ public class Almacenar {
 					zona.append(label.split("&&")[0], attr);
 				}
 			}else{
-				if(label.split("&&")[0].equals("rol")){
-					
-					ClassClient mc = new ClassClient();
-					List<String> topic = mc.tematicaDataset("l01280796-centros-para-personas-sin-hogar");
-					zona.append("rol", topic);
-					
-//					Iterator it = ID_datasets.entrySet().iterator();
-//					List<String> topic = new ArrayList<String>();
-//					while (it.hasNext()&&!topic.isEmpty()) {
-//						Map.Entry pair = (Map.Entry)it.next();
-//						for(String file:(List<String>)pair.getValue()){
-//							if(file.equals(fileEntry.getName())){
-//								topic = new ClassClient().tematicaDataset(pair.getKey().toString());
-//								zona.append("rol", topic);
-//							}
-//						}
-//						//		System.out.println(pair.getKey() + " = " + ((List<String>)pair.getValue()).size());
-//						it.remove(); // avoids a ConcurrentModificationException
-//					}
-					//List<String> topic = new ClassClient().tematicaDataset("PASAR ID");
+				if(label.split("&&")[0].equals("rol")&&!topics.isEmpty()){
+					zona.append("rol", topics);
 				}else if(label.split("&&")[0].equals("geo")){
 					String lat, lon;
 					if((lat = buscarValor(distritos_zonas, "latitud", "text"))!=null
@@ -319,31 +332,8 @@ public class Almacenar {
 				}
 			}
 		}
-
-
-
-		//		Document zonaPK = new Document()
-		//				.append("PK", Integer.parseInt(buscarValor(distritos_zonas, "PK", "number")))
-		//				.append("actividad", bucarTopic())
-		//				.append("sub-actividad", "")
-		//				.append("nombre", buscarValor(distritos_zonas, "nombre", "text"))
-		//				.append("descripcion", buscarValor(distritos_zonas, "descripcion", "text"))
-		//				.append("horario", buscarValor(distritos_zonas, "horario", "text"))
-		//				.append("transporte", buscarValor(distritos_zonas, "transporte", "text"))
-		//				.append("telefono", buscarValor(distritos_zonas, "telefono", "text"))
-		//				.append("email", buscarValor(distritos_zonas, "email", "text"))
-		//				.append("codigo_postal", Integer.parseInt(buscarValor(distritos_zonas, "codigo postal", "number")))
-		//				.append("geo", new Document("type","Point")
-		//						.append("coordinates", new ArrayList<Double>(){{
-		//							add(Double.parseDouble(buscarValor(distritos_zonas, "longitud", "text").replaceAll(",", "")));
-		//							add(Double.parseDouble(buscarValor(distritos_zonas, "latitud", "text").replaceAll(",", "")));}}));
-		//		return limpiarDoc(zonaPK);
+		//		System.out.println(zona.toJson());
 		return zona;
-	}
-
-	private String bucarTopic() {
-
-		return null;
 	}
 
 	private Document limpiarDoc(Document doc) {
