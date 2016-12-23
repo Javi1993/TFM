@@ -96,6 +96,7 @@ public class ClassClient {
 					topics.add(valor);
 				}
 			}
+			Thread.sleep(500);
 			return topics;
 		}catch (Exception e) {
 			System.err.println("No hay valores para el modelo "+model+" de la ID "+ID+".");

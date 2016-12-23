@@ -210,9 +210,9 @@ public class Almacenar {
 	private void generarZonas(List<Document> distritos){
 		try{
 			
-			
+			conDB();
 			collection.drop();
-			
+			client.close();
 			
 			File folder = new File(".\\documents\\PK_FORMAT");
 			for (File fileEntry : folder.listFiles()) {
