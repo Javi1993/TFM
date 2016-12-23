@@ -5,7 +5,7 @@
     {
       "barrio_id":1,
       "barrio_name":"name",
-      "cod_postal":[11111, 3333, 2222],
+      "codigo_postal":[11111, 3333, 2222],
       "superficie(m2)":1,
       "perimetro(m)":1,
       "padron": [
@@ -34,17 +34,17 @@
         ],
       "zonas":[
         {
-          "pk_ID": 1,
-          "actividad_id":"tipo (de momento: Cementerios, museos(turismo.csv),centro salud, inst no-muni (ESTE INCLUYE pk de otros pequeños), mecados municipales, escuela Ofi de idiomas,centros educacion, areas infantiles, areas de mayores, templos no catolicos, puntos limpios, polideportivos, salas estudio,farmacia guardia, sedes investifgacion, centros discapacidad, atencion social, instalaciones deport muni, templos catolicos, juntas, centro culturales muni, ofi correos, ofi DNI, atencion ciudadano(linea madrid), escuelas infantiles, parques y jardines, oficina de empleo, parkings publicos, embajadas y consulados, atencion social, servicios sociales, teatros, cine, salas concierto, centro atencion medica, atencion mujeres, ...",
-          "sub_actividad_id":"considerar, ejemplo: para mercados o museos el tipo",
+          "PK": 1,
+          "rol": ["rol1","rol2"],
           "nombre":"name",
-          "desc":"desc",
-          "horario":"desc de horario",
-          "trasnporte":"desc de lineas",
-          "telefono":1212,
+          "descripcion":"descripcion",
+          "horario":"horario",
+          "trasnporte":"desc. de lineas",
+          "telefono":"telefono",
+          "fax":"fax",
           "email":"email@email.com",
-          "cod_postal":1111,
-          "geo(TENER EN CUENTA LAS QUE VIENEN EN ED50.ZONA30 para cambio a WGS84": {
+          "codigo_postal":1,
+          "geo": {
            "type": "Point",
             "coordinates": [1.1, 1.1]
           }

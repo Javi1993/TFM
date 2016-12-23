@@ -41,7 +41,7 @@ public class ClassClient {
 		// We define the variables needed to call the API
 		String api = "http://api.meaningcloud.com/class-1.1";
 		String key = "67d2d31e37c2ba1d032188b1233f19bf";
-		String txt = ID;
+
 		//		String model = "IPTC_es";  // IPTC_es/IPTC_en/IPTC_fr/IPTC_it/IPTC_ca/EUROVOC_es_ca/BusinessRep_es/BusinessRepShort_es
 		//USAR  IPTC_es y coger por relevancia!
 		//SINO DEVUELVE NADA COGER OTRA QUE SI E IGUAL, X RELEVANCIA
@@ -50,24 +50,26 @@ public class ClassClient {
 
 			Post post = new Post (api);
 			post.addParameter("key", key);
-			post.addParameter("txt", txt);
+			post.addParameter("txt", ID);
 			post.addParameter("of", "json");
 			//String response = post.getResponse();
 
 
 			String[] tiposModel = new String[]{"IPTC_es","SocialMedia_es","EUROVOC_es_ca"};//checkear 2º y 3º
-			for(int i = 0; i<tiposModel.length||topicsFinal.size()<2; i++){
-				List<String> topicsAux = busquedaModelo(post, tiposModel[i]);//pasarle aqui
-				if(topicsAux.size()>=2){
-					topicsFinal.add(topicsAux.get(0));
-					if(topicsFinal.size()<2){
-						topicsFinal.add(topicsAux.get(1));
-					}
-					return topicsFinal;
-				}else if(topicsAux.size()>0){
-					topicsFinal.add(topicsAux.get(0));
-					if(topicsFinal.size()>=2){
+			for(int i = 0; i<tiposModel.length; i++){
+				List<String> topicsAux = busquedaModelo(post, tiposModel[i], ID);//pasarle aqui
+				if(topicsAux!=null && !topicsAux.isEmpty()){
+					if(topicsAux.size()>=2){
+						topicsFinal.add(topicsAux.get(0));
+						if(topicsFinal.size()<2){
+							topicsFinal.add(topicsAux.get(1));
+						}
 						return topicsFinal;
+					}else if(topicsAux.size()>0){
+						topicsFinal.add(topicsAux.get(0));
+						if(topicsFinal.size()>=2){
+							return topicsFinal;
+						}
 					}
 				}
 			}
@@ -80,25 +82,33 @@ public class ClassClient {
 		return topicsFinal;
 	}
 
-	private List<String> busquedaModelo(Post post, String model) throws UnsupportedEncodingException, JSONException, IOException {
+	private List<String> busquedaModelo(Post post, String model, String ID) throws UnsupportedEncodingException, JSONException, IOException {
 		post.addParameter("model", model);
-		JSONObject jsonObj = new JSONObject(post.getResponse());
-		JSONArray categorias = (JSONArray)jsonObj.get("category_list");
-		List<String> topics = new ArrayList<String>();
-		for(int i = 0; i<categorias.length(); i++){
-			if(topics.isEmpty()){
-				topics.add(((JSONObject)categorias.get(i)).get("label").toString().split("-")[0]);
-			}else if(!topics.get(0).equals(((JSONObject)categorias.get(i)).get("label").toString().split("-")[0])){
-				topics.add(((JSONObject)categorias.get(i)).get("label").toString().split("-")[0]);
+		JSONObject jsonObj = null;
+		try{
+			jsonObj = new JSONObject(post.getResponse());
+			Thread.sleep(500);//espera para que no nos rechace la peticion la API
+			JSONArray categorias = (JSONArray)jsonObj.get("category_list");
+			List<String> topics = new ArrayList<String>();
+			for(int i = 0; i<categorias.length(); i++){
+				if(topics.isEmpty()){
+					topics.add(((JSONObject)categorias.get(i)).get("label").toString().split("-")[0]);
+				}else if(!topics.get(0).equals(((JSONObject)categorias.get(i)).get("label").toString().split("-")[0])){
+					topics.add(((JSONObject)categorias.get(i)).get("label").toString().split("-")[0]);
+				}
 			}
+			return topics;
+		}catch (Exception e) {
+			System.err.println("No hay valores para el modelo "+model+" de la ID "+ID+".");
+			System.err.println(jsonObj.toString());
+			return null;
 		}
-		return topics;
 	}
 
 	public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
 
 		ClassClient cc = new ClassClient();
-		List<String> ja = cc.tematicaDataset("l01280796-salas-de-espectaculos-artisticos-teatros-cines-filmotecas-auditorios-y-salas-de-conciertos");
+		List<String> ja = cc.tematicaDataset("l01280796-centros-para-personas-sin-hogar");
 		System.out.println(ja.size());
 		System.out.println(ja.get(0));
 		System.out.println(ja.get(1));
