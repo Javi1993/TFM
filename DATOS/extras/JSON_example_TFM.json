@@ -150,26 +150,32 @@
   ],
   "fuentes_potables":[
     {
-      "id":1,
+      "codigo":1,
       "estado":"estado",
       "geo": {
         "type": "Point",
-          "coordinates": [1.1, 1.1]
+        "coordinates": [1.1, 1.1]
       }
     }
   ],
   "contenedores":[
     {
-      "tipo":"ropa/pilas marquesinas",
-      "lineas(solo si pilas)":"lineas",
+      "tipo":"ropa/pilas(si parana null es ropa)",
+      "parada":1,
+      "linea":"lineas",
       "geo": {
         "type": "Point",
-          "coordinates": [1.1, 1.1]
+        "coordinates": [1.1, 1.1]
       }
     }
   ],
-  "animales_domesticos":{
-    "num_caninos":1,
-    "num_felinos":1
-  }
+  "censo_animales_domesticos": [
+  {
+    "año":1,
+    "n_especie_canina":1,
+    "n_especie_felina":1
+  },
+  {"año":1,
+  "...":"..."}
+  ]
 }
