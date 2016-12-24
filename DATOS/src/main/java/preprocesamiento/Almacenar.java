@@ -22,6 +22,10 @@ import com.csvreader.CsvReader;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+
+import gov.nasa.worldwind.avlist.AVKey;
+import gov.nasa.worldwind.geom.LatLon;
+import gov.nasa.worldwind.geom.coords.UTMCoord;
 import preprocesamiento.meaningcloud.ClassClient;
 
 @SuppressWarnings({"serial", "unchecked"})
@@ -116,28 +120,44 @@ public class Almacenar {
 		int[] dist_index = null;
 		if( (dist_index = buscarDistritoBarrioInfo(distritos_locs, 1)) !=null ){//obtenemos la posicion de la cabeceras distrito en el CSV		
 			while (distritos_locs.readRecord()){
-				Document anim = new Document();
+				Document doc = new Document();
 				index = buscarDistrito_Barrio_Zona(distritos, distritos_locs.get(dist_index[0]).trim(), "nombre");//obtenemos la posicion en la lista del doc del distrito
 				if(index>=0){
 					Document dist = distritos.get(index);//cogemos el documento del distrito
 					for(String label:attrList){
-						if((attr = buscarValor(distritos_locs, label.split("&&")[0], label.split("&&")[1]))!=null&&!label.split("&&")[0].equals("geo")){
+						if((attr = buscarValor(distritos_locs, label.split("&&")[0], label.split("&&")[1]))!=null && !label.split("&&")[0].equals("geo")){
 							if(StringUtils.isNumeric(label.split("&&")[1])){
-								anim.append(label.split("&&")[0], Double.parseDouble(attr));
+								doc.append(label.split("&&")[0], Double.parseDouble(attr));
 							}else{
-								anim.append(label.split("&&")[0], attr);
+								doc.append(label.split("&&")[0], attr);
 							}
 						}else{
-							//geoloc! ver formato en que vienen coodenadas!
+							String lat, lon, east, nort;
+							if((lat = buscarValor(distritos_locs, "latitud", "text"))!=null
+									&& (lon = buscarValor(distritos_locs, "longitud", "text"))!=null){
+								doc.append("geo", new Document("type","Point")
+										.append("coordinates", new ArrayList<Double>(){{
+											add(Double.parseDouble(lon.replaceAll(",", "")));
+											add(Double.parseDouble(lat.replaceAll(",", "")));
+										}}));
+							}else if((east = buscarValor(distritos_locs, "coord X", "text"))!=null
+									&& (nort = buscarValor(distritos_locs, "coord Y", "text"))!=null){
+								LatLon coordinates = UTMCoord.locationFromUTMCoord(30, AVKey.NORTH, Double.parseDouble(east), Double.parseDouble(nort));
+								doc.append("geo", new Document("type","Point")
+										.append("coordinates", new ArrayList<Double>(){{
+											add(coordinates.getLongitude().getDegrees());
+											add(coordinates.getLatitude().getDegrees());
+										}}));
+							}
 						}
 					}
-					List<Document> animales =  (List<Document>) dist.get(document);
-					if(animales!=null){
-						animales.add(anim);
-						dist.replace(document, animales);
+					List<Document> documents =  (List<Document>) dist.get(document);
+					if(documents!=null){
+						documents.add(doc);
+						dist.replace(document, documents);
 					}else{
 						dist.append(document, new ArrayList<Document>(){{
-							add(anim);}});
+							add(doc);}});
 					}
 					distritos.remove(index);
 					distritos.add(dist);
@@ -413,7 +433,7 @@ public class Almacenar {
 			double aux = 0.0;
 			String header = null;
 			for(int i = 0; i<headers.length; i++){
-				if( (aux = similarity(headers[i], aprox)) > max && aux > 0.60){
+				if( (aux = similarity(headers[i], aprox)) > max && aux > 0.55){
 					max = aux;
 					header = headers[i];
 				}
@@ -487,7 +507,7 @@ public class Almacenar {
 		for(Document dist_bar:distritos_barrios_zonas){
 			if(dist_bar.get(id).equals(code)||dist_bar.get(id).toString().split("-")[0].equals(code)
 					||(!id.equals("PK")&&similarity(dist_bar.get(id).toString(), code)>0.8)){
-					return distritos_barrios_zonas.indexOf(dist_bar);
+				return distritos_barrios_zonas.indexOf(dist_bar);
 			}
 		}
 		return -1;
@@ -504,7 +524,7 @@ public class Almacenar {
 	}
 
 	public static void main(String[] args) throws JSONException, FileNotFoundException, IOException, ParseException  {
-//						Almacenar alm = new Almacenar(null);
+		//						Almacenar alm = new Almacenar(null);
 		//	alm.generarZonas(null);
 		//		alm.generarDistritosBarrios();
 
@@ -518,10 +538,10 @@ public class Almacenar {
 
 		//		String a = "02";
 		//		System.out.println(Integer.parseInt(a));
-		//alm.client.close();
-//				String a = "fuencarral el pardo";
-//				String b = "fuencarral-el-pardo";
-//				System.out.println(similarityBorrar(a, b));
+		//		alm.client.close();
+		//				String a = "COORD.X";
+		//				String b = "coord X";
+		//				System.out.println(similarityBorrar(a, b));
 		// omp parallel for schedule(dynamic)
 		//        for (int i = 2; i < 20; i += 3) {
 		//            System.out.println("  @" + i);
