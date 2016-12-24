@@ -13,11 +13,7 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.validator.routines.UrlValidator;
@@ -28,7 +24,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-
 import preprocesamiento.Almacenar;
 import preprocesamiento.Limpieza;
 
@@ -213,7 +208,7 @@ public class DatosGobES {
 //			        System.out.println(pair.getKey() + " = " + pair.getValue());
 //			        it.remove(); // avoids a ConcurrentModificationException
 //			    }
-				Almacenar alm = new Almacenar(getDataset_ID());
+				new Almacenar(getDataset_ID());
 
 
 

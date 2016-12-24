@@ -16,36 +16,25 @@ package preprocesamiento.meaningcloud;
  */
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
+import java.util.Set;
 import javax.xml.parsers.ParserConfigurationException;
-import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
-import java.io.ByteArrayInputStream;
-
-import org.json.JSONArray;
+import org.bson.Document;
 import org.json.JSONException;
-import org.json.JSONObject;
-import org.w3c.dom.*;
-
 
 /**
  * This class implements a starting client for Text Classification  
  */
 public class ClassClient {
 
-	public List<String> tematicaDataset(String ID){
+	public Set<String> tematicaDataset(String ID){
 		// We define the variables needed to call the API
 		String api = "http://api.meaningcloud.com/class-1.1";
 		String key = "67d2d31e37c2ba1d032188b1233f19bf";
 
-		//		String model = "IPTC_es";  // IPTC_es/IPTC_en/IPTC_fr/IPTC_it/IPTC_ca/EUROVOC_es_ca/BusinessRep_es/BusinessRepShort_es
-		//USAR  IPTC_es y coger por relevancia!
-		//SINO DEVUELVE NADA COGER OTRA QUE SI E IGUAL, X RELEVANCIA
-		List<String> topicsFinal = new ArrayList<String>() ;
+		Set<String> topicsFinal = new HashSet<String>() ;
 		try{
 			//String response = post.getResponse();
 			String[] tiposModel = new String[]{"IPTC_es","SocialMedia_es","EUROVOC_es_ca"};//checkear 2º y 3º
@@ -54,20 +43,9 @@ public class ClassClient {
 				post.addParameter("key", key);
 				post.addParameter("txt", ID);
 				post.addParameter("of", "json");
-				List<String> topicsAux = busquedaModelo(post, tiposModel[i], ID);//pasarle aqui
+				Set<String> topicsAux = busquedaModelo(post, tiposModel[i], ID);//pasarle aqui
 				if(topicsAux!=null && !topicsAux.isEmpty()){
-					if(topicsAux.size()>=2){
-						topicsFinal.add(topicsAux.get(0));
-						if(topicsFinal.size()<2){
-							topicsFinal.add(topicsAux.get(1));
-						}
-						return topicsFinal;
-					}else if(topicsAux.size()>0){
-						topicsFinal.add(topicsAux.get(0));
-						if(topicsFinal.size()>=2){
-							return topicsFinal;
-						}
-					}
+					topicsFinal.addAll(topicsAux);
 				}
 			}
 		}catch (IOException e) {
@@ -78,29 +56,28 @@ public class ClassClient {
 		return topicsFinal;
 	}
 
-	private List<String> busquedaModelo(Post post, String model, String ID) throws UnsupportedEncodingException, JSONException, IOException {
+	@SuppressWarnings("unchecked")
+	private Set<String> busquedaModelo(Post post, String model, String ID) throws UnsupportedEncodingException, JSONException, IOException {
 		post.addParameter("model", model);
-		JSONObject jsonObj = null;
+		Document JSON = null;
 		try{
-			jsonObj = new JSONObject(post.getResponse());
-			JSONArray categorias = (JSONArray)jsonObj.get("category_list");
-			List<String> topics = new ArrayList<String>();
-			for(int i = 0; i<categorias.length() && topics.size()<2; i++){
-				String valor = ((JSONObject)categorias.get(i)).get("label").toString().split("-")[0].trim();
+			byte[] encoded = post.getResponse().getBytes();
+			JSON = Document.parse(new String(encoded, "UTF-8"));
+			System.out.println(JSON.toJson());
+			List<Document> categorias = (List<Document>) JSON.get("category_list");
+			Set<String> topics = new HashSet<String>();
+			for(Document cat:categorias){
+				String valor = cat.get("label").toString().split("-")[0].trim();
 				if(model.equals("EUROVOC_es_ca")){
 					valor = valor.split("/")[1].replaceAll("[(es)]", "").trim();
 				}
-				if(topics.isEmpty()){
-					topics.add(valor);
-				}else if(!topics.get(0).equals(valor)){
-					topics.add(valor);
-				}
+				topics.add(valor);
 			}
 			Thread.sleep(500);
 			return topics;
 		}catch (Exception e) {
 			System.err.println("No hay valores para el modelo "+model+" de la ID "+ID+".");
-			System.err.println(jsonObj.toString());
+			System.err.println(JSON.toJson());
 			return null;
 		}
 	}
@@ -108,10 +85,10 @@ public class ClassClient {
 	public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
 
 		ClassClient cc = new ClassClient();
-		List<String> ja = cc.tematicaDataset("l01280796-centros-para-personas-sin-hogar");
+		Set<String> ja = cc.tematicaDataset("l01280796-centros-para-personas-sin-hogar");
 		System.out.println(ja.size());
-		System.out.println(ja.get(0));
-		System.out.println(ja.get(1));
+//		System.out.println(ja.get(0));
+//		System.out.println(ja.get(1));
 
 
 		// Show response
