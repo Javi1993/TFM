@@ -148,9 +148,24 @@
         }
     }
   ],
+  "actividades_deportivas":[
+  {
+  	"ID_evento":1,
+  	"titulo":"titulo",
+  	"fecha":"fecha",
+  	"dias":"dias",
+  	"nombre_instalacion":"instalacion",
+  	"geo": {
+        "type": "Point",
+        "coordinates": [1.1, 1.1]
+      }
+  },
+  {"ID_evento":1,
+  "...":"..."}
+  ],
   "fuentes_potables":[
     {
-      "codigo":1,
+      "codigo":"cod",
       "estado":"estado",
       "geo": {
         "type": "Point",
