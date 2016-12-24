@@ -68,7 +68,7 @@ public class ClassClient {
 			for(Document cat:categorias){
 				String valor = cat.get("label").toString().split("-")[0].trim();
 				if(model.equals("EUROVOC_es_ca")){
-					valor = valor.split("/")[1].replaceAll("[(es)]", "").trim();
+					valor = valor.split("/")[1].replaceAll("\\(.+\\)", "").trim();
 				}
 				topics.add(valor);
 			}
@@ -83,13 +83,14 @@ public class ClassClient {
 
 	public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
 
-		ClassClient cc = new ClassClient();
-		Set<String> ja = cc.tematicaDataset("l01280796-centros-para-personas-sin-hogar");
-		System.out.println(ja.size());
+//		ClassClient cc = new ClassClient();
+//		Set<String> ja = cc.tematicaDataset("l01280796-centros-para-personas-sin-hogar");
+//		System.out.println(ja.size());
 //		System.out.println(ja.get(0));
 //		System.out.println(ja.get(1));
 
-
+//		String a = "centro de educacion (es)";
+//		System.out.println(a.replaceAll("\\(.+\\)", "").trim());
 		// Show response
 		/*System.out.println("Response");
       System.out.println("============");
