@@ -63,7 +63,6 @@ public class ClassClient {
 		try{
 			byte[] encoded = post.getResponse().getBytes();
 			JSON = Document.parse(new String(encoded, "UTF-8"));
-			System.out.println(JSON.toJson());
 			List<Document> categorias = (List<Document>) JSON.get("category_list");
 			Set<String> topics = new HashSet<String>();
 			for(Document cat:categorias){
