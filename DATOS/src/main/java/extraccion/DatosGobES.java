@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.EnumUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -118,7 +119,6 @@ public class DatosGobES {
 	private Elements getRows(String url) throws IOException, JSONException {
 		UrlValidator defaultValidator = new UrlValidator(); 
 		Document doc = null;
-
 		if (defaultValidator.isValid(url)) {
 			doc = Jsoup.connect(url).get();
 		}else{
@@ -130,24 +130,21 @@ public class DatosGobES {
 		return table.select("tr");
 	}
 
-	private String getTitle(String url) {
-		String title = "";
+	private String getTitle(String url) throws IOException, JSONException {
+		String title = null;
 		UrlValidator defaultValidator = new UrlValidator(); 
 		Document doc = null;
-		try {
-			if (defaultValidator.isValid(url)) {
-				doc = Jsoup.connect(url).get();
-			}else{
-				JSONObject jsonObj = new JSONObject(url);
-				doc = Jsoup.connect(jsonObj.getString("_about")).get();
-			}	
-			Element content = doc.select("div#content").first();
-			title = content.select("h1").first().text();
-			if(Integer.parseInt(title)>=0){
-				return "..:anio:..";
-			}
-			return "";
-		}catch (NumberFormatException e) {//limpiamos titulo si tiene numero o mes para no coger de otras fechas anteriores
+		if (defaultValidator.isValid(url)) {
+			doc = Jsoup.connect(url).get();
+		}else{
+			JSONObject jsonObj = new JSONObject(url);
+			doc = Jsoup.connect(jsonObj.getString("_about")).get();
+		}	
+		Element content = doc.select("div#content").first();
+		title = content.select("h1").first().text();
+		if(StringUtils.isNumeric(title)){
+			return "..:anio:..";
+		}else{
 			title = title.replaceAll("\\d|\\s|\\.","");
 			if(EnumUtils.isValidEnum(Meses.class, title.toUpperCase())){
 				return "..:mes:..";
@@ -158,11 +155,6 @@ public class DatosGobES {
 					}
 				}
 			}
-			return title;
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (JSONException e) {
-			e.printStackTrace();
 		}
 		return title;
 	}
@@ -202,12 +194,12 @@ public class DatosGobES {
 				System.out.println("Descarga finalizada.");
 				Limpieza pre = new Limpieza();
 				pre.separacionCarpetas(path);
-//			    Iterator it = getDataset_ID().entrySet().iterator();
-//			    while (it.hasNext()) {
-//			        Map.Entry pair = (Map.Entry)it.next();
-//			        System.out.println(pair.getKey() + " = " + pair.getValue());
-//			        it.remove(); // avoids a ConcurrentModificationException
-//			    }
+				//			    Iterator it = getDataset_ID().entrySet().iterator();
+				//			    while (it.hasNext()) {
+				//			        Map.Entry pair = (Map.Entry)it.next();
+				//			        System.out.println(pair.getKey() + " = " + pair.getValue());
+				//			        it.remove(); // avoids a ConcurrentModificationException
+				//			    }
 				new Almacenar(getDataset_ID());
 
 
@@ -245,7 +237,7 @@ public class DatosGobES {
 			for(int j = 0; j<urls.length(); j++){//recorremos las URLs de los datasheet para el ID actual
 				Elements tr = getRows(urls.get(j).toString());//cogemos la tabla de datos del datasheet (formato y URL)
 				String title = getTitle(urls.get(j).toString());//cogemos el titulo del datasheet actual
-				if(!tr.isEmpty()&&!title.equals("")){
+				if(tr!=null&&!tr.isEmpty()&&!title.equals("")){
 					int pos = checkExtension(tr, format);
 					if(pos>=0&&checkTitleList(titulos, title)){//es el formato deseado y no se ha descargado uno con el mismo nombre de diferente fecha
 						if(tr.get(pos-1).select("th").text().equals("URL")){
@@ -259,17 +251,17 @@ public class DatosGobES {
 							dataset_ID.put(link.substring(link.lastIndexOf('/') + 1), ID);
 						}
 					}
-				}else{
-					System.out.println("*********************BORRAR**********************");
 				}
 			}
 		} catch (JSONException e) {
-			e.printStackTrace();
+			System.err.println("Error en la ID "+ID);
+//			e.printStackTrace();
 		} catch (SocketTimeoutException e) {
 			System.err.println("Se ha excedido el tiempo para descargar un dataset de la ID '"+ID+"'.");
 			//			e.printStackTrace();
 		} catch (MalformedURLException e) {
-			e.printStackTrace();
+			System.err.println("La url pasada para la descarga del dataset de la ID "+ID+" no es valida.");
+//			e.printStackTrace();
 		} catch (IOException e) {
 			System.err.println("Un dataset de la ID '"+ID+"' está inaccesible en estos momentos.");
 			//			e.printStackTrace();

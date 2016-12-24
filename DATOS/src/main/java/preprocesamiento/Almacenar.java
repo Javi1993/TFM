@@ -142,7 +142,7 @@ public class Almacenar {
 										}}));
 							}else if((east = buscarValor(distritos_locs, "coord X", "text"))!=null
 									&& (nort = buscarValor(distritos_locs, "coord Y", "text"))!=null){
-								LatLon coordinates = UTMCoord.locationFromUTMCoord(30, AVKey.NORTH, Double.parseDouble(east), Double.parseDouble(nort));
+								LatLon coordinates = UTMCoord.locationFromUTMCoord(30, AVKey.NORTH, Double.parseDouble(east.replaceAll(",", ".")), Double.parseDouble(nort.replaceAll(",", ".")));
 								doc.append("geo", new Document("type","Point")
 										.append("coordinates", new ArrayList<Double>(){{
 											add(coordinates.getLongitude().getDegrees());
@@ -535,7 +535,8 @@ public class Almacenar {
 		//			j = Integer.valueOf(m.group(1));
 		//		}
 		//		System.out.println(j);
-
+//		String a = "40.36581776978113";
+//		System.out.println();
 		//		String a = "02";
 		//		System.out.println(Integer.parseInt(a));
 		//		alm.client.close();
