@@ -82,7 +82,7 @@ public class Almacenar {
 					}
 					switch(i) {
 					case 0:
-						distritos = addDistritoLoc(distritos, distritos_locs, "censo_animales_domesticos");
+						distritos = addDistritoLoc(distritos, distritos_locs, "censo_animales_domesticos", null);
 						break;
 					case 1:
 						distritos = addDistritoLoc(distritos, distritos_locs, "contenedores", "ropa");
@@ -91,10 +91,10 @@ public class Almacenar {
 						distritos = addDistritoLoc(distritos, distritos_locs, "contenedores", "pila");
 						break;
 					case 3:
-						distritos = addDistritoLoc(distritos, distritos_locs, "fuentes_potables");
+						distritos = addDistritoLoc(distritos, distritos_locs, "fuentes_potables", null);
 						break;
 					case 4:
-						distritos = addDistritoLoc(distritos, distritos_locs, "actividades_deportivas");
+						distritos = addDistritoLoc(distritos, distritos_locs, "actividades_deportivas", null);
 						break;
 					default:
 						System.out.println("No hay desarrolo para preprocesar "+fileEntry.getName());
@@ -110,14 +110,14 @@ public class Almacenar {
 		}
 	}
 
-	private List<Document> addDistritoLoc(List<Document> distritos, CsvReader distritos_locs, String document, String... tipo) throws NumberFormatException, IOException{
+	private List<Document> addDistritoLoc(List<Document> distritos, CsvReader distritos_locs, String document, String tipo) throws NumberFormatException, IOException{
 		List<String> attrList = getCampos(document, 0);
 		String attr;
 		int index = 0;
 		int[] dist_index = null;
 		if( (dist_index = buscarDistritoBarrioInfo(distritos_locs, 1)) !=null ){//obtenemos la posicion de la cabeceras distrito en el CSV		
 			while (distritos_locs.readRecord()){
-				Document doc = new Document();
+				Document doc = new Document();//doc a insertar
 				if(tipo!=null){//contenedor
 					doc.append("tipo", tipo);
 				}
@@ -524,7 +524,7 @@ public class Almacenar {
 	}
 
 	public static void main(String[] args) throws JSONException, FileNotFoundException, IOException, ParseException  {
-		//						Almacenar alm = new Almacenar(null);
+//								Almacenar alm = new Almacenar(null);
 		//	alm.generarZonas(null);
 		//		alm.generarDistritosBarrios();
 

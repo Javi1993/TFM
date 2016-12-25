@@ -254,7 +254,7 @@ public class DatosGobES {
 				}
 			}
 		} catch (JSONException e) {
-			System.err.println("Error en la ID "+ID);
+			System.err.println("Error en la ID '"+ID+"'.");
 //			e.printStackTrace();
 		} catch (SocketTimeoutException e) {
 			System.err.println("Se ha excedido el tiempo para descargar un dataset de la ID '"+ID+"'.");
