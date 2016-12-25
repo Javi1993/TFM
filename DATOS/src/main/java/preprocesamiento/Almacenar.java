@@ -85,12 +85,10 @@ public class Almacenar {
 						distritos = addDistritoLoc(distritos, distritos_locs, "censo_animales_domesticos");
 						break;
 					case 1:
+						distritos = addDistritoLoc(distritos, distritos_locs, "contenedores", "ropa");
+						break;
 					case 2:
-						//							if(i==1){//ropa CAMBIAR SEGUN TIPO!!
-						//								distritos = addDistritoLoc(distritos, dist_index, distritos_locs, index, "contenedores");
-						//							}else{//pila
-						//								distritos = addDistritoLoc(distritos, dist_index, distritos_locs, index, "contenedores");
-						//							}
+						distritos = addDistritoLoc(distritos, distritos_locs, "contenedores", "pila");
 						break;
 					case 3:
 						distritos = addDistritoLoc(distritos, distritos_locs, "fuentes_potables");
@@ -112,8 +110,7 @@ public class Almacenar {
 		}
 	}
 
-	//CAMBIAR NOMBRE VARIANBLES (ANIUMALES) PARA DEJAR DE FORMA GENERAL
-	private List<Document> addDistritoLoc(List<Document> distritos, CsvReader distritos_locs, String document) throws NumberFormatException, IOException{
+	private List<Document> addDistritoLoc(List<Document> distritos, CsvReader distritos_locs, String document, String... tipo) throws NumberFormatException, IOException{
 		List<String> attrList = getCampos(document, 0);
 		String attr;
 		int index = 0;
@@ -121,6 +118,9 @@ public class Almacenar {
 		if( (dist_index = buscarDistritoBarrioInfo(distritos_locs, 1)) !=null ){//obtenemos la posicion de la cabeceras distrito en el CSV		
 			while (distritos_locs.readRecord()){
 				Document doc = new Document();
+				if(tipo!=null){//contenedor
+					doc.append("tipo", tipo);
+				}
 				index = buscarDistrito_Barrio_Zona(distritos, distritos_locs.get(dist_index[0]).trim(), "nombre");//obtenemos la posicion en la lista del doc del distrito
 				if(index>=0){
 					Document dist = distritos.get(index);//cogemos el documento del distrito
@@ -535,8 +535,8 @@ public class Almacenar {
 		//			j = Integer.valueOf(m.group(1));
 		//		}
 		//		System.out.println(j);
-//		String a = "40.36581776978113";
-//		System.out.println();
+		//		String a = "40.36581776978113";
+		//		System.out.println();
 		//		String a = "02";
 		//		System.out.println(Integer.parseInt(a));
 		//		alm.client.close();
