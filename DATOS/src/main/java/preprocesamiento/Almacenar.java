@@ -22,7 +22,6 @@ import com.csvreader.CsvReader;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-
 import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.coords.UTMCoord;
@@ -32,11 +31,9 @@ import preprocesamiento.meaningcloud.ClassClient;
 public class Almacenar {
 
 	private HashMap<String, String> dataset_ID;
-
 	private MongoClient client;
 	private MongoDatabase database;
 	private MongoCollection<Document> collection;
-
 
 	public Almacenar(HashMap<String, String> dataset_ID){
 		this.dataset_ID = dataset_ID;
@@ -49,9 +46,12 @@ public class Almacenar {
 		collection = database.getCollection("distritos");//tomamos la coleccion de estaciones de aire
 	}
 
+	/**
+	 * 
+	 */
 	private void cargarDatos(){
 		List<Document> distritos = generarDistritosBarrios();//generamos los 21 distritos y sus barrios en base al padron
-		if(!distritos.isEmpty()&&distritos.size()==21){
+		if(!distritos.isEmpty() && distritos.size()==21){
 			System.out.println("Estructura basica de distritos y barrios creada.");
 			distritos = generarZonas(distritos);//formato PK
 			System.out.println("Insertadas las zonas con formato PK.");
@@ -99,7 +99,7 @@ public class Almacenar {
 					default:
 						System.out.println("No hay desarrolo para preprocesar "+fileEntry.getName());
 					}
-
+					distritos_locs.close();
 				}
 			}
 			conDB();
@@ -202,7 +202,8 @@ public class Almacenar {
 					if(distritos.isEmpty() || (index = buscarDistrito_Barrio_Zona(distritos, distritos_barrios.get(dist_barrio_index[0]).trim(), "nombre"))<0){//distrito nuevo
 						Document dist = new Document("_id", distritos_barrios.get("COD_DISTRITO")).append("nombre", distritos_barrios.get(dist_barrio_index[0]).trim());//cogemos el documento del distrito
 						List<Document> barrios = new ArrayList<Document>();//lista de barrios del sitrito
-						Document bar = new Document("_id", distritos_barrios.get("COD_BARRIO")).append("nombre", distritos_barrios.get(dist_barrio_index[1]).trim());
+						Document bar = completarBarrio(distritos_barrios, dist_barrio_index);
+						bar = completarBarrio(distritos_barrios, dist_barrio_index);
 						if(!bar.get("nombre").equals("")&&!bar.get("_id").equals("")){//el formato es correcto, lo añadimos a la lista de barrios
 							List<Document> padron = new ArrayList<Document>();
 							padron.add(addNewAgePadron(distritos_barrios, attrPadron));
@@ -251,7 +252,7 @@ public class Almacenar {
 							distritos.add(dist);
 							//añadir si no se actualizo, meter boolean o algo
 						}else{//no tiene el barrio
-							Document bar = new Document("_id", distritos_barrios.get("COD_BARRIO")).append("nombre", distritos_barrios.get(dist_barrio_index[1]).trim());
+							Document bar = completarBarrio(distritos_barrios, dist_barrio_index);
 							if(!bar.get("nombre").equals("")&&!bar.get("_id").equals("")){//el formato es correcto, lo añadimos a la lista de barrios
 								List<Document> padron = new ArrayList<Document>();
 								padron.add(addNewAgePadron(distritos_barrios, attrPadron));
@@ -272,11 +273,29 @@ public class Almacenar {
 			//				System.out.println(d.get("_id")+"__"+d.get("nombre"));
 			//			}
 			//			collection.insertMany(distritos);//insertamos los distritos
+			distritos_barrios.close();
 			return distritos;
 		}catch (Exception e) {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	private Document completarBarrio(CsvReader distritos_barrios, int[] dist_barrio_index) throws IOException {
+		String nombre =  distritos_barrios.get(dist_barrio_index[1]).trim();
+		Document barrio = new Document("_id", distritos_barrios.get("COD_BARRIO")).append("nombre", nombre);
+		File dir = new File("./documents/DISTRICT_BARRIO_FORMAT/");
+		FileFilter fileFilter = new WildcardFileFilter("*distritos-barrios.csv");
+		CsvReader info_barrio = new CsvReader (dir.listFiles(fileFilter)[0].getAbsolutePath(), ';');
+		while (info_barrio.readRecord()){//recorremos el CSV
+			if(info_barrio.get(buscarValor(info_barrio, "nombre barrio", "text")).equals(nombre)){
+				barrio.append("superfice", buscarValor(info_barrio, "superfice", "1"));
+				barrio.append("perimetro", buscarValor(info_barrio, "perimetro", "1"));
+				break;
+			}
+		}
+		info_barrio.close();
+		return barrio;
 	}
 
 	/**
@@ -364,6 +383,7 @@ public class Almacenar {
 							}
 						}
 					}
+					distritos_zonas.close();
 				}
 			}
 		}catch (IOException e) {
@@ -524,7 +544,7 @@ public class Almacenar {
 	}
 
 	public static void main(String[] args) throws JSONException, FileNotFoundException, IOException, ParseException  {
-//								Almacenar alm = new Almacenar(null);
+		//								Almacenar alm = new Almacenar(null);
 		//	alm.generarZonas(null);
 		//		alm.generarDistritosBarrios();
 
@@ -540,9 +560,9 @@ public class Almacenar {
 		//		String a = "02";
 		//		System.out.println(Integer.parseInt(a));
 		//		alm.client.close();
-		//				String a = "COORD.X";
-		//				String b = "coord X";
-		//				System.out.println(similarityBorrar(a, b));
+		//						String a = "barrio";
+		//						String b = "Nombre de barrio";
+		//						System.out.println(similarityBorrar(a, b));
 		// omp parallel for schedule(dynamic)
 		//        for (int i = 2; i < 20; i += 3) {
 		//            System.out.println("  @" + i);

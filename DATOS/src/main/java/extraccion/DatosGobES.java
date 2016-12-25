@@ -200,7 +200,7 @@ public class DatosGobES {
 				//			        System.out.println(pair.getKey() + " = " + pair.getValue());
 				//			        it.remove(); // avoids a ConcurrentModificationException
 				//			    }
-				new Almacenar(getDataset_ID());
+								new Almacenar(getDataset_ID());
 
 
 
@@ -232,9 +232,11 @@ public class DatosGobES {
 	 * @return
 	 */
 	private boolean downloadDS(JSONArray urls, String format, String ID){
-		try{
-			List<String> titulos = new ArrayList<>();
-			for(int j = 0; j<urls.length(); j++){//recorremos las URLs de los datasheet para el ID actual
+
+		List<String> titulos = new ArrayList<>();
+		boolean fileDown = false;
+		for(int j = 0; j<urls.length(); j++){//recorremos las URLs de los datasheet para el ID actual
+			try{
 				Elements tr = getRows(urls.get(j).toString());//cogemos la tabla de datos del datasheet (formato y URL)
 				String title = getTitle(urls.get(j).toString());//cogemos el titulo del datasheet actual
 				if(tr!=null&&!tr.isEmpty()&&!title.equals("")){
@@ -246,26 +248,28 @@ public class DatosGobES {
 							File csv = new File(".\\documents\\"+link.substring(link.lastIndexOf('/') + 1));
 							//System.out.println(link);
 							FileUtils.copyURLToFile(new URL(link), csv, 5000, 30000);
-							System.out.println("Se ha descargado "+link.substring(link.lastIndexOf('/') + 1)+".");
 							titulos.add(title);
+							System.out.println("Se ha descargado "+link.substring(link.lastIndexOf('/') + 1)+".");
 							dataset_ID.put(link.substring(link.lastIndexOf('/') + 1), ID);
+							fileDown = true;
 						}
 					}
 				}
+			} catch (JSONException e) {
+				System.err.println("Error en la ID '"+ID+"'.");
+				//					e.printStackTrace();
+			} catch (SocketTimeoutException e) {
+				System.err.println("Se ha excedido el tiempo para descargar un dataset de la ID '"+ID+"'.");
+				//			e.printStackTrace();
+			} catch (MalformedURLException e) {
+				System.err.println("La url pasada para la descarga del dataset de la ID "+ID+" no es valida.");
+				//					e.printStackTrace();
+			} catch (IOException e) {
+				System.err.println("Un dataset de la ID '"+ID+"' está inaccesible en estos momentos.");
+				//			e.printStackTrace();
 			}
-		} catch (JSONException e) {
-			System.err.println("Error en la ID '"+ID+"'.");
-//			e.printStackTrace();
-		} catch (SocketTimeoutException e) {
-			System.err.println("Se ha excedido el tiempo para descargar un dataset de la ID '"+ID+"'.");
-			//			e.printStackTrace();
-		} catch (MalformedURLException e) {
-			System.err.println("La url pasada para la descarga del dataset de la ID "+ID+" no es valida.");
-//			e.printStackTrace();
-		} catch (IOException e) {
-			System.err.println("Un dataset de la ID '"+ID+"' está inaccesible en estos momentos.");
-			//			e.printStackTrace();
 		}
+		if(fileDown){return true;}
 		return false;
 	}
 

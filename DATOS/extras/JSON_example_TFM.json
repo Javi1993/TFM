@@ -21,13 +21,15 @@
         ],
       "catastro": [
         {
-          "uso": "uso",
-          "num_inmuebles":1,
-          "anio_med":1,
-          "superficie_total":1,
-          "superficie_media":1,
-          "valor_total_€":1,
-          "valor_medio_€":1
+          "uso_denominacio": "uso",
+          "inmuebles":1,
+          "año_medio":1,
+          "superficie_construida":1,
+          "superficie_construida_media":1,
+          "superficie_suelo":1,
+          "superficie_suelo_media":1,
+          "valor_catastro":1,
+          "valor_catastro_medio":1
         },
         {"uso":1,
            "...":"..."}
@@ -49,7 +51,7 @@
             "coordinates": [1.1, 1.1]
           }
         },
-        {"pk_ID":1,
+        {"PK":1,
          "...":"..."}
         ],
       "parquimetros":[
