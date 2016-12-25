@@ -127,7 +127,7 @@ public class Almacenar {
 					for(String label:attrList){
 						if((attr = buscarValor(distritos_locs, label.split("&&")[0], label.split("&&")[1]))!=null && !label.split("&&")[0].equals("geo")){
 							if(StringUtils.isNumeric(label.split("&&")[1])){
-								doc.append(label.split("&&")[0], Double.parseDouble(attr));
+								doc.append(label.split("&&")[0], Integer.parseInt(attr));
 							}else{
 								doc.append(label.split("&&")[0], attr);
 							}
@@ -222,16 +222,16 @@ public class Almacenar {
 							if(padron!=null){
 								boolean cambiado = false;
 								for(Document pad:padron){
-									if(pad.getDouble("cod_edad")==Double.parseDouble((buscarValor(distritos_barrios, "cod_edad", "0")))){
+									if(pad.getInteger("cod_edad")==Integer.parseInt((buscarValor(distritos_barrios, "cod_edad", "0")))){
 										//actualizar padron
 										for(String label:attrPadron){
 											if(!label.split("&&")[0].equals("cod_edad")){
 												String valor;
 												if((valor = buscarValor(distritos_barrios, label.split("&&")[0], label.split("&&")[1]))!=null){
 													if(pad.get(label.split("&&")[0])!=null){
-														pad.replace(label.split("&&")[0], pad.getDouble(label.split("&&")[0])+Double.valueOf(valor));
+														pad.replace(label.split("&&")[0], pad.getInteger(label.split("&&")[0])+Integer.valueOf(valor));
 													}else{//todavia no se tomo valores para ese tipo
-														pad.append(label.split("&&")[0], Double.valueOf(valor));
+														pad.append(label.split("&&")[0], Integer.valueOf(valor));
 													}
 												}
 											}
@@ -287,10 +287,11 @@ public class Almacenar {
 		File dir = new File("./documents/DISTRICT_BARRIO_FORMAT/");
 		FileFilter fileFilter = new WildcardFileFilter("*distritos-barrios.csv");
 		CsvReader info_barrio = new CsvReader (dir.listFiles(fileFilter)[0].getAbsolutePath(), ';');
+		info_barrio.readHeaders();
 		while (info_barrio.readRecord()){//recorremos el CSV
-			if(info_barrio.get(buscarValor(info_barrio, "nombre barrio", "text")).equals(nombre)){
-				barrio.append("superfice", buscarValor(info_barrio, "superfice", "1"));
-				barrio.append("perimetro", buscarValor(info_barrio, "perimetro", "1"));
+			if(buscarValor(info_barrio, "nombre barrio", "text").equals(nombre)){
+				barrio.append("superfice", Double.parseDouble(buscarValor(info_barrio, "superfice", "1")));
+				barrio.append("perimetro", Double.parseDouble(buscarValor(info_barrio, "perimetro", "1")));
 				break;
 			}
 		}
@@ -310,7 +311,7 @@ public class Almacenar {
 		for(String label:attrPadron){
 			if((attr = buscarValor(distritos_barrios, label.split("&&")[0], label.split("&&")[1]))!=null){
 				if(StringUtils.isNumeric(label.split("&&")[1])){
-					pad.append(label.split("&&")[0], Double.parseDouble(attr));
+					pad.append(label.split("&&")[0], Integer.parseInt(attr));
 				}else{
 					pad.append(label.split("&&")[0], attr);
 				}
@@ -357,15 +358,17 @@ public class Almacenar {
 										}
 									}
 									if(barrio.get("zonas")!=null&&!barrio.get("zonas").equals("")){//ya hay zonas guardadas para ese barrio
-										//comprobar si zona PK ya existe (buscar por PK) y fusiinar topics
 										int index_z;
-										if((index_z = buscarDistrito_Barrio_Zona((List<Document>) barrio.get("zonas"), distritos_zonas.get("PK"), "PK")) == -1){
+										if((index_z = buscarDistrito_Barrio_Zona((List<Document>) barrio.get("zonas"), distritos_zonas.get("PK"), "PK")) < 0){
 											((List<Document>) barrio.get("zonas")).add(addZona(distritos_zonas, topics));
 										}else{
 											if(topics!=null && !topics.isEmpty()){
-												System.out.println("ENTRO "+fileEntry.getName());
-												for(String top:topics){
-													((Set<String>)((Document)((List<Document>) barrio.get("zonas")).get(index_z)).get("rol")).add(top);
+												if(((Document)((List<Document>) barrio.get("zonas")).get(index_z)).get("rol")!=null){
+													for(String top:topics){
+														((Set<String>)((Document)((List<Document>) barrio.get("zonas")).get(index_z)).get("rol")).add(top);
+													}
+												}else{//no tiene rol la zona
+													((Document)((List<Document>) barrio.get("zonas")).get(index_z)).append("rol", topics);
 												}
 											}	
 										}
@@ -412,7 +415,7 @@ public class Almacenar {
 			attr = buscarValor(distritos_zonas, label.split("&&")[0], label.split("&&")[1]);
 			if(attr!=null&&!label.split("&&")[0].equals("geo")&&!label.split("&&")[0].equals("rol")){
 				if(StringUtils.isNumeric(label.split("&&")[1])){
-					zona.append(label.split("&&")[0], Double.parseDouble(attr));
+					zona.append(label.split("&&")[0], Integer.parseInt(attr));
 				}else{
 					zona.append(label.split("&&")[0], attr);
 				}
@@ -435,20 +438,9 @@ public class Almacenar {
 		return zona;
 	}
 
-	//	private Document limpiarDoc(Document doc) {
-	//		Document aux = new Document(doc);
-	//		for(String label:doc.keySet()){
-	//			String value = doc.get(label).toString();
-	//			if(value.equals("")||value.equals("0")){
-	//				aux.remove(label);
-	//			}
-	//		}
-	//		return aux;
-	//	}
-
-	private String buscarValor(CsvReader distritos_zonas, String aprox, String tipo) {
+	private String buscarValor(CsvReader csvDoc, String aprox, String tipo) {
 		try{
-			String[] headers = distritos_zonas.getHeaders();
+			String[] headers = csvDoc.getHeaders();
 			double max = 0.0;
 			double aux = 0.0;
 			String header = null;
@@ -458,7 +450,7 @@ public class Almacenar {
 					header = headers[i];
 				}
 			}
-			String value = distritos_zonas.get(header);
+			String value = csvDoc.get(header);
 			if(!value.equals("")){
 				if(StringUtils.isNumeric(tipo)){//cogemos solo la parte numerica
 					value = value.replaceAll("\\s+","");
@@ -469,13 +461,11 @@ public class Almacenar {
 					}
 				}
 				return value.trim();
-			}else{
-				return null;
 			}
 		}catch (IOException e) {
 			e.printStackTrace();
-			return null;
 		}
+		return null;
 	}
 
 	private double similarity(String s1, String s2) {
@@ -544,7 +534,7 @@ public class Almacenar {
 	}
 
 	public static void main(String[] args) throws JSONException, FileNotFoundException, IOException, ParseException  {
-		//								Almacenar alm = new Almacenar(null);
+		//		Almacenar alm = new Almacenar(null);
 		//	alm.generarZonas(null);
 		//		alm.generarDistritosBarrios();
 
