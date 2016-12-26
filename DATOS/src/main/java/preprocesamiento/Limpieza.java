@@ -16,71 +16,52 @@ public class Limpieza {
 			for (File fileEntry : folder.listFiles()) {
 				if (!fileEntry.isDirectory()) {
 					File src = new File(folder+File.separator+fileEntry.getName());
-					CsvReader products = new CsvReader(folder+File.separator+fileEntry.getName(), ';');
-					products.readHeaders();
-					if(products.getHeaders()[0].equals("PK")){//archivos formato PK
-						products.close();	
+					CsvReader dataset = new CsvReader(folder+File.separator+fileEntry.getName(), ';');
+					dataset.readHeaders();
+					if(dataset.getHeaders()[0].equals("PK")){//archivos formato PK
+						dataset.close();	
 						File dest = new File(folder+File.separator+"PK_FORMAT"+File.separator+fileEntry.getName());
 						FileUtils.copyFile(src, dest);
 						FileUtils.forceDelete(src);
 					}else{
 						boolean barrio = false;
 						boolean distrito = false;
-						for(int i = 0; i<products.getHeaders().length; i++){
+						for(int i = 0; i<dataset.getHeaders().length; i++){
 							if(!barrio||!distrito){
-								if(products.getHeaders()[i].toLowerCase().contains("barrio")){
+								if(dataset.getHeaders()[i].toLowerCase().contains("barrio")){
 									barrio = true;
 								}
-								if(products.getHeaders()[i].toLowerCase().contains("distrito")){
+								if(dataset.getHeaders()[i].toLowerCase().contains("distrito")){
 									distrito = true;
 								}
 							}else{
 								break;
 							}
 						}
+						dataset.close();
+						File dest = null;
 						if(!barrio&&distrito){//archivos con solo distrito
-							products.close();	
-							File dest = new File(folder+File.separator+"DISTRICT_FORMAT"+File.separator+fileEntry.getName());
-							FileUtils.copyFile(src, dest);
-							FileUtils.forceDelete(src);
+							dest = new File(folder+File.separator+"DISTRICT_FORMAT"+File.separator+fileEntry.getName());
 						}else if(barrio&&distrito){
-							products.close();	
-							File dest = new File(folder+File.separator+"DISTRICT_BARRIO_FORMAT"+File.separator+fileEntry.getName());
-							FileUtils.copyFile(src, dest);
-							FileUtils.forceDelete(src);
-						}else if(barrio&&!distrito){
-							products.close();	
-							File dest = new File(folder+File.separator+"BARRIO_FORMAT"+File.separator+fileEntry.getName());
-							FileUtils.copyFile(src, dest);
-							FileUtils.forceDelete(src);
+							dest = new File(folder+File.separator+"DISTRICT_BARRIO_FORMAT"+File.separator+fileEntry.getName());
+						}else if(barrio&&!distrito){	
+							dest = new File(folder+File.separator+"BARRIO_FORMAT"+File.separator+fileEntry.getName());
 						}else{
-							products.close();	
-							File dest = new File(folder+File.separator+"UNKNOW_FORMAT"+File.separator+fileEntry.getName());
-							FileUtils.copyFile(src, dest);
-							FileUtils.forceDelete(src);
+							if(fileEntry.getName().contains("calidad-aire")||fileEntry.getName().contains("calidad-acustica")){
+								dest = new File(folder+File.separator+"ESTACIONES_CALIDAD"+File.separator+fileEntry.getName());
+							}else{
+								dest = new File(folder+File.separator+"UNKNOW_FORMAT"+File.separator+fileEntry.getName());
+							}
 						}
+						FileUtils.copyFile(src, dest);//copiamos archivo
+						FileUtils.forceDelete(src);//borramos origen
 					}
 				}
 			}
-			//			CsvReader products = new CsvReader(".\\documents\\200186-0-polideportivos.csv", ';');
-			//			products.readHeaders();
-			//			System.out.println("----------------------------INI HEADERD");
-			//			System.out.println(products.getHeaders()[0]);
-			//			System.out.println("----------------------------FIN HEADERD");
-			//			while (products.readRecord()){
-			//				System.out.println("++++++++++++++++++++++++");
-			//				System.out.println(products.getRawRecord());
-			//			}
-			//			products.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-	public static void main(String[] args)  {
-		Limpieza pre = new Limpieza();
-		pre.separacionCarpetas(".\\documents");
 	}
 }

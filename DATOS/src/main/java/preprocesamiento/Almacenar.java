@@ -22,9 +22,11 @@ import com.csvreader.CsvReader;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import funciones.Funciones;
 import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.coords.UTMCoord;
+import preprocesamiento.geocoding.Geocode;
 import preprocesamiento.meaningcloud.ClassClient;
 
 @SuppressWarnings({"serial", "unchecked"})
@@ -56,16 +58,91 @@ public class Almacenar {
 			distritos = generarZonas(distritos);//formato PK
 			System.out.println("Insertadas las zonas con formato PK.");
 			generarDistritoFormat(distritos);
+			generarEstaciones(distritos);
+			System.out.println("Insertada toda la informacion disponible a nivel de distrito.");
 		}else{
 			System.out.println("La carga inicial de distritos y barrios es erronea.");
 		}
+	}
+
+	private void generarEstaciones(List<Document> distritos) {
+		File dir = new File("./documents/ESTACIONES_CALIDAD/");
+		try{
+			conDB();
+			collection.drop();
+			client.close();
+			addAireAcustica(distritos, dir, new WildcardFileFilter("*calidad-aire.csv"), "aire");
+			addAireAcustica(distritos, dir, new WildcardFileFilter("*calidad-acustica.csv"), "acustico");
+			conDB();
+			collection.insertMany(distritos);//insertamos los distritos
+			client.close();
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void addAireAcustica(List<Document> distritos, File dir, FileFilter ff, String document) throws IOException{
+		CsvReader estaciones = new CsvReader (dir.listFiles(ff)[0].getAbsolutePath(), ';');
+		estaciones.readHeaders();
+		while (estaciones.readRecord()){//recorremos el CSV
+			String lon = estaciones.get("longitud");
+			String lat = estaciones.get("latitud");
+
+			double lonDegree = Double.parseDouble(lon.split("º")[0]); 
+			double lonMinutes = Double.parseDouble(lon.split("º")[1].split("'")[0]);
+			double lonSecond = Double.parseDouble(lon.split("º")[1].split("'")[1].split("''")[0]);
+			double lonDouble = Math.signum(lonDegree) * (Math.abs(lonDegree) + (lonMinutes / 60.0) + (lonSecond / 3600.0));
+
+			double latDegree = Double.parseDouble(lat.split("º")[0]); 
+			double latMinutes = Double.parseDouble(lat.split("º")[1].split("'")[0]);
+			double latSecond = Double.parseDouble(lat.split("º")[1].split("'")[1].split("''")[0]);
+			double latDouble = Math.signum(latDegree) * (Math.abs(latDegree) + (latMinutes / 60.0) + (latSecond / 3600.0));
+
+			Geocode gc = new Geocode();
+			String CP = gc.getCP(lonDouble, latDouble);
+			int index = getDistritoByCP(distritos, CP);//devuelve la posicion que ocupa el distrito con ese CP
+			if(index>=0){
+				Document dist = distritos.get(index);
+				String attr;
+				List<String> attrList = getCampos(document, 0);
+				for(String label:attrList){
+					if((attr = buscarValor(estaciones, label.split("&&")[0], label.split("&&")[1]))!=null && !label.split("&&")[0].equals("geo")){
+						if(StringUtils.isNumeric(label.split("&&")[1])){
+							dist.append(label.split("&&")[0], Integer.parseInt(attr));
+						}else{
+							dist.append(label.split("&&")[0], attr);
+						}
+					}else{
+						dist.append("geo", new Document("type","Point")
+								.append("coordinates", new ArrayList<Double>(){{
+									add(lonDouble);
+									add(latDouble);
+								}}));
+					}
+				}
+				distritos.remove(index);
+				distritos.add(dist);
+			}
+		}
+		estaciones.close();
+	}
+
+	private int getDistritoByCP(List<Document> distritos, String CP) {
+		for(Document dist:distritos){
+			for(Document barrio:(List<Document>)dist.get("barrios")){
+				if(((Set<Integer>)barrio.get("codigo_postal")).contains(Integer.parseInt(CP))){
+					return distritos.indexOf(dist);
+				}
+			}
+		}
+		return -1;
 	}
 
 	/**
 	 * SIMPLIFICAR!! CADA SWITCH EN UNA UNICA FUNCION LO COMUN!! VER NOTEPADD++ CON MAS NOTAS
 	 * @param distritos
 	 */
-	private void generarDistritoFormat(List<Document> distritos) {
+	private List<Document> generarDistritoFormat(List<Document> distritos) {
 		try{
 			conDB();
 			collection.drop();
@@ -102,12 +179,10 @@ public class Almacenar {
 					distritos_locs.close();
 				}
 			}
-			conDB();
-			collection.insertMany(distritos);//insertamos los distritos
-			client.close();
 		}catch (Exception e) {
 			e.printStackTrace();
 		}
+		return distritos;
 	}
 
 	private List<Document> addDistritoLoc(List<Document> distritos, CsvReader distritos_locs, String document, String tipo) throws NumberFormatException, IOException{
@@ -445,7 +520,7 @@ public class Almacenar {
 			double aux = 0.0;
 			String header = null;
 			for(int i = 0; i<headers.length; i++){
-				if( (aux = similarity(headers[i], aprox)) > max && aux > 0.55){
+				if( (aux = Funciones.similarity(headers[i], aprox)) > max && aux > 0.55){
 					max = aux;
 					header = headers[i];
 				}
@@ -466,16 +541,6 @@ public class Almacenar {
 			e.printStackTrace();
 		}
 		return null;
-	}
-
-	private double similarity(String s1, String s2) {
-		String longer = s1.toLowerCase(), shorter = s2.toLowerCase();
-		if (s1.length() < s2.length()) { // longer should always have greater length
-			longer = s2.toLowerCase(); shorter = s1.toLowerCase();
-		}
-		int longerLength = longer.length();
-		if (longerLength == 0) { return 1.0; /* both strings are zero length */ }
-		return (longerLength - StringUtils.getLevenshteinDistance(longer, shorter)) / (double) longerLength;
 	}
 
 	/**
@@ -516,21 +581,11 @@ public class Almacenar {
 	private int buscarDistrito_Barrio_Zona(List<Document> distritos_barrios_zonas, String code, String id){
 		for(Document dist_bar:distritos_barrios_zonas){
 			if(dist_bar.get(id).equals(code)||dist_bar.get(id).toString().split("-")[0].equals(code)
-					||(!id.equals("PK")&&similarity(dist_bar.get(id).toString(), code)>0.8)){
+					||(!id.equals("PK")&&Funciones.similarity(dist_bar.get(id).toString(), code)>0.8)){
 				return distritos_barrios_zonas.indexOf(dist_bar);
 			}
 		}
 		return -1;
-	}
-
-	static double similarityBorrar(String s1, String s2) {
-		String longer = s1.toLowerCase(), shorter = s2.toLowerCase();
-		if (s1.length() < s2.length()) { // longer should always have greater length
-			longer = s2.toLowerCase(); shorter = s1.toLowerCase();
-		}
-		int longerLength = longer.length();
-		if (longerLength == 0) { return 1.0; /* both strings are zero length */ }
-		return (longerLength - StringUtils.getLevenshteinDistance(longer, shorter)) / (double) longerLength;
 	}
 
 	public static void main(String[] args) throws JSONException, FileNotFoundException, IOException, ParseException  {
@@ -550,9 +605,9 @@ public class Almacenar {
 		//		String a = "02";
 		//		System.out.println(Integer.parseInt(a));
 		//		alm.client.close();
-		//						String a = "barrio";
-		//						String b = "Nombre de barrio";
-		//						System.out.println(similarityBorrar(a, b));
+		//								String a = "Carlos V";
+		//								String b = "GLORIETA CARLOS V";
+		//								System.out.println(Funciones.similarity(a, b));
 		// omp parallel for schedule(dynamic)
 		//        for (int i = 2; i < 20; i += 3) {
 		//            System.out.println("  @" + i);

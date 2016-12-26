@@ -118,11 +118,12 @@
       }
     }
   ],
-  "aire(VER SI HACER DIARIO o TR)":[
+  "aire":[
     {
-      "num":1,
-      "nombre":"nombre",
-      "contaminantes":[
+      "numero":1,
+      "estacion":"estacion",
+      "fecha":"fecha(ver formato date mongo)",
+      "valores":[
         {
           "id":"NO2",
           "valor":1
@@ -132,13 +133,16 @@
         "type": "Point",
           "coordinates": [1.1, 1.1]
         }
-    }
+    },
+    {"numero":1,
+    "...":"..."}
   ],
-  "acustico (FUSIONAR CON AIRE SI SE PUEDE))":[
+  "acustico":[
     {
-      "num":1,
-      "nombre":"nombre",
-      "valores(VER Q SE MIDE, si hay más de 1)":[
+      "numero":1,
+      "estacion":"estacion",
+      "fecha":"fecha(ver formato date mongo)",
+      "valores":[
         {
           "id":"dB",
           "valor":1

@@ -2,11 +2,9 @@ package extraccion;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.LineNumberReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
@@ -25,12 +23,14 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import preprocesamiento.Almacenar;
-import preprocesamiento.Limpieza;
+import funciones.Funciones;
 
 public class DatosGobES {
 
-	private String path = "."+File.separator+"documents";
+	public DatosGobES(){
+		getDatosGobEs();
+	}
+	
 	private enum Meses {
 		ENERO,
 		FEBRERO,
@@ -47,7 +47,7 @@ public class DatosGobES {
 	}
 
 	private HashMap<String, String> dataset_ID = new HashMap<String, String>();//por cada dataset empareja con su ID
-	private HashMap<String, String> getDataset_ID(){
+	public HashMap<String, String> getDataset_ID(){
 		return this.dataset_ID;
 	}
 
@@ -56,12 +56,12 @@ public class DatosGobES {
 	 * @return
 	 */
 	private String[] getIdsDataGob(){
-		String[] ids = new String[getLineNumber()];
 		String  thisLine = null;
+		String path = ".\\extras\\ids_datos_gob.txt";
 		int i = 0;
 		try{
-			// open input stream test.txt for reading purpose.
-			BufferedReader br = new BufferedReader(new FileReader(".\\extras\\ids_datos_gob.txt"));
+			String[] ids = new String[Funciones.getLineNumber(path)];
+			BufferedReader br = new BufferedReader(new FileReader(path));
 			while ((thisLine = br.readLine()) != null) {
 				ids[i] = thisLine;
 				i++;
@@ -72,27 +72,6 @@ public class DatosGobES {
 			e.printStackTrace();
 		}
 		return null;
-	}
-
-	/**
-	 * 
-	 * @return
-	 */
-	private int getLineNumber(){
-		LineNumberReader lnr;
-		try {
-			lnr = new LineNumberReader(new FileReader(new File(".\\extras\\ids_datos_gob.txt")));	
-			lnr.skip(Long.MAX_VALUE);
-			int nlines = lnr.getLineNumber() + 1; //Add 1 because line index starts at 0
-			lnr.close();
-			return nlines;
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return 0;
 	}
 
 	/**
@@ -162,7 +141,7 @@ public class DatosGobES {
 	/**
 	 * 
 	 */
-	public void getDatosGobEs(){
+	private void getDatosGobEs(){
 		try{
 			String[] ids = getIdsDataGob();//creamos el array con todas las IDs de los datasets a bajar de datos.gob.es
 			if(ids!=null){
@@ -183,38 +162,14 @@ public class DatosGobES {
 
 						//guardamos los enlaces a los datasheets
 						JSONObject jsonObj = new JSONObject(result.toString());
-						JSONArray urls = (JSONArray) ((JSONObject)jsonObj.get("result")).get("items");
-
+						JSONArray urls = jsonObj.getJSONObject("result").getJSONArray("items");
 						if(!downloadDS(urls, "CSV", ids[i])){//comprobamos si lo tienen en CSV
 							downloadDS(urls, "XLS", ids[i]);//sino se baja version en XLS
 							//CONSIDERAR OTRAS VERSIONES COMO XML, TEXT PLAIN ETC
 						}
 					}
 				}
-				System.out.println("Descarga finalizada.");
-				Limpieza pre = new Limpieza();
-				pre.separacionCarpetas(path);
-				//			    Iterator it = getDataset_ID().entrySet().iterator();
-				//			    while (it.hasNext()) {
-				//			        Map.Entry pair = (Map.Entry)it.next();
-				//			        System.out.println(pair.getKey() + " = " + pair.getValue());
-				//			        it.remove(); // avoids a ConcurrentModificationException
-				//			    }
-								new Almacenar(getDataset_ID());
-
-
-
-				//				System.out.println("_--------------------------------------------------_");
-				//				Set set = ID_datasets.entrySet();
-				//				Iterator iterator = set.iterator();
-				//				while(iterator.hasNext()) {
-				//					Map.Entry mentry = (Map.Entry)iterator.next();
-				//					System.out.println("key is: "+ mentry.getKey() + " & Value is: ");
-				//					for(String dataset:((List<String>)mentry.getValue())){
-				//						System.out.println(dataset);
-				//					}
-				//					System.out.println();
-				//				}
+				System.out.println("Descarga finalizada de Datos.Gob.Es.");
 			}
 		}catch (JSONException e) {
 			e.printStackTrace();
@@ -280,10 +235,5 @@ public class DatosGobES {
 			}
 		}
 		return true;
-	}
-
-	public static void main (String[] args) throws Exception{
-		DatosGobES t = new DatosGobES();
-		t.getDatosGobEs();
 	}
 }
