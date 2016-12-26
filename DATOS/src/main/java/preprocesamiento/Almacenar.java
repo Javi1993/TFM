@@ -85,17 +85,17 @@ public class Almacenar {
 		CsvReader estaciones = new CsvReader (dir.listFiles(ff)[0].getAbsolutePath(), ';');
 		estaciones.readHeaders();
 		while (estaciones.readRecord()){//recorremos el CSV
-			String lon = estaciones.get("longitud");
-			String lat = estaciones.get("latitud");
+			String lon = estaciones.get("longitud").replaceAll("\\s+", "");
+			String lat = estaciones.get("latitud").replaceAll("\\s+", "");
 
-			double lonDegree = Double.parseDouble(lon.split("º")[0]); 
-			double lonMinutes = Double.parseDouble(lon.split("º")[1].split("'")[0]);
-			double lonSecond = Double.parseDouble(lon.split("º")[1].split("'")[1].split("''")[0]);
-			double lonDouble = Math.signum(lonDegree) * (Math.abs(lonDegree) + (lonMinutes / 60.0) + (lonSecond / 3600.0));
+			double lonDegree = Double.parseDouble(lon.split("[º|°]")[0].replaceAll(",", ".").trim()); 
+			double lonMinutes = Double.parseDouble(lon.split("[º|°]")[1].split("'")[0].replaceAll(",", ".").trim());
+			double lonSecond = Double.parseDouble(lon.split("[º|°]")[1].split("'")[1].split("[\"|'][O?]")[0].replaceAll(",", ".").replaceAll("'|º|O", "").trim());
+			double lonDouble = (-1)*Math.signum(lonDegree) * (Math.abs(lonDegree) + (lonMinutes / 60.0) + (lonSecond / 3600.0));
 
-			double latDegree = Double.parseDouble(lat.split("º")[0]); 
-			double latMinutes = Double.parseDouble(lat.split("º")[1].split("'")[0]);
-			double latSecond = Double.parseDouble(lat.split("º")[1].split("'")[1].split("''")[0]);
+			double latDegree = Double.parseDouble(lat.split("[º|°]")[0].replaceAll(",", ".").trim()); 
+			double latMinutes = Double.parseDouble(lat.split("[º|°]")[1].split("'")[0].replaceAll(",", ".").trim());
+			double latSecond = Double.parseDouble(lat.split("[º|°]")[1].split("'")[1].split("[\"|'][N?]")[0].replaceAll(",", ".").replaceAll("'|º|O", "").trim());
 			double latDouble = Math.signum(latDegree) * (Math.abs(latDegree) + (latMinutes / 60.0) + (latSecond / 3600.0));
 
 			Geocode gc = new Geocode();
@@ -103,22 +103,32 @@ public class Almacenar {
 			int index = getDistritoByCP(distritos, CP);//devuelve la posicion que ocupa el distrito con ese CP
 			if(index>=0){
 				Document dist = distritos.get(index);
+				Document estacion = new Document();//documento donde se guardara la info de la estacion
 				String attr;
 				List<String> attrList = getCampos(document, 0);
 				for(String label:attrList){
-					if((attr = buscarValor(estaciones, label.split("&&")[0], label.split("&&")[1]))!=null && !label.split("&&")[0].equals("geo")){
+					if((attr = buscarValor(estaciones, label.split("&&")[0], label.split("&&")[1]))!=null && !label.split("&&")[0].equals("geo") && !label.split("&&")[0].equals("valores")){
 						if(StringUtils.isNumeric(label.split("&&")[1])){
-							dist.append(label.split("&&")[0], Integer.parseInt(attr));
+							estacion.append(label.split("&&")[0], Integer.parseInt(attr));
 						}else{
-							dist.append(label.split("&&")[0], attr);
+							estacion.append(label.split("&&")[0], attr);
 						}
-					}else{
-						dist.append("geo", new Document("type","Point")
+					}else if(label.split("&&")[0].equals("geo")){
+						estacion.append("geo", new Document("type","Point")
 								.append("coordinates", new ArrayList<Double>(){{
 									add(lonDouble);
 									add(latDouble);
 								}}));
+					}else if(label.split("&&")[0].equals("valores")){
+						//Hacer, cogerheader de CSV como nombre de valor
 					}
+				}
+				List<Document> estacionesJSON = (List<Document>) dist.get(document);
+				if(estacionesJSON!=null && !estacionesJSON.isEmpty()){
+					((List<Document>) dist.get(document)).add(estacion);
+					estacionesJSON.clear();
+				}else{
+					dist.append(document, new ArrayList<Document>(){{add(estacion);}});
 				}
 				distritos.remove(index);
 				distritos.add(dist);
@@ -592,7 +602,13 @@ public class Almacenar {
 		//		Almacenar alm = new Almacenar(null);
 		//	alm.generarZonas(null);
 		//		alm.generarDistritosBarrios();
-
+//		String a = "11,42\"O";
+//		String a = "11,42''O";
+//		String a = "11,42'ODSfvsvdf";
+//		String a = "25Oº";
+//		System.out.println(a.split("[º|°]")[0].replaceAll(",", ".").trim());
+//		System.out.println(a.split("[\"|'][O?]")[0].replaceAll("',", ".").replaceAll("'|º|O", "").trim());
+		
 		//		Pattern p = Pattern.compile("(\\d+)");
 		//		Matcher m = p.matcher("SN - 28040");
 		//		Integer j = null;

@@ -169,7 +169,7 @@ public class DatosGobES {
 						}
 					}
 				}
-				System.out.println("Descarga finalizada de Datos.Gob.Es.");
+				System.out.println("Descarga de 'http://datos.gob.es/' finalizada.");
 			}
 		}catch (JSONException e) {
 			e.printStackTrace();

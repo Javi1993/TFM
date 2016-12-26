@@ -42,6 +42,7 @@ public class Mambiente {
 			br.close();
 			calidadAire(urls);
 			calidadAcustica(urls);
+			System.out.println("Descarga de 'http://www.mambiente.munimadrid.es' finalizada.");
 		}catch(FileNotFoundException e){
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -69,7 +70,7 @@ public class Mambiente {
 			for(Element tc:tableContent){
 				if(!tc.className().equals("thcabecera") && !tc.className().equals("separador")){//nueva estacion
 					HashMap<String, String> cabeceras = new HashMap<String, String>();
-					cabeceras.put("fecha/hora", fechaHora);
+					cabeceras.put("fecha", fechaHora);
 					Elements columns = tc.select("td");
 					for(Element c:columns){
 						cabeceras.put(c.attr("headers"), c.text());
@@ -80,6 +81,7 @@ public class Mambiente {
 			}
 		}
 		volcarCSV(estaciones, fechaHora.replaceAll(":", "-")+"_calidad-aire.csv");
+		System.out.println("Se ha descargado los valores de calidad del aire a fecha de "+fechaHora);
 	}
 
 	/**
@@ -113,6 +115,7 @@ public class Mambiente {
 			}
 		}
 		volcarCSV(estaciones, fecha.replaceAll(":", "-")+"_calidad-acustica.csv");
+		System.out.println("Se ha descargado los valores de calidad acústica a fecha de "+fecha);
 	}
 	
 	/**
