@@ -55,7 +55,7 @@ public class Almacenar {
 		List<Document> distritos = generarDistritosBarrios();//generamos los 21 distritos y sus barrios en base al padron
 		if(!distritos.isEmpty() && distritos.size()==21){
 			System.out.println("Estructura basica de distritos y barrios creada.");
-			distritos = generarZonas(distritos);//formato PK
+			generarZonas(distritos);//formato PK
 			System.out.println("Insertadas las zonas con formato PK.");
 			generarDistritoFormat(distritos);
 			generarEstaciones(distritos);
@@ -124,7 +124,7 @@ public class Almacenar {
 				List<Document> valores = new ArrayList<Document>();
 				for(String head:estaciones.getHeaders()){//guardamos las medidas tomadas
 					if(!head.equals("Estacion") && !head.equals("Estación") && !head.equals("numero") && !head.equals("longitud") && !head.equals("latitud")){
-						valores.add(new Document("id", head).append("valor", estaciones.get(head)));
+						valores.add(new Document("id", head).append("valor", Double.parseDouble(estaciones.get(head))));
 					}
 				}
 				List<Document> estacionesJSON = (List<Document>) dist.get(document);
@@ -157,7 +157,7 @@ public class Almacenar {
 	 * SIMPLIFICAR!! CADA SWITCH EN UNA UNICA FUNCION LO COMUN!! VER NOTEPADD++ CON MAS NOTAS
 	 * @param distritos
 	 */
-	private List<Document> generarDistritoFormat(List<Document> distritos) {
+	private void generarDistritoFormat(List<Document> distritos) {
 		try{
 			conDB();
 			collection.drop();
@@ -197,7 +197,6 @@ public class Almacenar {
 		}catch (Exception e) {
 			e.printStackTrace();
 		}
-		return distritos;
 	}
 
 	private List<Document> addDistritoLoc(List<Document> distritos, CsvReader distritos_locs, String document, String tipo) throws NumberFormatException, IOException{
@@ -415,7 +414,7 @@ public class Almacenar {
 	 * @param distritos
 	 * @return
 	 */
-	private List<Document> generarZonas(List<Document> distritos){
+	private void generarZonas(List<Document> distritos){
 		try{
 
 			File folder = new File(".\\documents\\PK_FORMAT");
@@ -482,7 +481,6 @@ public class Almacenar {
 		}catch (IOException e) {
 			e.printStackTrace();
 		}
-		return distritos;
 	}
 
 	private Set<String> getRol(String nameFile){
