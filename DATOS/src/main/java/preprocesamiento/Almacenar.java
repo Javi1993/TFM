@@ -124,7 +124,10 @@ public class Almacenar {
 				List<Document> valores = new ArrayList<Document>();
 				for(String head:estaciones.getHeaders()){//guardamos las medidas tomadas
 					if(!head.equals("Estacion") && !head.equals("Estación") && !head.equals("numero") && !head.equals("longitud") && !head.equals("latitud")){
-						valores.add(new Document("id", head).append("valor", Double.parseDouble(estaciones.get(head))));
+						String value = estaciones.get(head);
+						if(StringUtils.isNumeric(value)){
+							valores.add(new Document("id", head).append("valor", Double.parseDouble(value)));
+						}
 					}
 				}
 				List<Document> estacionesJSON = (List<Document>) dist.get(document);
@@ -602,20 +605,20 @@ public class Almacenar {
 	}
 
 	public static void main(String[] args) throws JSONException, FileNotFoundException, IOException, ParseException  {
-//				Almacenar alm = new Almacenar(null);
-//				List<String> al = alm.getCampos("valores", "aire");
-//				for(String a:al){
-//					System.out.println(a);
-//				}
+		//				Almacenar alm = new Almacenar(null);
+		//				List<String> al = alm.getCampos("valores", "aire");
+		//				for(String a:al){
+		//					System.out.println(a);
+		//				}
 		//	alm.generarZonas(null);
 		//		alm.generarDistritosBarrios();
-//		String a = "11,42\"O";
-//		String a = "11,42''O";
-//		String a = "11,42'ODSfvsvdf";
-//		String a = "25Oº";
-//		System.out.println(a.split("[º|°]")[0].replaceAll(",", ".").trim());
-//		System.out.println(a.split("[\"|'][O?]")[0].replaceAll("',", ".").replaceAll("'|º|O", "").trim());
-		
+		//		String a = "11,42\"O";
+		//		String a = "11,42''O";
+		//		String a = "11,42'ODSfvsvdf";
+		//		String a = "25Oº";
+		//		System.out.println(a.split("[º|°]")[0].replaceAll(",", ".").trim());
+		//		System.out.println(a.split("[\"|'][O?]")[0].replaceAll("',", ".").replaceAll("'|º|O", "").trim());
+
 		//		Pattern p = Pattern.compile("(\\d+)");
 		//		Matcher m = p.matcher("SN - 28040");
 		//		Integer j = null;

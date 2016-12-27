@@ -40,8 +40,8 @@ public class Mambiente {
 				i++;
 			}
 			br.close();
-			calidadAire(urls);
-			calidadAcustica(urls);
+			calidadAire(urls[0]);
+			calidadAcustica(urls[1]);
 			System.out.println("Descarga de 'http://www.mambiente.munimadrid.es' finalizada.");
 		}catch(FileNotFoundException e){
 			e.printStackTrace();
@@ -55,14 +55,14 @@ public class Mambiente {
 	 * @param urls
 	 * @throws IOException
 	 */
-	private void calidadAire(String[] urls) throws IOException{
+	private void calidadAire(String url) throws IOException{
 		List<HashMap<String, String>> estaciones = new ArrayList<HashMap<String, String>>();
 		HashMap<String, List<String>> infoEstacion = leerExcelEstaciones("estaciones-control-aire");
 		UrlValidator defaultValidator = new UrlValidator(); 
 		Document doc = null;
 		String fechaHora = null;
-		if (defaultValidator.isValid(urls[0])) {
-			doc = Jsoup.connect(urls[0]).get();
+		if (defaultValidator.isValid(url)) {
+			doc = Jsoup.connect(url).timeout(10000).get();
 			Element content = doc.select("table.inf_diario").first();
 			fechaHora = content.select("caption").select("span.tabla_titulo").select("span.tabla_titulo_hora").text();//cogemos la fecha y hora
 			Element table = content.select("tbody").first();
@@ -89,14 +89,14 @@ public class Mambiente {
 	 * @param urls
 	 * @throws IOException
 	 */
-	private void calidadAcustica(String[] urls) throws IOException{
+	private void calidadAcustica(String url) throws IOException{
 		List<HashMap<String, String>> estaciones = new ArrayList<HashMap<String, String>>();
 		HashMap<String, List<String>> infoEstacion = leerExcelEstaciones("estaciones-acusticas");
 		UrlValidator defaultValidator = new UrlValidator(); 
 		Document doc = null;
 		String fecha = null;
-		if (defaultValidator.isValid(urls[1])) {
-			doc = Jsoup.connect(urls[1]).get();
+		if (defaultValidator.isValid(url)) {
+			doc = Jsoup.connect(url).timeout(10000).get();
 			Element content = doc.select("table.inf_diario").first();
 			fecha = content.select("caption").select("span.tabla_titulo").select("span.tabla_titulo_fecha").text();//cogemos la fecha
 			Element table = content.select("tbody").first();
