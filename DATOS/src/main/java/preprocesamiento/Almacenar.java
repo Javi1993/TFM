@@ -105,7 +105,7 @@ public class Almacenar {
 				Document dist = distritos.get(index);
 				Document estacion = new Document();//documento donde se guardara la info de la estacion
 				String attr;
-				List<String> attrList = getCampos(document, 0);
+				List<String> attrList = getCampos(document, null);
 				for(String label:attrList){
 					if((attr = buscarValor(estaciones, label.split("&&")[0], label.split("&&")[1]))!=null && !label.split("&&")[0].equals("geo") && !label.split("&&")[0].equals("valores")){
 						if(StringUtils.isNumeric(label.split("&&")[1])){
@@ -119,11 +119,16 @@ public class Almacenar {
 									add(lonDouble);
 									add(latDouble);
 								}}));
-					}else if(label.split("&&")[0].equals("valores")){
-						//Hacer, cogerheader de CSV como nombre de valor
+					}
+				}
+				List<Document> valores = new ArrayList<Document>();
+				for(String head:estaciones.getHeaders()){//guardamos las medidas tomadas
+					if(!head.equals("Estacion") && !head.equals("Estación") && !head.equals("numero") && !head.equals("longitud") && !head.equals("latitud")){
+						valores.add(new Document("id", head).append("valor", estaciones.get(head)));
 					}
 				}
 				List<Document> estacionesJSON = (List<Document>) dist.get(document);
+				estacion.append("valores", valores);
 				if(estacionesJSON!=null && !estacionesJSON.isEmpty()){
 					((List<Document>) dist.get(document)).add(estacion);
 					estacionesJSON.clear();
@@ -196,7 +201,7 @@ public class Almacenar {
 	}
 
 	private List<Document> addDistritoLoc(List<Document> distritos, CsvReader distritos_locs, String document, String tipo) throws NumberFormatException, IOException{
-		List<String> attrList = getCampos(document, 0);
+		List<String> attrList = getCampos(document, null);
 		String attr;
 		int index = 0;
 		int[] dist_index = null;
@@ -252,13 +257,13 @@ public class Almacenar {
 		return distritos;
 	}
 
-	private List<String> getCampos(String partOfJSON, int nivel){
+	private List<String> getCampos(String partOfJSON, String nivel){
 		List<String> campos = new ArrayList<String>();
 		try {
 			byte[] encoded = Files.readAllBytes(Paths.get("./extras/JSON_example_TFM.json"));
 			Document JSON = Document.parse(new String(encoded, "ISO-8859-1"));
-			if(nivel > 0){//bajamos a subnivel en JSON
-				JSON = ((List<Document>) JSON.get("barrios")).get(0);
+			if(nivel !=null){//bajamos a subnivel en JSON
+				JSON = ((List<Document>) JSON.get(nivel)).get(0);
 			}
 			List<Document> docs = (List<Document>)JSON.get(partOfJSON);
 			Document doc = docs.get(0);
@@ -279,7 +284,7 @@ public class Almacenar {
 			CsvReader distritos_barrios = new CsvReader (dir.listFiles(fileFilter)[0].getAbsolutePath(), ';');
 			distritos_barrios.readHeaders();
 			List<Document> distritos = new ArrayList<>();
-			List<String> attrPadron = getCampos("padron", 1);
+			List<String> attrPadron = getCampos("padron", "barrios");
 			int[] dist_barrio_index = null;
 			while (distritos_barrios.readRecord()){//recorremos el CSV
 				int index = 0;//posicion en la lista del distrito
@@ -493,7 +498,7 @@ public class Almacenar {
 	 * @return
 	 */
 	private Document addZona(CsvReader distritos_zonas, Set<String> topics) {
-		List<String> attrZonas = getCampos("zonas", 1);
+		List<String> attrZonas = getCampos("zonas", "barrios");
 		Document zona = new Document();
 		String attr = null;
 		for(String label:attrZonas){
@@ -599,7 +604,11 @@ public class Almacenar {
 	}
 
 	public static void main(String[] args) throws JSONException, FileNotFoundException, IOException, ParseException  {
-		//		Almacenar alm = new Almacenar(null);
+//				Almacenar alm = new Almacenar(null);
+//				List<String> al = alm.getCampos("valores", "aire");
+//				for(String a:al){
+//					System.out.println(a);
+//				}
 		//	alm.generarZonas(null);
 		//		alm.generarDistritosBarrios();
 //		String a = "11,42\"O";

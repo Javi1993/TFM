@@ -124,10 +124,22 @@
       "estacion":"estacion",
       "fecha":"fecha(ver formato date mongo)",
       "valores":[
-        {
-          "id":"NO2",
-          "valor":1
-        }
+        { "id":"PM10",
+          "valor":1},
+        { "id":"PM2.5",
+        "valor":1},
+        { "id":"SO2",
+        "valor":1},
+        { "id":"CO",
+        "valor":1},
+        { "id":"O3",
+        "valor":1},
+        { "id":"NO2",
+        "valor":1},
+        { "id":"BEN",
+        "valor":1},
+        { "id":"TOL",
+        "valor":1}
       ],
       "geo": {
         "type": "Point",
@@ -143,10 +155,18 @@
       "estacion":"estacion",
       "fecha":"fecha(ver formato date mongo)",
       "valores":[
-        {
-          "id":"dB",
-          "valor":1
-        }
+        {"id":"LdBA",
+         "valor":1},
+        {"id":"L01",
+         "valor":1},
+        {"id":"L10",
+         "valor":1},
+        {"id":"L50",
+         "valor":1},
+        {"id":"L90",
+         "valor":1},
+        {"id":"L99",
+         "valor":1}
       ],
       "geo": {
         "type": "Point",
