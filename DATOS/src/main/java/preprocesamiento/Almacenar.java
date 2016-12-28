@@ -2,6 +2,7 @@ package preprocesamiento;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,6 +16,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.bson.Document;
 import org.json.JSONException;
 import org.json.simple.parser.ParseException;
@@ -37,6 +43,11 @@ public class Almacenar {
 	private MongoDatabase database;
 	private MongoCollection<Document> collection;
 
+	//BORRAR
+	public Almacenar(){
+		
+	}
+	
 	public Almacenar(HashMap<String, String> dataset_ID){
 		this.dataset_ID = dataset_ID;
 		cargarDatos();
@@ -123,15 +134,17 @@ public class Almacenar {
 				}
 				List<Document> valores = new ArrayList<Document>();
 				for(String head:estaciones.getHeaders()){//guardamos las medidas tomadas
-					if(!head.equals("Estacion") && !head.equals("Estación") && !head.equals("numero") && !head.equals("longitud") && !head.equals("latitud")){
-						String value = estaciones.get(head);
-						if(StringUtils.isNumeric(value)){
+					if(!head.equals("numero")){
+						String value = estaciones.get(head);//cogemos el valor
+						if(StringUtils.isNumeric(value.replaceAll(",", "."))){//vemos si es un numero
 							valores.add(new Document("id", head).append("valor", Double.parseDouble(value)));
 						}
 					}
 				}
+				if(!valores.isEmpty()){
+					estacion.append("valores", valores);
+				}
 				List<Document> estacionesJSON = (List<Document>) dist.get(document);
-				estacion.append("valores", valores);
 				if(estacionesJSON!=null && !estacionesJSON.isEmpty()){
 					((List<Document>) dist.get(document)).add(estacion);
 					estacionesJSON.clear();
@@ -604,7 +617,107 @@ public class Almacenar {
 		return -1;
 	}
 
+	/**
+	 * cabeceras['distrito','barrio','censo', 'abstencion','total', 'nulos', 'blanco', 'PP', 'PSOE', 'Ahora Madrid']
+	 * @param doucment
+	 * @return
+	 */
+	private String leerExcelVotaciones(String doucment){
+		HashMap<String, List<String>> infoAux = new HashMap<String, List<String>>();
+		try {
+			File dir = new File("./documents/UNKNOW_FORMAT/");
+			FileFilter fileFilter = new WildcardFileFilter("*"+doucment+".*");
+			POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(dir.listFiles(fileFilter)[0].getAbsolutePath()));
+			HSSFWorkbook wb = new HSSFWorkbook(fs);
+			HSSFSheet sheet = wb.getSheetAt(0);
+			HSSFRow row;
+			HSSFCell cell;
+			boolean contenidoBueno = false;
+			short longitud = -1;
+			String[] headers = new String[]{"distrito","barrio","censo","abstencion","total","nulos","blanco","PP","PSOE","Ahora","Madrid","Ciudadanos","AES","PH","IUCM-LV","UPyD","ULEG","P-LIB","LV-GV","LCN","PCAS-TC-PACTO","MJS","SAIn","PACMA","PCPE","VOX","POSI","EB","FE","DE","LAS","JONS","CILUS"};
+			int[] columnIndexHeaders = new int[headers.length];
+			int rowIndexHeaders = 0;
+			int indexHeader = 0;
+			int rows; // No of rows
+			rows = sheet.getPhysicalNumberOfRows();
+			int cols = 0; // No of columns
+			int tmp = 0;
+			
+			// This trick ensures that we get the data properly even if it doesn't start from first few rows
+			for(int i = 0; i < 10 || i < rows; i++) {
+				row = sheet.getRow(i);
+				if(row != null) {
+					tmp = sheet.getRow(i).getPhysicalNumberOfCells();
+					if(tmp > cols) cols = tmp;
+				}
+			}
+			for(int r = 0; r < rows; r++) {
+				row = sheet.getRow(r);
+				if(row != null && (longitud == -1|| row.getLastCellNum()==longitud)) {
+					List<String> mesa = new ArrayList<String>();
+					String nombre = "";
+					for(int c = 0; c < cols; c++) {
+						cell = row.getCell((short)c);
+						
+						/*
+						 * 
+						 * PARA EVITARSE IF/ELSE METER numeros de columnX en un array en el que se conozca el orden
+						 * 
+						 */
+						
+						if(cell != null && (cell.toString().toLowerCase().equals("distrito") || contenidoBueno)) {
+							if((cell.toString().toLowerCase().equals("distrito") || cell.toString().toLowerCase().equals("nº")) && !contenidoBueno){
+								longitud = row.getLastCellNum();
+								contenidoBueno = true;
+								columnIndexHeaders[0] = cell.getColumnIndex();
+								rowIndexHeaders = cell.getRowIndex();
+							}else if((indexHeader = isHeaderChoosen(headers, cell.toString().toLowerCase())) > 0){
+								columnIndexHeaders[indexHeader] = cell.getColumnIndex();
+							}else if(cell.getRowIndex()>rowIndexHeaders){//entramos en contenido
+								if(isCellChoosen(columnIndexHeaders, cell.getColumnIndex())){
+									mesa.add(String.valueOf(cell.getNumericCellValue()));
+								}
+							}	
+//							System.out.print(cell.toString()+" | ");
+						}
+					}
+//					System.out.println();
+//					infoAux.put(nombre, mesa);
+					
+					//ESCRIBIR LA LINEA EN UN CSV!!! ACABAR!! VER SI LA LISTA DEBE ESTAR FUERA Y SI ES ESE FORMATO
+				}
+			}
+			wb.close();
+		} catch(Exception ioe) {
+			ioe.printStackTrace();
+		}
+		
+		//NAME DE CSV
+		return "";
+	}
+	
+	private boolean isCellChoosen(int[] headerIndex, int columnIndex){
+		for(int i = 0; i<headerIndex.length; i++){
+			if(columnIndex == headerIndex[i]){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private int isHeaderChoosen(String[] headers, String cell){
+		int i = 0;
+		for(i = 0; i<headers.length; i++){
+			if(cell.equals(headers[i])){
+				return i;
+			}
+		}
+		return i;
+	}
 	public static void main(String[] args) throws JSONException, FileNotFoundException, IOException, ParseException  {
+		Almacenar alm = new Almacenar();
+		alm.leerExcelVotaciones("elecciones-ayuntamiento-madrid");
+		
 		//				Almacenar alm = new Almacenar(null);
 		//				List<String> al = alm.getCampos("valores", "aire");
 		//				for(String a:al){

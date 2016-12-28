@@ -62,7 +62,7 @@ public class Mambiente {
 		Document doc = null;
 		String fechaHora = null;
 		if (defaultValidator.isValid(url)) {
-			doc = Jsoup.connect(url).timeout(10000).get();
+			doc = Jsoup.connect(url).timeout(30000).get();
 			Element content = doc.select("table.inf_diario").first();
 			fechaHora = content.select("caption").select("span.tabla_titulo").select("span.tabla_titulo_hora").text();//cogemos la fecha y hora
 			Element table = content.select("tbody").first();
@@ -96,7 +96,7 @@ public class Mambiente {
 		Document doc = null;
 		String fecha = null;
 		if (defaultValidator.isValid(url)) {
-			doc = Jsoup.connect(url).timeout(10000).get();
+			doc = Jsoup.connect(url).timeout(30000).get();
 			Element content = doc.select("table.inf_diario").first();
 			fecha = content.select("caption").select("span.tabla_titulo").select("span.tabla_titulo_fecha").text();//cogemos la fecha
 			Element table = content.select("tbody").first();
