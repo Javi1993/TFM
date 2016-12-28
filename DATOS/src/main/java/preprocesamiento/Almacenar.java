@@ -45,9 +45,9 @@ public class Almacenar {
 
 	//BORRAR
 	public Almacenar(){
-		
+
 	}
-	
+
 	public Almacenar(HashMap<String, String> dataset_ID){
 		this.dataset_ID = dataset_ID;
 		cargarDatos();
@@ -623,7 +623,6 @@ public class Almacenar {
 	 * @return
 	 */
 	private String leerExcelVotaciones(String doucment){
-		HashMap<String, List<String>> infoAux = new HashMap<String, List<String>>();
 		try {
 			File dir = new File("./documents/UNKNOW_FORMAT/");
 			FileFilter fileFilter = new WildcardFileFilter("*"+doucment+".*");
@@ -634,7 +633,7 @@ public class Almacenar {
 			HSSFCell cell;
 			boolean contenidoBueno = false;
 			short longitud = -1;
-			String[] headers = new String[]{"distrito","barrio","censo","abstencion","total","nulos","blanco","PP","PSOE","Ahora","Madrid","Ciudadanos","AES","PH","IUCM-LV","UPyD","ULEG","P-LIB","LV-GV","LCN","PCAS-TC-PACTO","MJS","SAIn","PACMA","PCPE","VOX","POSI","EB","FE","DE","LAS","JONS","CILUS"};
+			String[] headers = new String[]{"distrito","barrio","censo (1)","abstencion","total","nulos","blanco","PP","PSOE","Ahora Madrid","Ciudadanos","AES","PH","IUCM-LV","UPyD","ULEG","P-LIB","LV-GV","LCN","PCAS-TC-PACTO","MJS","SAIn","PACMA","PCPE","VOX","POSI","EB","FE DE LAS JONS","CILUS"};
 			int[] columnIndexHeaders = new int[headers.length];
 			int rowIndexHeaders = 0;
 			int indexHeader = 0;
@@ -642,7 +641,7 @@ public class Almacenar {
 			rows = sheet.getPhysicalNumberOfRows();
 			int cols = 0; // No of columns
 			int tmp = 0;
-			
+
 			// This trick ensures that we get the data properly even if it doesn't start from first few rows
 			for(int i = 0; i < 10 || i < rows; i++) {
 				row = sheet.getRow(i);
@@ -651,73 +650,82 @@ public class Almacenar {
 					if(tmp > cols) cols = tmp;
 				}
 			}
+			List<List<String>> mesas = new ArrayList<List<String>>();
 			for(int r = 0; r < rows; r++) {
+				List<String> mesa = new ArrayList<String>();
 				row = sheet.getRow(r);
 				if(row != null && (longitud == -1|| row.getLastCellNum()==longitud)) {
-					List<String> mesa = new ArrayList<String>();
-					String nombre = "";
 					for(int c = 0; c < cols; c++) {
 						cell = row.getCell((short)c);
-						
-						/*
-						 * 
-						 * PARA EVITARSE IF/ELSE METER numeros de columnX en un array en el que se conozca el orden
-						 * 
-						 */
-						
 						if(cell != null && (cell.toString().toLowerCase().equals("distrito") || contenidoBueno)) {
+							//							System.out.println(cell.toString().toLowerCase().trim());
 							if((cell.toString().toLowerCase().equals("distrito") || cell.toString().toLowerCase().equals("nº")) && !contenidoBueno){
 								longitud = row.getLastCellNum();
 								contenidoBueno = true;
 								columnIndexHeaders[0] = cell.getColumnIndex();
-								rowIndexHeaders = cell.getRowIndex();
-							}else if((indexHeader = isHeaderChoosen(headers, cell.toString().toLowerCase())) > 0){
-								columnIndexHeaders[indexHeader] = cell.getColumnIndex();
-							}else if(cell.getRowIndex()>rowIndexHeaders){//entramos en contenido
-								if(isCellChoosen(columnIndexHeaders, cell.getColumnIndex())){
-									mesa.add(String.valueOf(cell.getNumericCellValue()));
+								rowIndexHeaders = cell.getRowIndex()+6;
+							}else if((indexHeader = isHeaderChoosen(headers, cell.toString().toLowerCase().trim())) > 0){
+								if(columnIndexHeaders[indexHeader] == 0){
+									columnIndexHeaders[indexHeader] = cell.getColumnIndex();
+								}
+							}else if(cell.getRowIndex()>rowIndexHeaders && columnIndexHeaders[columnIndexHeaders.length-1]!=0){//entramos en contenido
+								int j = 0;
+								if((j =isCellChoosen(columnIndexHeaders, cell.getColumnIndex()))>=0){
+									if(j <= 1){
+										String cellAux = cell.getStringCellValue();
+										if(StringUtils.isNumeric(cellAux)){
+											mesa.add(cell.getStringCellValue()+"&&"+j);
+										}else{//fin de recuento votos
+											break;
+										}
+									}else{
+										mesa.add(String.valueOf(cell.getNumericCellValue())+"&&"+j);	
+									}
 								}
 							}	
-//							System.out.print(cell.toString()+" | ");
 						}
-					}
-//					System.out.println();
-//					infoAux.put(nombre, mesa);
-					
-					//ESCRIBIR LA LINEA EN UN CSV!!! ACABAR!! VER SI LA LISTA DEBE ESTAR FUERA Y SI ES ESE FORMATO
+					}			
+					//ESCRIBIR LA LINEA EN UN CSV!!! 
 				}
+				mesas.add(mesa);
 			}
+			volcarCSV(mesas);//volcar a CSV o meter directo en base datos, si es esto ultimo pasarle distritos(lista con la coleccion)!! VER!!! HAY QUE FUSIONAR barrios
 			wb.close();
 		} catch(Exception ioe) {
 			ioe.printStackTrace();
 		}
-		
+
 		//NAME DE CSV
 		return "";
 	}
-	
-	private boolean isCellChoosen(int[] headerIndex, int columnIndex){
+
+	private void volcarCSV(List<List<String>> mesas) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private int isCellChoosen(int[] headerIndex, int columnIndex){
 		for(int i = 0; i<headerIndex.length; i++){
 			if(columnIndex == headerIndex[i]){
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	private int isHeaderChoosen(String[] headers, String cell){
-		int i = 0;
-		for(i = 0; i<headers.length; i++){
-			if(cell.equals(headers[i])){
 				return i;
 			}
 		}
-		return i;
+		return -1;
+	}
+
+	private int isHeaderChoosen(String[] headers, String cell){
+		int i = 0;
+		for(i = 0; i<headers.length; i++){
+			if(cell.equals(headers[i].toLowerCase())){
+				return i;
+			}
+		}
+		return 0;
 	}
 	public static void main(String[] args) throws JSONException, FileNotFoundException, IOException, ParseException  {
 		Almacenar alm = new Almacenar();
 		alm.leerExcelVotaciones("elecciones-ayuntamiento-madrid");
-		
+
 		//				Almacenar alm = new Almacenar(null);
 		//				List<String> al = alm.getCampos("valores", "aire");
 		//				for(String a:al){
