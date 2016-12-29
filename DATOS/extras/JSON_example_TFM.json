@@ -3,11 +3,11 @@
   "nombre" : "name",
   "barrios" : [
     {
-      "barrio_id":1,
-      "barrio_name":"name",
+      "_id":1,
+      "nombre":"name",
       "codigo_postal":[11111, 3333, 2222],
-      "superficie(m2)":1,
-      "perimetro(m)":1,
+      "superficie":1,
+      "perimetro":1,
       "padron": [
         {
           "cod_edad": 1,
@@ -87,11 +87,13 @@
       "elecciones":[
         {
           "censo":1,
-          "año":1,
+          "total":1,
+          "abstencion":1,
+          "nulos":1,
           "votos":[
             {
               "partido":"partido",
-              "num":1
+              "total":1
             }
             ]
         }

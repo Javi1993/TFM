@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -25,6 +26,7 @@ import org.bson.Document;
 import org.json.JSONException;
 import org.json.simple.parser.ParseException;
 import com.csvreader.CsvReader;
+import com.csvreader.CsvWriter;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -42,11 +44,6 @@ public class Almacenar {
 	private MongoClient client;
 	private MongoDatabase database;
 	private MongoCollection<Document> collection;
-
-	//BORRAR
-	public Almacenar(){
-
-	}
 
 	public Almacenar(HashMap<String, String> dataset_ID){
 		this.dataset_ID = dataset_ID;
@@ -71,6 +68,12 @@ public class Almacenar {
 			generarDistritoFormat(distritos);
 			generarEstaciones(distritos);
 			System.out.println("Insertada toda la informacion disponible a nivel de distrito.");
+			guardarElecciones("elecciones-ayuntamiento-madrid", distritos);
+			
+			conDB();
+			collection.drop();
+			collection.insertMany(distritos);//insertamos los distritos con su informacion
+			client.close();
 		}else{
 			System.out.println("La carga inicial de distritos y barrios es erronea.");
 		}
@@ -79,14 +82,8 @@ public class Almacenar {
 	private void generarEstaciones(List<Document> distritos) {
 		File dir = new File("./documents/ESTACIONES_CALIDAD/");
 		try{
-			conDB();
-			collection.drop();
-			client.close();
 			addAireAcustica(distritos, dir, new WildcardFileFilter("*calidad-aire.csv"), "aire");
 			addAireAcustica(distritos, dir, new WildcardFileFilter("*calidad-acustica.csv"), "acustico");
-			conDB();
-			collection.insertMany(distritos);//insertamos los distritos
-			client.close();
 		}catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -618,90 +615,197 @@ public class Almacenar {
 	}
 
 	/**
-	 * cabeceras['distrito','barrio','censo', 'abstencion','total', 'nulos', 'blanco', 'PP', 'PSOE', 'Ahora Madrid']
+	 * 
 	 * @param doucment
 	 * @return
+	 * @throws IOException 
+	 * @throws FileNotFoundException 
 	 */
-	private String leerExcelVotaciones(String doucment){
-		try {
-			File dir = new File("./documents/UNKNOW_FORMAT/");
-			FileFilter fileFilter = new WildcardFileFilter("*"+doucment+".*");
-			POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(dir.listFiles(fileFilter)[0].getAbsolutePath()));
-			HSSFWorkbook wb = new HSSFWorkbook(fs);
-			HSSFSheet sheet = wb.getSheetAt(0);
-			HSSFRow row;
-			HSSFCell cell;
-			boolean contenidoBueno = false;
-			short longitud = -1;
-			String[] headers = new String[]{"distrito","barrio","censo (1)","abstencion","total","nulos","blanco","PP","PSOE","Ahora Madrid","Ciudadanos","AES","PH","IUCM-LV","UPyD","ULEG","P-LIB","LV-GV","LCN","PCAS-TC-PACTO","MJS","SAIn","PACMA","PCPE","VOX","POSI","EB","FE DE LAS JONS","CILUS"};
-			int[] columnIndexHeaders = new int[headers.length];
-			int rowIndexHeaders = 0;
-			int indexHeader = 0;
-			int rows; // No of rows
-			rows = sheet.getPhysicalNumberOfRows();
-			int cols = 0; // No of columns
-			int tmp = 0;
+	private List<List<String>> leerExcelVotaciones(String document, String[] headers) throws FileNotFoundException, IOException{
+		File dir = new File("./documents/UNKNOW_FORMAT/");
+		FileFilter fileFilter = new WildcardFileFilter("*"+document+".*");
+		POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(dir.listFiles(fileFilter)[0].getAbsolutePath()));
+		HSSFWorkbook wb = new HSSFWorkbook(fs);
+		HSSFSheet sheet = wb.getSheetAt(0);
+		HSSFRow row;
+		HSSFCell cell;
+		boolean contenidoBueno = false;
+		short longitud = -1;
 
-			// This trick ensures that we get the data properly even if it doesn't start from first few rows
-			for(int i = 0; i < 10 || i < rows; i++) {
-				row = sheet.getRow(i);
-				if(row != null) {
-					tmp = sheet.getRow(i).getPhysicalNumberOfCells();
-					if(tmp > cols) cols = tmp;
-				}
+		int[] columnIndexHeaders = new int[headers.length];
+		int rowIndexHeaders = 0;
+		int indexHeader = 0;
+		int rows; // No of rows
+		rows = sheet.getPhysicalNumberOfRows();
+		int cols = 0; // No of columns
+		int tmp = 0;
+
+		// This trick ensures that we get the data properly even if it doesn't start from first few rows
+		for(int i = 0; i < 10 || i < rows; i++) {
+			row = sheet.getRow(i);
+			if(row != null) {
+				tmp = sheet.getRow(i).getPhysicalNumberOfCells();
+				if(tmp > cols) cols = tmp;
 			}
-			List<List<String>> mesas = new ArrayList<List<String>>();
-			for(int r = 0; r < rows; r++) {
-				List<String> mesa = new ArrayList<String>();
-				row = sheet.getRow(r);
-				if(row != null && (longitud == -1|| row.getLastCellNum()==longitud)) {
-					for(int c = 0; c < cols; c++) {
-						cell = row.getCell((short)c);
-						if(cell != null && (cell.toString().toLowerCase().equals("distrito") || contenidoBueno)) {
-							//							System.out.println(cell.toString().toLowerCase().trim());
-							if((cell.toString().toLowerCase().equals("distrito") || cell.toString().toLowerCase().equals("nº")) && !contenidoBueno){
-								longitud = row.getLastCellNum();
-								contenidoBueno = true;
-								columnIndexHeaders[0] = cell.getColumnIndex();
-								rowIndexHeaders = cell.getRowIndex()+6;
-							}else if((indexHeader = isHeaderChoosen(headers, cell.toString().toLowerCase().trim())) > 0){
-								if(columnIndexHeaders[indexHeader] == 0){
-									columnIndexHeaders[indexHeader] = cell.getColumnIndex();
-								}
-							}else if(cell.getRowIndex()>rowIndexHeaders && columnIndexHeaders[columnIndexHeaders.length-1]!=0){//entramos en contenido
-								int j = 0;
-								if((j =isCellChoosen(columnIndexHeaders, cell.getColumnIndex()))>=0){
-									if(j <= 1){
-										String cellAux = cell.getStringCellValue();
-										if(StringUtils.isNumeric(cellAux)){
-											mesa.add(cell.getStringCellValue()+"&&"+j);
-										}else{//fin de recuento votos
-											break;
-										}
-									}else{
-										mesa.add(String.valueOf(cell.getNumericCellValue())+"&&"+j);	
-									}
-								}
-							}	
-						}
-					}			
-					//ESCRIBIR LA LINEA EN UN CSV!!! 
-				}
-				mesas.add(mesa);
-			}
-			volcarCSV(mesas);//volcar a CSV o meter directo en base datos, si es esto ultimo pasarle distritos(lista con la coleccion)!! VER!!! HAY QUE FUSIONAR barrios
-			wb.close();
-		} catch(Exception ioe) {
-			ioe.printStackTrace();
 		}
-
-		//NAME DE CSV
-		return "";
+		List<List<String>> mesas = new ArrayList<List<String>>();
+		for(int r = 0; r < rows; r++) {
+			List<String> mesa = new ArrayList<String>();
+			row = sheet.getRow(r);
+			if(row != null && (longitud == -1|| row.getLastCellNum()==longitud)) {
+				for(int c = 0; c < cols; c++) {
+					cell = row.getCell((short)c);
+					if(cell != null && (cell.toString().toLowerCase().equals("distrito") || contenidoBueno)) {
+						//							System.out.println(cell.toString().toLowerCase().trim());
+						if((cell.toString().toLowerCase().equals("distrito") || cell.toString().toLowerCase().equals("nº")) && !contenidoBueno){
+							longitud = row.getLastCellNum();
+							contenidoBueno = true;
+							columnIndexHeaders[0] = cell.getColumnIndex();
+							rowIndexHeaders = cell.getRowIndex()+6;
+						}else if((indexHeader = isHeaderChoosen(headers, cell.toString().toLowerCase().trim())) > 0){
+							if(columnIndexHeaders[indexHeader] == 0){
+								columnIndexHeaders[indexHeader] = cell.getColumnIndex();
+							}
+						}else if(cell.getRowIndex()>rowIndexHeaders && columnIndexHeaders[columnIndexHeaders.length-1]!=0){//entramos en contenido
+							int j = 0;
+							if((j =isCellChoosen(columnIndexHeaders, cell.getColumnIndex()))>=0){
+								if(j <= 1){
+									String cellAux = cell.getStringCellValue();
+									if(StringUtils.isNumeric(cellAux)){
+										//											mesa.add(cell.getStringCellValue()+"&&"+j);
+										mesa.add(cell.getStringCellValue());
+									}else{//fin de recuento votos
+										break;
+									}
+								}else{
+									//										mesa.add(String.valueOf(cell.getNumericCellValue())+"&&"+j);	
+									mesa.add(String.valueOf(cell.getNumericCellValue()));
+								}
+							}
+						}	
+					}
+				}			
+				//ESCRIBIR LA LINEA EN UN CSV!!! 
+			}
+			mesas.add(mesa);
+		}
+		wb.close();
+		return fusionarFilas(mesas);
 	}
 
-	private void volcarCSV(List<List<String>> mesas) {
-		// TODO Auto-generated method stub
-		
+	private void guardarElecciones(String document, List<Document> distritos) {
+		String[] headers = new String[]{"distrito","barrio","censo (1)","abstención","total","nulos","blanco","PP","PSOE","Ahora Madrid","Ciudadanos","AES","PH","IUCM-LV","UPyD","ULEG","P-LIB","LV-GV","LCN","PCAS-TC-PACTO","MJS","SAIn","PACMA","PCPE","VOX","POSI","EB","FE DE LAS JONS","CILUS"};
+		try {
+			volcarCSV(leerExcelVotaciones(document, headers), headers, document);
+			File folder = new File(".\\documents\\DISTRICT_BARRIO_FORMAT\\"+document+".csv");
+			for (File fileEntry : folder.listFiles()) {
+				if (!fileEntry.isDirectory()) {
+					CsvReader elecciones = new CsvReader(fileEntry.getAbsolutePath(),';');
+					elecciones.readHeaders();
+					int index = 0;//posicion en la lista del distrito
+					int[] dist_barrio_index = null;
+					while (elecciones.readRecord()){
+						if( (dist_barrio_index = buscarDistritoBarrioInfo(elecciones, 2)) !=null ){//obtenemos la posicion de las cabeceras nombre distrito y barrio en el CSV
+							index = buscarDistrito_Barrio_Zona(distritos, elecciones.get(dist_barrio_index[0]).trim(), "_id");//obtenemos la posicion en la lista del doc del distrito
+							//							System.out.println("INDEX D "+index);
+							if(index>=0){//LOCALIZAR POR COORDENADAS SI NO TIENE BARRIO O DISTTRITO EN EL CSV!!
+								Document dist = distritos.get(index);//cogemos el documento del distrito
+								List<Document> barrios = (List<Document>) dist.get("barrios");//cogemos su lista de barrios asociada al distrito
+								int index_b = buscarDistrito_Barrio_Zona(barrios, elecciones.get(dist_barrio_index[1]).trim(), "_id");//posicion en la lista del barrio
+								//								System.out.println("INDEX B "+index_b);
+								if(index_b>=0){
+									Document barrio = barrios.get(index_b);//cogemos el documento del barrio
+									List<String> attrZonas = getCampos("elecciones", "barrios");
+									Document votos = new Document();
+									String attr = null;
+									for(String label:attrZonas){
+										attr = buscarValor(elecciones, label.split("&&")[0], label.split("&&")[1]);
+										if(attr!=null&&!label.split("&&")[0].equals("votos")){
+											votos.append(label.split("&&")[0], Integer.parseInt(attr));
+										}else if(label.split("&&")[0].equals("votos")){
+											List<Document> votos_partidos = new ArrayList<Document>();
+											for(int i = 7; i<elecciones.getHeaderCount(); i++){
+												votos.append(elecciones.getHeaders()[i], elecciones.get(i));
+											}
+											votos.append(label.split("&&")[0], votos_partidos);
+										}
+									}
+									barrio.append("elecciones", votos);
+									barrios.remove(index_b);
+									barrios.add(barrio);	
+									dist.replace("barrios", barrios);	
+									distritos.remove(index);//actualizamos
+									distritos.add(dist);//añade distrito actualizado	
+								}
+							}
+						}
+					}
+				}
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void volcarCSV(List<List<String>> list, String[] headers, String name) {
+		String outputFile = "./documents/DISTRICT_BARRIO_FORMAT/"+name+".csv";
+		try {
+			if(list != null && !list.isEmpty()){
+				CsvWriter csvOutput = new CsvWriter(new FileWriter(outputFile, false), ';');
+				for (String head: headers){
+					csvOutput.write(head.replaceAll("[(][\\d][)]$", "").trim().toLowerCase());
+				}
+				csvOutput.endRecord();
+				for(List<String> mesa:list){
+					for (String valor:mesa){
+						if(mesa.indexOf(valor)==1){
+							csvOutput.write(valor.substring(valor.length()-1));
+						}else{
+							csvOutput.write(String.valueOf((int)Double.parseDouble(valor)));
+						}		
+					}
+					csvOutput.endRecord();
+				} 
+				csvOutput.close();
+				list.clear();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private List<List<String>> fusionarFilas(List<List<String>> mesas) {
+		String barrio = "";
+		String distrito = "";
+		int size = 0;
+		List<List<String>> mesasAux = new ArrayList<List<String>>();
+		for(List<String> mesa:mesas){//fusionamos los resultados de las mesas para dejar un registro por barrio
+			if(mesa!=null && !mesa.isEmpty()){
+				if(mesa.get(1).equals(barrio) && mesa.get(0).equals(distrito)){
+					List<String> valorAux = mesasAux.get(size-1);
+					for(int i = 2; i<mesa.size(); i++){
+						double suma = (int)Double.parseDouble(valorAux.get(i))+(int)Double.parseDouble(mesa.get(i));
+						valorAux.remove(i);
+						valorAux.add(i, String.valueOf(suma));
+					}
+					mesasAux.remove(size-1);
+					mesasAux.add(size-1, valorAux);
+				}else{
+					List<String> valorAux = new ArrayList<String>();
+					barrio = mesa.get(1);
+					distrito = mesa.get(0);
+					for(String valores:mesa){
+						valorAux.add(valores);
+					}
+					mesasAux.add(valorAux);
+					size = mesasAux.size();
+				}
+			}
+		}
+		mesas.clear();
+		return mesasAux;
 	}
 
 	private int isCellChoosen(int[] headerIndex, int columnIndex){
@@ -723,8 +827,8 @@ public class Almacenar {
 		return 0;
 	}
 	public static void main(String[] args) throws JSONException, FileNotFoundException, IOException, ParseException  {
-		Almacenar alm = new Almacenar();
-		alm.leerExcelVotaciones("elecciones-ayuntamiento-madrid");
+//		Almacenar alm = new Almacenar();
+//		alm.guardarElecciones("elecciones-ayuntamiento-madrid", null);
 
 		//				Almacenar alm = new Almacenar(null);
 		//				List<String> al = alm.getCampos("valores", "aire");
