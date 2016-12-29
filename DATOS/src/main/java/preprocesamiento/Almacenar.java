@@ -69,7 +69,7 @@ public class Almacenar {
 			generarEstaciones(distritos);
 			System.out.println("Insertada toda la informacion disponible a nivel de distrito.");
 			guardarElecciones("elecciones-ayuntamiento-madrid", distritos);
-			
+
 			conDB();
 			collection.drop();
 			collection.insertMany(distritos);//insertamos los distritos con su informacion
@@ -172,9 +172,6 @@ public class Almacenar {
 	 */
 	private void generarDistritoFormat(List<Document> distritos) {
 		try{
-			conDB();
-			collection.drop();
-			client.close();
 			File folder = new File(".\\documents\\DISTRICT_FORMAT");
 			for (File fileEntry : folder.listFiles()){ 
 				if (!fileEntry.isDirectory()) {
@@ -697,47 +694,44 @@ public class Almacenar {
 		String[] headers = new String[]{"distrito","barrio","censo (1)","abstención","total","nulos","blanco","PP","PSOE","Ahora Madrid","Ciudadanos","AES","PH","IUCM-LV","UPyD","ULEG","P-LIB","LV-GV","LCN","PCAS-TC-PACTO","MJS","SAIn","PACMA","PCPE","VOX","POSI","EB","FE DE LAS JONS","CILUS"};
 		try {
 			volcarCSV(leerExcelVotaciones(document, headers), headers, document);
-			File folder = new File(".\\documents\\DISTRICT_BARRIO_FORMAT\\"+document+".csv");
-			for (File fileEntry : folder.listFiles()) {
-				if (!fileEntry.isDirectory()) {
-					CsvReader elecciones = new CsvReader(fileEntry.getAbsolutePath(),';');
-					elecciones.readHeaders();
-					int index = 0;//posicion en la lista del distrito
-					int[] dist_barrio_index = null;
-					while (elecciones.readRecord()){
-						if( (dist_barrio_index = buscarDistritoBarrioInfo(elecciones, 2)) !=null ){//obtenemos la posicion de las cabeceras nombre distrito y barrio en el CSV
-							index = buscarDistrito_Barrio_Zona(distritos, elecciones.get(dist_barrio_index[0]).trim(), "_id");//obtenemos la posicion en la lista del doc del distrito
-							//							System.out.println("INDEX D "+index);
-							if(index>=0){//LOCALIZAR POR COORDENADAS SI NO TIENE BARRIO O DISTTRITO EN EL CSV!!
-								Document dist = distritos.get(index);//cogemos el documento del distrito
-								List<Document> barrios = (List<Document>) dist.get("barrios");//cogemos su lista de barrios asociada al distrito
-								int index_b = buscarDistrito_Barrio_Zona(barrios, elecciones.get(dist_barrio_index[1]).trim(), "_id");//posicion en la lista del barrio
-								//								System.out.println("INDEX B "+index_b);
-								if(index_b>=0){
-									Document barrio = barrios.get(index_b);//cogemos el documento del barrio
-									List<String> attrZonas = getCampos("elecciones", "barrios");
-									Document votos = new Document();
-									String attr = null;
-									for(String label:attrZonas){
-										attr = buscarValor(elecciones, label.split("&&")[0], label.split("&&")[1]);
-										if(attr!=null&&!label.split("&&")[0].equals("votos")){
-											votos.append(label.split("&&")[0], Integer.parseInt(attr));
-										}else if(label.split("&&")[0].equals("votos")){
-											List<Document> votos_partidos = new ArrayList<Document>();
-											for(int i = 7; i<elecciones.getHeaderCount(); i++){
-												votos.append(elecciones.getHeaders()[i], elecciones.get(i));
-											}
-											votos.append(label.split("&&")[0], votos_partidos);
-										}
+			CsvReader elecciones = new CsvReader(".\\documents\\DISTRICT_BARRIO_FORMAT\\"+document+".csv",';');
+			elecciones.readHeaders();
+			int index = 0;//posicion en la lista del distrito
+			int[] dist_barrio_index = null;
+			while (elecciones.readRecord()){
+				if( (dist_barrio_index = buscarDistritoBarrioInfo(elecciones, 2)) !=null ){//obtenemos la posicion de las cabeceras nombre distrito y barrio en el CSV
+					index = buscarDistrito_Barrio_Zona(distritos, elecciones.get(dist_barrio_index[0]).trim(), "_id");//obtenemos la posicion en la lista del doc del distrito
+					//							System.out.println("INDEX D "+index);
+					if(index>=0){//LOCALIZAR POR COORDENADAS SI NO TIENE BARRIO O DISTTRITO EN EL CSV!!
+						Document dist = distritos.get(index);//cogemos el documento del distrito
+						List<Document> barrios = (List<Document>) dist.get("barrios");//cogemos su lista de barrios asociada al distrito
+						int index_b = buscarDistrito_Barrio_Zona(barrios, elecciones.get(dist_barrio_index[1]).trim(), "_id");//posicion en la lista del barrio
+						//								System.out.println("INDEX B "+index_b);
+						if(index_b>=0){
+							Document barrio = barrios.get(index_b);//cogemos el documento del barrio
+							List<String> attrZonas = getCampos("elecciones", "barrios");
+							Document votos = new Document();
+							String attr = null;
+							for(String label:attrZonas){
+								attr = buscarValor(elecciones, label.split("&&")[0], label.split("&&")[1]);
+								if(attr!=null&&!label.split("&&")[0].equals("votos")){
+									votos.append(label.split("&&")[0], Integer.parseInt(attr));
+								}else if(label.split("&&")[0].equals("votos")){
+									List<Document> votos_partidos = new ArrayList<Document>();
+									for(int i = 7; i<elecciones.getHeaderCount(); i++){
+										votos_partidos.add(new Document()
+												.append("partido", elecciones.getHeaders()[i])
+												.append("total", elecciones.get(i)) );
 									}
-									barrio.append("elecciones", votos);
-									barrios.remove(index_b);
-									barrios.add(barrio);	
-									dist.replace("barrios", barrios);	
-									distritos.remove(index);//actualizamos
-									distritos.add(dist);//añade distrito actualizado	
+									votos.append(label.split("&&")[0], votos_partidos);
 								}
 							}
+							barrio.append("elecciones", votos);
+							barrios.remove(index_b);
+							barrios.add(barrio);	
+							dist.replace("barrios", barrios);	
+							distritos.remove(index);//actualizamos
+							distritos.add(dist);//añade distrito actualizado	
 						}
 					}
 				}
@@ -827,8 +821,8 @@ public class Almacenar {
 		return 0;
 	}
 	public static void main(String[] args) throws JSONException, FileNotFoundException, IOException, ParseException  {
-//		Almacenar alm = new Almacenar();
-//		alm.guardarElecciones("elecciones-ayuntamiento-madrid", null);
+		//		Almacenar alm = new Almacenar();
+		//		alm.guardarElecciones("elecciones-ayuntamiento-madrid", null);
 
 		//				Almacenar alm = new Almacenar(null);
 		//				List<String> al = alm.getCampos("valores", "aire");
