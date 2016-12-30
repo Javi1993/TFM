@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
+import java.net.SocketTimeoutException;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.jsoup.Jsoup;
@@ -11,7 +13,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 public class Funciones {
-	
+
 	/**
 	 * 
 	 * @param path
@@ -25,7 +27,7 @@ public class Funciones {
 		lnr.close();
 		return nlines;
 	}
-	
+
 	/**
 	 * 
 	 * @param s1
@@ -41,7 +43,7 @@ public class Funciones {
 		if (longerLength == 0) { return 1.0; /* both strings are zero length */ }
 		return (longerLength - StringUtils.getLevenshteinDistance(longer, shorter)) / (double) longerLength;
 	}
-	
+
 	/**
 	 * 
 	 * @param CP
@@ -52,14 +54,19 @@ public class Funciones {
 		UrlValidator defaultValidator = new UrlValidator(); 
 		Document doc = null;
 		String url = "http://www.codigospostales.com/mapa.cgi?codigo="+CP;
-		if (defaultValidator.isValid(url)) {
-			doc = Jsoup.connect(url).get();
-			Element content = doc.select("h1").first();
-			String[] texto = content.text().split(",");
-			String city = texto[texto.length-1].trim();
-			if(city.toLowerCase().equals("madrid")){
-				return true;
+		try{
+			if (defaultValidator.isValid(url)) {
+				doc = Jsoup.connect(url).timeout(30000).get();
+				Element content = doc.select("h1").first();
+				String[] texto = content.text().split(",");
+				String city = texto[texto.length-1].trim();
+				if(city.toLowerCase().equals("madrid")){
+					return true;
+				}
 			}
+		}catch (SocketTimeoutException e) {
+			System.err.println("Se ha excedido el tiempo para validar el codigo postal '"+CP+"' en la URL '"+url+"'.");
+			e.printStackTrace();
 		}
 		return false;
 	}
