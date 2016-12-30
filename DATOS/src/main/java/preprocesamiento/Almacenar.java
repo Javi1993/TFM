@@ -108,48 +108,50 @@ public class Almacenar {
 
 			Geocode gc = new Geocode();
 			String CP = gc.getCP(lonDouble, latDouble);
-			int index = getDistritoByCP(distritos, CP);//devuelve la posicion que ocupa el distrito con ese CP
-			if(index>=0){
-				Document dist = distritos.get(index);
-				Document estacion = new Document();//documento donde se guardara la info de la estacion
-				String attr;
-				List<String> attrList = getCampos(document, null);
-				for(String label:attrList){
-					if((attr = buscarValor(estaciones, label.split("&&")[0], label.split("&&")[1]))!=null && !label.split("&&")[0].equals("geo") && !label.split("&&")[0].equals("valores")){
-						if(StringUtils.isNumeric(label.split("&&")[1])){
-							estacion.append(label.split("&&")[0], Integer.parseInt(attr));
-						}else{
-							estacion.append(label.split("&&")[0], attr);
-						}
-					}else if(label.split("&&")[0].equals("geo")){
-						estacion.append("geo", new Document("type","Point")
-								.append("coordinates", new ArrayList<Double>(){{
-									add(lonDouble);
-									add(latDouble);
-								}}));
-					}
-				}
-				List<Document> valores = new ArrayList<Document>();
-				for(String head:estaciones.getHeaders()){//guardamos las medidas tomadas
-					if(!head.equals("numero")){
-						String value = estaciones.get(head);//cogemos el valor
-						if(StringUtils.isNumeric(value.replaceAll(",", "."))){//vemos si es un numero
-							valores.add(new Document("id", head).append("valor", Double.parseDouble(value)));
+			if(Funciones.checkCP(CP)){
+				int index = getDistritoByCP(distritos, CP);//devuelve la posicion que ocupa el distrito con ese CP
+				if(index>=0){
+					Document dist = distritos.get(index);
+					Document estacion = new Document();//documento donde se guardara la info de la estacion
+					String attr;
+					List<String> attrList = getCampos(document, null);
+					for(String label:attrList){
+						if((attr = buscarValor(estaciones, label.split("&&")[0], label.split("&&")[1]))!=null && !label.split("&&")[0].equals("geo") && !label.split("&&")[0].equals("valores")){
+							if(StringUtils.isNumeric(label.split("&&")[1])){
+								estacion.append(label.split("&&")[0], Integer.parseInt(attr));
+							}else{
+								estacion.append(label.split("&&")[0], attr);
+							}
+						}else if(label.split("&&")[0].equals("geo")){
+							estacion.append("geo", new Document("type","Point")
+									.append("coordinates", new ArrayList<Double>(){{
+										add(lonDouble);
+										add(latDouble);
+									}}));
 						}
 					}
+					List<Document> valores = new ArrayList<Document>();
+					for(String head:estaciones.getHeaders()){//guardamos las medidas tomadas
+						if(!head.equals("numero")){
+							String value = estaciones.get(head);//cogemos el valor
+							if(StringUtils.isNumeric(value.replaceAll(",", "."))){//vemos si es un numero
+								valores.add(new Document("id", head).append("valor", Double.parseDouble(value)));
+							}
+						}
+					}
+					if(!valores.isEmpty()){
+						estacion.append("valores", valores);
+					}
+					List<Document> estacionesJSON = (List<Document>) dist.get(document);
+					if(estacionesJSON!=null && !estacionesJSON.isEmpty()){
+						((List<Document>) dist.get(document)).add(estacion);
+						estacionesJSON.clear();
+					}else{
+						dist.append(document, new ArrayList<Document>(){{add(estacion);}});
+					}
+					distritos.remove(index);
+					distritos.add(dist);
 				}
-				if(!valores.isEmpty()){
-					estacion.append("valores", valores);
-				}
-				List<Document> estacionesJSON = (List<Document>) dist.get(document);
-				if(estacionesJSON!=null && !estacionesJSON.isEmpty()){
-					((List<Document>) dist.get(document)).add(estacion);
-					estacionesJSON.clear();
-				}else{
-					dist.append(document, new ArrayList<Document>(){{add(estacion);}});
-				}
-				distritos.remove(index);
-				distritos.add(dist);
 			}
 		}
 		estaciones.close();
@@ -447,7 +449,7 @@ public class Almacenar {
 								if(index_b>=0){
 									Document barrio = barrios.get(index_b);//cogemos el documento del barrio
 									String cod_postal = buscarValor(distritos_zonas, "codigo_postal", "1");
-									if(cod_postal!=null && !cod_postal.equals("")){
+									if(cod_postal!=null && !cod_postal.equals("") && Funciones.checkCP(cod_postal)){
 										if(barrio.get("codigo_postal")!=null&&!barrio.get("codigo_postal").equals("")){
 											//										System.out.println(fileEntry.getName()+"_"+buscarValor(distritos_zonas, "PK", "1")+"_"+buscarValor(distritos_zonas, "codigo_postal", "1"));
 											((Set<Integer>)barrio.get("codigo_postal")).add(Integer.parseInt(cod_postal));
