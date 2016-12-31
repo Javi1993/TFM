@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.poi.hssf.usermodel.HSSFCell;
@@ -30,7 +32,7 @@ public class Mambiente {
 
 	public Mambiente(){
 		String  thisLine = null;
-		String path = ".\\extras\\url_mambiente.txt";
+		String path = ".\\extras\\url_mambiente.txt";//documento con las URLs de los datos
 		int i = 0;
 		try{
 			String[] urls = new String[Funciones.getLineNumber(path)];
@@ -51,8 +53,8 @@ public class Mambiente {
 	}
 
 	/**
-	 * 
-	 * @param urls
+	 * Lee de la URL pasada la informacion medida por la estaciones de calidad del aire
+	 * @param url - URL donde estan los datos
 	 * @throws IOException
 	 */
 	private void calidadAire(String url) throws IOException{
@@ -85,8 +87,8 @@ public class Mambiente {
 	}
 
 	/**
-	 * 
-	 * @param urls
+	 * Lee de la URL pasada la informacion medida por la estaciones acusticas
+	 * @param url - URL donde estan los datos
 	 * @throws IOException
 	 */
 	private void calidadAcustica(String url) throws IOException{
@@ -119,9 +121,9 @@ public class Mambiente {
 	}
 	
 	/**
-	 * 
-	 * @param estaciones
-	 * @param name
+	 * Vuelca en un CSV con la estructa deseada la informacion completa de las estaciones de calidad aire y acustica
+	 * @param estaciones - Estrucutra con la informacion de las estaciones
+	 * @param name - Acustica o aire
 	 */
 	private void volcarCSV(List<HashMap<String, String>> estaciones, String name) {
 		String outputFile = "./documents/"+name;
@@ -147,9 +149,10 @@ public class Mambiente {
 	}
 
 	/**
-	 * 
-	 * @param infoEstacion
-	 * @param aprox
+	 * Busca en la estructura pasada el atibuto equivalente al que se quiere almacenar en el JSON
+	 * @param infoEstacion - Estrcuta con la informacion de la estacion
+	 * @param aprox - nombre aproximado del atributo buscado en la estructura
+	 * @param tipo - tipo de estacion (aire/acustica)
 	 * @return
 	 */
 	private String buscarValor(Set<String> infoEstacion, String aprox, int tipo) {
@@ -173,9 +176,10 @@ public class Mambiente {
 	}
 
 	/**
-	 * 
-	 * @param cabeceras
-	 * @param infoEstacion
+	 * Dada la informacion de las estaciones y sus valores medidos junta todo en una unica estructura
+	 * @param cabeceras - Estrcutura con los valores medidos por la estacion
+	 * @param infoEstacion - Estrcutura con la informacion basica de la estacion
+	 * @param tipo - indica si es de aire o acustica
 	 */
 	private void completarEstacion(HashMap<String, String> cabeceras, HashMap<String, List<String>> infoEstacion, int tipo) {
 		HashMap<String, String> cabecerasAux = new HashMap<String, String>(cabeceras);
@@ -192,9 +196,9 @@ public class Mambiente {
 	}
 
 	/**
-	 * 
-	 * @param doucment
-	 * @return
+	 * Lee el XLS del listado de estaciones acusticas/aire
+	 * @param doucment - String con identificador de si son de aire o acusticas
+	 * @return Hashmap de 'nombre estacion' como key y sus atributos como value.
 	 */
 	private HashMap<String, List<String>> leerExcelEstaciones(String doucment){
 		HashMap<String, List<String>> infoAux = new HashMap<String, List<String>>();
@@ -260,13 +264,11 @@ public class Mambiente {
 				}
 			}
 			wb.close();
+			fs.close();
+			FileUtils.forceDelete(new File(dir.listFiles(fileFilter)[0].getAbsolutePath()));//borramos origen
 		} catch(Exception ioe) {
 			ioe.printStackTrace();
 		}
 		return infoAux;
-	}
-	
-	public static void main(String[] args)  {
-		new Mambiente();
 	}
 }
