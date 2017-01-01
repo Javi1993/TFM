@@ -15,9 +15,7 @@
           "n_extranjeros_hombres":1,
           "n_españoles_mujeres":1,
           "n_extranjeros_mujeres":1
-        },
-        {"cod_edad":1,
-           "...":"..."}
+        }
         ],
       "catastro": [
         {
@@ -30,9 +28,7 @@
           "superficie_suelo_media":1,
           "valor_catastro":1,
           "valor_catastro_medio":1
-        },
-        {"uso":1,
-           "...":"..."}
+        }
         ],
       "zonas":[
         {
@@ -50,9 +46,7 @@
            "type": "Point",
             "coordinates": [1.1, 1.1]
           }
-        },
-        {"PK":1,
-         "...":"..."}
+        }
         ],
       "parquimetros":[
         {
@@ -62,18 +56,14 @@
            "type": "Point",
             "coordinates": [1.1, 1.1]
           }
-        },
-        {"matricula_id":"",
-        "...":"..."}
+        }
         ],
       "plazas_aparcamiento(COGER LAS QUE TENGAN LA GEO, el otro csv no vale)":[
         {
           "color":"color",
           "cantidad_linea":1,
           "cantidad_bateria":1
-        },
-        {"color":"",
-        "...":"..."}
+        }
         ],
       "plazas_aparcamiento_minusvalidos": {
           "cantidad_linea":1,
@@ -98,26 +88,12 @@
             ]
         }
         ]
-    },
-    {"barrio_id_N":1,
-      "...":"..."}
+    }
   ],
   "policia":[
     {
       "detenciones(DATASET MENSUAL)":1,
-      "accidentes(con/sin heridos)(DATASET MENSUAL)":[1,1],
-      "multas(MENSUAL)(SOLO AGENTE MOVILIDAD,las que vienen con GEO)":
-      {
-        "lugar":"lugar",
-        "motivos": [
-        {
-          "motivo":"motivo_desc",
-          "num_multa":1,
-          "cantidad_eur_total":1,
-          "cantidad_puntos":1
-        }
-        ]
-      }
+      "accidentes(con/sin heridos)(DATASET MENSUAL)":[1,1]
     }
   ],
   "aire":[
@@ -147,9 +123,7 @@
         "type": "Point",
           "coordinates": [1.1, 1.1]
         }
-    },
-    {"numero":1,
-    "...":"..."}
+    }
   ],
   "acustico":[
     {
@@ -187,9 +161,7 @@
         "type": "Point",
         "coordinates": [1.1, 1.1]
       }
-  },
-  {"ID_evento":1,
-  "...":"..."}
+  }
   ],
   "fuentes_potables":[
     {
@@ -212,13 +184,28 @@
       }
     }
   ],
+  "multas": [
+	  {
+	    "lugar":"lugar",
+	    "calificacion":"calif",
+	    "fecha":"fecha",
+	    "hora":"hora",
+	    "puntos":1,
+	    "denunciante":"denunciante",
+	    "hecho":"hecho",
+	    "vel_limite": 1,
+	    "vel_circula": 1,
+	    "geo": {
+	       "type": "Point",
+	        "coordinates": [1.1, 1.1]
+	      }
+	  }
+   ],
   "censo_animales_domesticos": [
   {
     "año":1,
     "n_especie_canina":1,
     "n_especie_felina":1
   },
-  {"año":1,
-  "...":"..."}
   ]
 }

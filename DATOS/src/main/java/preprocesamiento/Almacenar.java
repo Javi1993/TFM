@@ -61,7 +61,8 @@ public class Almacenar {
 			generarEstaciones(distritos);
 			System.out.println("Insertada toda la informacion disponible a nivel de distrito.");
 			guardarElecciones("elecciones-ayuntamiento-madrid", distritos);
-
+			generarMultas(distritos);
+			
 			conDB();
 			collection.drop();
 			collection.insertMany(distritos);//insertamos los distritos con su informacion
@@ -99,8 +100,8 @@ public class Almacenar {
 			double latDouble = Math.signum(latDegree) * (Math.abs(latDegree) + (latMinutes / 60.0) + (latSecond / 3600.0));
 
 			Geocode gc = new Geocode();
-			String CP = gc.getCP(lonDouble, latDouble);
-			if(Funciones.checkCP(CP)){
+			String CP = gc.getCPbyCoordinates(lonDouble, latDouble);
+			if(CP != null && Funciones.checkCP(CP)){
 				int index = getDistritoByCP(distritos, CP);//devuelve la posicion que ocupa el distrito con ese CP
 				if(index>=0){
 					Document dist = distritos.get(index);
@@ -277,6 +278,76 @@ public class Almacenar {
 			e.printStackTrace();
 		}
 		return campos;
+	}
+
+	private void generarMultas(List<Document> distritos){
+		File dir = new File("./documents/UNKNOW_FORMAT/");
+		FileFilter fileFilter = new WildcardFileFilter("*multas-circulacion-detalle.*");
+		try {
+			CsvReader multas = new CsvReader (dir.listFiles(fileFilter)[0].getAbsolutePath(), ';');
+			multas.readHeaders();
+			List<String> attrPadron = getCampos("multas", null);
+			while (multas.readRecord()){//recorremos el CSV
+				Geocode gc = new Geocode();
+				String CP = gc.getCPbyStreet(buscarValor(multas, "lugar", "text"));
+				if(CP != null && Funciones.checkCP(CP)){
+					int index = getDistritoByCP(distritos, CP);//devuelve la posicion que ocupa el distrito con ese CP
+					if(index>=0){
+						Document dist = distritos.get(index);
+						Document doc = new Document();//documenbto a insertar
+						for(String label:attrPadron){
+							String attr = null;
+							switch (label.split("&&")[0]) {
+							case "geo":
+								String east, nort;
+								if((east = buscarValor(multas, "coord X", "text"))!=null
+										&& (nort = buscarValor(multas, "coord Y", "text"))!=null
+										&& (east = buscarValor(multas, "coord X", "text"))!=""
+										&& (nort = buscarValor(multas, "coord Y", "text"))!=""){
+									LatLon coordinates = UTMCoord.locationFromUTMCoord(30, AVKey.NORTH, Double.parseDouble(east.replaceAll(",", ".")), Double.parseDouble(nort.replaceAll(",", ".")));
+									doc.append("geo", new Document("type","Point")
+											.append("coordinates", new ArrayList<Double>(){{
+												add(coordinates.getLongitude().getDegrees());
+												add(coordinates.getLatitude().getDegrees());
+											}}));
+								}
+								break;
+							case "fecha":
+								String mes, anio;
+								if((mes = buscarValor(multas, "mes", "text"))!=null
+										&& (anio = buscarValor(multas, "anio", "text"))!=null){
+									doc.append("fecha",mes+"/"+anio);
+								}
+								break;
+							default:
+								if((attr = buscarValor(multas, label.split("&&")[0], label.split("&&")[1]))!=null){
+									if(StringUtils.isNumeric(label.split("&&")[1])){
+										doc.append(label.split("&&")[0], Integer.parseInt(attr));
+									}else{
+										doc.append(label.split("&&")[0], attr);
+									}
+								}
+								break;
+							}
+						}
+						List<Document> documents =  (List<Document>) dist.get("multas");
+						if(documents!=null){
+							documents.add(doc);
+							dist.replace("multas", documents);
+						}else{
+							dist.append("multas", new ArrayList<Document>(){{
+								add(doc);}});
+						}
+						distritos.remove(index);
+						distritos.add(dist);
+					}
+				}
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private List<Document> generarDistritosBarrios(){
@@ -652,7 +723,7 @@ public class Almacenar {
 	}
 
 	public static void main(String[] args) throws JSONException, FileNotFoundException, IOException, ParseException  {
-		//		Almacenar alm = new Almacenar();
+		//				Almacenar alm = new Almacenar(null);
 		//		alm.guardarElecciones("elecciones-ayuntamiento-madrid", null);
 
 		//				Almacenar alm = new Almacenar(null);
