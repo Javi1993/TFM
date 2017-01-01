@@ -301,9 +301,7 @@ public class Almacenar {
 							case "geo":
 								String east, nort;
 								if((east = buscarValor(multas, "coord X", "text"))!=null
-										&& (nort = buscarValor(multas, "coord Y", "text"))!=null
-										&& (east = buscarValor(multas, "coord X", "text"))!=""
-										&& (nort = buscarValor(multas, "coord Y", "text"))!=""){
+										&& (nort = buscarValor(multas, "coord Y", "text"))!=null){
 									LatLon coordinates = UTMCoord.locationFromUTMCoord(30, AVKey.NORTH, Double.parseDouble(east.replaceAll(",", ".")), Double.parseDouble(nort.replaceAll(",", ".")));
 									doc.append("geo", new Document("type","Point")
 											.append("coordinates", new ArrayList<Double>(){{

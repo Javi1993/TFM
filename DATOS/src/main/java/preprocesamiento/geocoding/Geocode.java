@@ -1,11 +1,15 @@
 package preprocesamiento.geocoding;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.stream.Stream;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -14,43 +18,23 @@ import org.json.JSONObject;
 public class Geocode {
 
 	public String getCPbyCoordinates(double lon, double lat){
-		StringBuilder result = new StringBuilder();
-		String APIkey = "AIzaSyAmj4TRmxQNJqoeLaXOSBDdDB8d_6WLGyY";
-		String dir = "https://maps.googleapis.com/maps/api/geocode/json?latlng="+lat+","+lon+"&key="+APIkey;
-		String CP = null;
-		try {
-			URL url = new URL(dir);
-			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-			conn.setRequestMethod("GET");
-			conn.setRequestProperty("Content-Type", "application/json");
-			BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-			String line;
-			while ((line = rd.readLine()) != null) {
-				result.append(line);
-			}
-			rd.close();
-			JSONObject jsonObj = new JSONObject(result.toString());
-			JSONArray locs = jsonObj.getJSONArray("results").getJSONObject(0).getJSONArray("address_components");
-			CP = locs.getJSONObject(locs.length()-1).getString("short_name").trim();
-		} catch (MalformedURLException e) {
-			System.err.println("La URL '"+dir+"' no es valida.");
-//			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-		return CP;
+		String dir = "https://maps.googleapis.com/maps/api/geocode/json?latlng="+lat+","+lon;
+		return doRequest(dir, 0);
 	}
-	
+
 	public String getCPbyStreet(String street){
-		StringBuilder result = new StringBuilder();
-		String APIkey = "AIzaSyAmj4TRmxQNJqoeLaXOSBDdDB8d_6WLGyY";
 		street = street.replaceAll("\\s", "+");
-		String dir = "https://maps.googleapis.com/maps/api/geocode/json?address="+street+"+MADRID&key="+APIkey;
-		String CP = null;
+		street = street.replaceAll("Ñ", "N");
+		String dir = "https://maps.googleapis.com/maps/api/geocode/json?address="+street+"+MADRID";
+		return doRequest(dir, 0);
+	}
+
+	private String doRequest(String dir, int number){
+		JSONObject jsonObj = null;
 		try {
-			URL url = new URL(dir);
+			StringBuilder result = new StringBuilder();
+			String dirAux = dir+getKey(number);
+			URL url = new URL(dirAux);
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Content-Type", "application/json");
@@ -60,17 +44,31 @@ public class Geocode {
 				result.append(line);
 			}
 			rd.close();
-			JSONObject jsonObj = new JSONObject(result.toString());
+			jsonObj = new JSONObject(result.toString());
 			JSONArray locs = jsonObj.getJSONArray("results").getJSONObject(0).getJSONArray("address_components");
-			CP = locs.getJSONObject(locs.length()-1).getString("short_name").trim();
+			return locs.getJSONObject(locs.length()-1).getString("short_name").trim();
 		} catch (MalformedURLException e) {
 			System.err.println("La URL '"+dir+"' no es valida.");
-//			e.printStackTrace();
+			//			e.printStackTrace();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.out.println(e.getMessage());
+			//			e.printStackTrace();
 		} catch (JSONException e) {
-			e.printStackTrace();
+			System.err.println("No existe código postal para la localizacion pasada o se ha superado el límite de peticiones para la key.");
+			System.err.println(jsonObj.toString());
+			return doRequest(dir, number++);//porbamos con otra key
+			//			e.printStackTrace();
 		}
-		return CP;
+		return null;
+	}
+
+	private String getKey(int number) throws IOException{
+		Stream<String> lines = Files.lines(Paths.get("."+File.separator+"extras"+File.separator+"google-keys"));
+		String line = lines.skip(number).findFirst().get();
+		lines.close();
+		if(!line.equals("")){
+			line = "&key="+line;
+		}
+		return line;
 	}
 }
