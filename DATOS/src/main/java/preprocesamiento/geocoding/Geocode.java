@@ -9,6 +9,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.stream.Stream;
 
 import org.json.JSONArray;
@@ -16,6 +17,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class Geocode {
+
+	private HashMap<String, String> locCP;
+
+	public Geocode(){
+		locCP = new HashMap<String, String>();
+	}
 
 	public String getCPbyCoordinates(double lon, double lat){
 		String dir = "https://maps.googleapis.com/maps/api/geocode/json?latlng="+lat+","+lon;
@@ -25,8 +32,15 @@ public class Geocode {
 	public String getCPbyStreet(String street){
 		street = street.replaceAll("\\s", "+");
 		street = street.replaceAll("Ñ", "N");
-		String dir = "https://maps.googleapis.com/maps/api/geocode/json?address="+street+"+MADRID";
-		return doRequest(dir, 0);
+		String cp;
+		if((cp = locCP.get(street))!=null){
+			return cp;
+		}else{
+			String dir = "https://maps.googleapis.com/maps/api/geocode/json?address="+street+"+MADRID";
+			cp = doRequest(dir, 0);
+			locCP.put(street, cp);
+			return cp;
+		}
 	}
 
 	private String doRequest(String dir, int number){

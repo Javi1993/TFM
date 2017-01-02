@@ -36,9 +36,11 @@ public class Almacenar {
 	private MongoClient client;
 	private MongoDatabase database;
 	private MongoCollection<Document> collection;
+	private Geocode geo;
 
 	public Almacenar(HashMap<String, String> dataset_ID){
 		this.dataset_ID = dataset_ID;
+		geo = new Geocode();
 		cargarDatos();
 	}
 
@@ -99,8 +101,7 @@ public class Almacenar {
 			double latSecond = Double.parseDouble(lat.split("[º|°]")[1].split("'")[1].split("[\"|'][N?]")[0].replaceAll(",", ".").replaceAll("'|º|O", "").trim());
 			double latDouble = Math.signum(latDegree) * (Math.abs(latDegree) + (latMinutes / 60.0) + (latSecond / 3600.0));
 
-			Geocode gc = new Geocode();
-			String CP = gc.getCPbyCoordinates(lonDouble, latDouble);
+			String CP = geo.getCPbyCoordinates(lonDouble, latDouble);
 			if(CP != null && Funciones.checkCP(CP)){
 				int index = getDistritoByCP(distritos, CP);//devuelve la posicion que ocupa el distrito con ese CP
 				if(index>=0){
@@ -288,8 +289,7 @@ public class Almacenar {
 			multas.readHeaders();
 			List<String> attrPadron = getCampos("multas", null);
 			while (multas.readRecord()){//recorremos el CSV
-				Geocode gc = new Geocode();
-				String CP = gc.getCPbyStreet(buscarValor(multas, "lugar", "text"));
+				String CP = geo.getCPbyStreet(buscarValor(multas, "lugar", "text"));
 				if(CP != null && Funciones.checkCP(CP)){
 					int index = getDistritoByCP(distritos, CP);//devuelve la posicion que ocupa el distrito con ese CP
 					if(index>=0){
