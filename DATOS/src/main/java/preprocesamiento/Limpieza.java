@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -17,6 +17,7 @@ import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
 
+@SuppressWarnings("deprecation")
 public class Limpieza {
 
 	public void separacionCarpetas(String path){
@@ -140,7 +141,7 @@ public class Limpieza {
 							if((j =isCellChoosen(columnIndexHeaders, cell.getColumnIndex()))>=0){
 								if(j <= 1){
 									String cellAux = cell.getStringCellValue();
-									if(StringUtils.isNumeric(cellAux)){
+									if(NumberUtils.isNumber(cellAux)){
 										mesa.add(cell.getStringCellValue());
 									}else{//fin de recuento votos
 										break;

@@ -193,8 +193,10 @@
 	    "puntos":1,
 	    "denunciante":"denunciante",
 	    "hecho":"hecho",
+	    "imp_":1,
 	    "vel_limite": 1,
 	    "vel_circula": 1,
+	    "importe":1,
 	    "geo": {
 	       "type": "Point",
 	        "coordinates": [1.1, 1.1]
@@ -206,6 +208,6 @@
     "año":1,
     "n_especie_canina":1,
     "n_especie_felina":1
-  },
+  }
   ]
 }

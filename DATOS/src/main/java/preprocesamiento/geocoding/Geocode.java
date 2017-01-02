@@ -16,6 +16,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import funciones.Funciones;
+
 public class Geocode {
 
 	private HashMap<String, String> locCP;
@@ -70,7 +72,8 @@ public class Geocode {
 		} catch (JSONException e) {
 			System.err.println("No existe código postal para la localizacion pasada o se ha superado el límite de peticiones para la key.");
 			System.err.println(jsonObj.toString());
-			return doRequest(dir, number++);//porbamos con otra key
+			if(Funciones.getLineNumber("."+File.separator+"extras"+File.separator+"google-keys")<number)
+				return doRequest(dir, number++);//porbamos con otra key
 			//			e.printStackTrace();
 		}
 		return null;

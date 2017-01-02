@@ -20,11 +20,16 @@ public class Funciones {
 	 * @return
 	 * @throws IOException
 	 */
-	public static int getLineNumber(String path) throws IOException{
-		LineNumberReader lnr = new LineNumberReader(new FileReader(new File(path)));	
-		lnr.skip(Long.MAX_VALUE);
-		int nlines = lnr.getLineNumber() + 1; //Add 1 because line index starts at 0
-		lnr.close();
+	public static int getLineNumber(String path) {
+		int nlines = 0;
+		try{
+			LineNumberReader lnr = new LineNumberReader(new FileReader(new File(path)));	
+			lnr.skip(Long.MAX_VALUE);
+			nlines = lnr.getLineNumber() + 1; //Add 1 because line index starts at 0
+			lnr.close();
+		}catch (IOException e) {
+			System.err.println("No se encuentra el archivo '"+path+"'.");
+		}
 		return nlines;
 	}
 

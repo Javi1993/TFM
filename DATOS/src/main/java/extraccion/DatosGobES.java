@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.EnumUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -25,6 +25,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import funciones.Funciones;
 
+@SuppressWarnings("deprecation")
 public class DatosGobES {
 
 	public DatosGobES(){
@@ -121,7 +122,7 @@ public class DatosGobES {
 		}	
 		Element content = doc.select("div#content").first();
 		title = content.select("h1").first().text();
-		if(StringUtils.isNumeric(title)){
+		if(NumberUtils.isNumber(title)){
 			return "..:anio:..";
 		}else{
 			title = title.replaceAll("\\d|\\s|\\.","");

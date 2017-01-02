@@ -14,13 +14,15 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.bson.Document;
 import org.json.JSONException;
 import org.json.simple.parser.ParseException;
 import com.csvreader.CsvReader;
 import com.mongodb.MongoClient;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import funciones.Funciones;
 import gov.nasa.worldwind.avlist.AVKey;
@@ -29,7 +31,7 @@ import gov.nasa.worldwind.geom.coords.UTMCoord;
 import preprocesamiento.geocoding.Geocode;
 import preprocesamiento.meaningcloud.ClassClient;
 
-@SuppressWarnings({"serial", "unchecked"})
+@SuppressWarnings({"serial", "unchecked", "deprecation"})
 public class Almacenar {
 
 	private HashMap<String, String> dataset_ID;
@@ -54,23 +56,42 @@ public class Almacenar {
 	 * 
 	 */
 	private void cargarDatos(){
-		List<Document> distritos = generarDistritosBarrios();//generamos los 21 distritos y sus barrios en base al padron
-		if(!distritos.isEmpty() && distritos.size()==21){
-			System.out.println("Estructura basica de distritos y barrios creada.");
-			generarZonas(distritos);//formato PK
-			System.out.println("Insertadas las zonas con formato PK.");
-			generarDistritoFormat(distritos);
-			generarEstaciones(distritos);
-			System.out.println("Insertada toda la informacion disponible a nivel de distrito.");
-			guardarElecciones("elecciones-ayuntamiento-madrid", distritos);
-			generarMultas(distritos);
-			
-			conDB();
-			collection.drop();
-			collection.insertMany(distritos);//insertamos los distritos con su informacion
+		List<Document> distritos = null;
+		conDB();
+		if(collection.count()==0){//la coleccion esta vacia
 			client.close();
+			distritos = generarDistritosBarrios();
+			//generamos los 21 distritos y sus barrios en base al padron
+			if(!distritos.isEmpty() && distritos.size()==21){
+				System.out.println("Estructura basica de distritos y barrios creada.");
+				generarZonas(distritos);//formato PK
+				System.out.println("Insertadas las zonas con formato PK.");
+				generarDistritoFormat(distritos);
+				generarEstaciones(distritos);
+				System.out.println("Insertada toda la informacion disponible a nivel de distrito.");
+				guardarElecciones("elecciones-ayuntamiento-madrid", distritos);
+				generarMultas(distritos);
+
+				conDB();
+				collection.drop();
+				collection.insertMany(distritos);//insertamos los distritos con su informacion
+				client.close();
+			}else{
+				System.out.println("La carga inicial de distritos y barrios es erronea.");
+			}
 		}else{
-			System.out.println("La carga inicial de distritos y barrios es erronea.");
+			FindIterable<Document> list = collection.find();
+			MongoCursor<Document> cursor = list.iterator();
+			distritos = new ArrayList<Document>();
+			while (cursor.hasNext()) {
+				distritos.add(cursor.next());
+			}
+//			collection.updateMany(new Document(), new Document("$unset", new Document("aire","").append("acustico", "")));
+//			generarEstaciones(distritos);
+//			collection.drop();
+//			collection.insertMany(distritos);//insertamos los distritos con su informacion
+//			client.close();
+//			Auxiliar para probar sueltas funciones de almacenar
 		}
 	}
 
@@ -111,7 +132,7 @@ public class Almacenar {
 					List<String> attrList = getCampos(document, null);
 					for(String label:attrList){
 						if((attr = buscarValor(estaciones, label.split("&&")[0], label.split("&&")[1]))!=null && !label.split("&&")[0].equals("geo") && !label.split("&&")[0].equals("valores")){
-							if(StringUtils.isNumeric(label.split("&&")[1])){
+							if(NumberUtils.isNumber(label.split("&&")[1])){
 								estacion.append(label.split("&&")[0], Integer.parseInt(attr));
 							}else{
 								estacion.append(label.split("&&")[0], attr);
@@ -128,7 +149,7 @@ public class Almacenar {
 					for(String head:estaciones.getHeaders()){//guardamos las medidas tomadas
 						if(!head.equals("numero")){
 							String value = estaciones.get(head);//cogemos el valor
-							if(StringUtils.isNumeric(value.replaceAll(",", "."))){//vemos si es un numero
+							if(NumberUtils.isNumber(value.replaceAll(",", "."))){//vemos si es un numero
 								valores.add(new Document("id", head).append("valor", Double.parseDouble(value)));
 							}
 						}
@@ -136,10 +157,9 @@ public class Almacenar {
 					if(!valores.isEmpty()){
 						estacion.append("valores", valores);
 					}
-					List<Document> estacionesJSON = (List<Document>) dist.get(document);
-					if(estacionesJSON!=null && !estacionesJSON.isEmpty()){
+
+					if(dist.get(document)!=null && !((List<Document>) dist.get(document)).isEmpty()){
 						((List<Document>) dist.get(document)).add(estacion);
-						estacionesJSON.clear();
 					}else{
 						dist.append(document, new ArrayList<Document>(){{add(estacion);}});
 					}
@@ -154,7 +174,8 @@ public class Almacenar {
 	private int getDistritoByCP(List<Document> distritos, String CP) {
 		for(Document dist:distritos){
 			for(Document barrio:(List<Document>)dist.get("barrios")){
-				if(((Set<Integer>)barrio.get("codigo_postal")).contains(Integer.parseInt(CP))){
+				Set<Integer> aux = new HashSet<Integer>((List<Integer>)barrio.get("codigo_postal"));
+				if(aux.contains(Integer.parseInt(CP))){
 					return distritos.indexOf(dist);
 				}
 			}
@@ -221,7 +242,7 @@ public class Almacenar {
 					Document dist = distritos.get(index);//cogemos el documento del distrito
 					for(String label:attrList){
 						if((attr = buscarValor(distritos_locs, label.split("&&")[0], label.split("&&")[1]))!=null && !label.split("&&")[0].equals("geo")){
-							if(StringUtils.isNumeric(label.split("&&")[1])){
+							if(NumberUtils.isNumber(label.split("&&")[1])){
 								doc.append(label.split("&&")[0], Integer.parseInt(attr));
 							}else{
 								doc.append(label.split("&&")[0], attr);
@@ -319,7 +340,7 @@ public class Almacenar {
 								break;
 							default:
 								if((attr = buscarValor(multas, label.split("&&")[0], label.split("&&")[1]))!=null){
-									if(StringUtils.isNumeric(label.split("&&")[1])){
+									if(NumberUtils.isNumber(label.split("&&")[1])){
 										doc.append(label.split("&&")[0], Integer.parseInt(attr));
 									}else{
 										doc.append(label.split("&&")[0], attr);
@@ -466,7 +487,7 @@ public class Almacenar {
 		String attr;
 		for(String label:attrPadron){
 			if((attr = buscarValor(distritos_barrios, label.split("&&")[0], label.split("&&")[1]))!=null){
-				if(StringUtils.isNumeric(label.split("&&")[1])){
+				if(NumberUtils.isNumber(label.split("&&")[1])){
 					pad.append(label.split("&&")[0], Integer.parseInt(attr));
 				}else{
 					pad.append(label.split("&&")[0], attr);
@@ -568,7 +589,7 @@ public class Almacenar {
 		for(String label:attrZonas){
 			attr = buscarValor(distritos_zonas, label.split("&&")[0], label.split("&&")[1]);
 			if(attr!=null&&!label.split("&&")[0].equals("geo")&&!label.split("&&")[0].equals("rol")){
-				if(StringUtils.isNumeric(label.split("&&")[1])){
+				if(NumberUtils.isNumber(label.split("&&")[1])){
 					zona.append(label.split("&&")[0], Integer.parseInt(attr));
 				}else{
 					zona.append(label.split("&&")[0], attr);
@@ -606,7 +627,7 @@ public class Almacenar {
 			}
 			String value = csvDoc.get(header);
 			if(!value.equals("")){
-				if(StringUtils.isNumeric(tipo)){//cogemos solo la parte numerica
+				if(NumberUtils.isNumber(tipo)){//cogemos solo la parte numerica
 					value = value.replaceAll("\\s+","");
 					Pattern p = Pattern.compile("(\\d+)");
 					Matcher m = p.matcher(value);
@@ -721,6 +742,8 @@ public class Almacenar {
 	}
 
 	public static void main(String[] args) throws JSONException, FileNotFoundException, IOException, ParseException  {
+		
+//		System.out.println(NumberUtils.isNumber("222"));
 		//				Almacenar alm = new Almacenar(null);
 		//		alm.guardarElecciones("elecciones-ayuntamiento-madrid", null);
 
@@ -750,9 +773,9 @@ public class Almacenar {
 		//		String a = "02";
 		//		System.out.println(Integer.parseInt(a));
 		//		alm.client.close();
-		//								String a = "Carlos V";
-		//								String b = "GLORIETA CARLOS V";
-		//								System.out.println(Funciones.similarity(a, b));
+		//										String a = "Imp_";
+		//										String b = "IMP_BOL";
+		//										System.out.println(Funciones.similarity(a, b));
 		// omp parallel for schedule(dynamic)
 		//        for (int i = 2; i < 20; i += 3) {
 		//            System.out.println("  @" + i);
