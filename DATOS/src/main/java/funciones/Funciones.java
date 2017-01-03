@@ -5,7 +5,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.net.SocketTimeoutException;
-
+import java.util.ArrayList;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.jsoup.Jsoup;
@@ -15,9 +15,9 @@ import org.jsoup.nodes.Element;
 public class Funciones {
 
 	/**
-	 * 
-	 * @param path
-	 * @return
+	 * Devuelve el numero de lineas del fichero pasado
+	 * @param path - localizacion del fichero
+	 * @return Numero de lineas
 	 * @throws IOException
 	 */
 	public static int getLineNumber(String path) {
@@ -34,10 +34,10 @@ public class Funciones {
 	}
 
 	/**
-	 * 
-	 * @param s1
-	 * @param s2
-	 * @return
+	 * Devuelve la similitud entre dos String en base a la distancia Levenshtein
+	 * @param s1 - string 1
+	 * @param s2 - string 2
+	 * @return Similitud entre 0-1
 	 */
 	public static double similarity(String s1, String s2) {
 		String longer = s1.toLowerCase(), shorter = s2.toLowerCase();
@@ -50,9 +50,9 @@ public class Funciones {
 	}
 
 	/**
-	 * 
-	 * @param CP
-	 * @return
+	 * Comprueba si el codigo postal pasado es de la ciudad de Madrid
+	 * @param CP - Codigo postal
+	 * @return - booleano con respuesta
 	 * @throws IOException
 	 */
 	public static boolean checkCP(String CP) throws IOException{
@@ -74,5 +74,20 @@ public class Funciones {
 			e.printStackTrace();
 		}
 		return false;
+	}
+	
+	/**
+	 * Inserta la geolocalizacion en un documento JSON
+	 * @param doc - documento JSON
+	 * @param lat - latitud
+	 * @param lon - longitud
+	 */
+	@SuppressWarnings("serial")
+	public static void setCoordinates(org.bson.Document doc, double lat, double lon){
+		doc.append("geo", new org.bson.Document("type","Point")
+				.append("coordinates", new ArrayList<Double>(){{
+					add(lon);
+					add(lat);
+				}}));
 	}
 }
