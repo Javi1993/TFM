@@ -23,7 +23,7 @@ public class Limpieza {
 	public void separacionCarpetas(String path){
 		try {
 			File folder = new File(path);
-			transformarExceltoCSV(folder);//transformamos los Excels a formato CSV
+			transformarExcelToCSV(folder);//transformamos los Excels a formato CSV
 			for (File fileEntry : folder.listFiles()) {
 				if (!fileEntry.isDirectory()) {
 					File src = new File(folder+File.separator+fileEntry.getName());
@@ -76,7 +76,7 @@ public class Limpieza {
 		}
 	}
 
-	private void transformarExceltoCSV(File folder) {
+	private void transformarExcelToCSV(File folder) {
 		for (File fileEntry : folder.listFiles()) {
 			try {
 				if (!fileEntry.isDirectory() && FilenameUtils.getExtension(fileEntry.getAbsolutePath()).equals("xls")) {
@@ -159,7 +159,7 @@ public class Limpieza {
 		wb.close();
 		fs.close();
 		FileUtils.forceDelete(fileEntry);
-		volcarCSV(fusionarFilas(mesas), headers, "elecciones-ayuntamiento-madrid");
+		volcarCSV(fusionarFilas(mesas), headers, fileEntry.getName().substring(fileEntry.getName().lastIndexOf(".")+1));
 	}
 
 	private List<List<String>> fusionarFilas(List<List<String>> mesas) {
