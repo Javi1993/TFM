@@ -19,15 +19,16 @@
         ],
       "catastro": [
         {
-          "uso_denominacio": "uso",
+          "uso_cod":"A",
+          "uso_denomin": "uso",
           "inmuebles":1,
           "año_medio":1,
-          "superficie_construida":1,
-          "superficie_construida_media":1,
-          "superficie_suelo":1,
-          "superficie_suelo_media":1,
-          "valor_catastro":1,
-          "valor_catastro_medio":1
+          "sup_cons_barrio":1,
+          "sup_cons_media":1,
+          "sup_suelo":1,
+          "sup_suelo_media":1,
+          "val_catastro":1,
+          "val_catastro_medio":1
         }
         ],
       "zonas":[

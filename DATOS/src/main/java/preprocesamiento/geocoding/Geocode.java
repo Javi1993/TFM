@@ -72,9 +72,12 @@ public class Geocode {
 		} catch (JSONException e) {
 			System.err.println("No existe código postal para la localizacion pasada o se ha superado el límite de peticiones para la key.");
 			System.err.println(jsonObj.toString());
-			if(Funciones.getLineNumber("."+File.separator+"extras"+File.separator+"google-keys")<number)
-				return doRequest(dir, number++);//porbamos con otra key
-			//			e.printStackTrace();
+			try {
+				if(jsonObj.get("status").equals("OVER_QUERY_LIMIT") && Funciones.getLineNumber("."+File.separator+"extras"+File.separator+"google-keys")<number)
+					return doRequest(dir, number++);
+			} catch (JSONException e1) {
+				return null;
+			}
 		}
 		return null;
 	}
