@@ -101,7 +101,7 @@
     {
       "numero":1,
       "estacion":"estacion",
-      "fecha":"fecha(ver formato date mongo)",
+      "fecha":"fecha",
       "valores":[
         { "id":"PM10",
           "valor":1},
@@ -130,7 +130,7 @@
     {
       "numero":1,
       "estacion":"estacion",
-      "fecha":"fecha(ver formato date mongo)",
+      "fecha":"fecha",
       "valores":[
         {"id":"LdBA",
          "valor":1},

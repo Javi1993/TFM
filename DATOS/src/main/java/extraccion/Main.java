@@ -1,6 +1,8 @@
 package extraccion;
 
 import java.io.File;
+
+import funciones.Funciones;
 import preprocesamiento.Almacenar;
 import preprocesamiento.Limpieza;
 
@@ -13,6 +15,7 @@ public class Main {
 		new Mambiente();
 		new Limpieza().separacionCarpetas(path);
 		new Almacenar(dgES.getDataset_ID());
+		Funciones.vaciarDocuments();
 	}
 
 }

@@ -1,11 +1,19 @@
 package funciones;
 
 import java.io.File;
+import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.jsoup.Jsoup;
@@ -75,7 +83,7 @@ public class Funciones {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Inserta la geolocalizacion en un documento JSON
 	 * @param doc - documento JSON
@@ -89,5 +97,67 @@ public class Funciones {
 					add(lon);
 					add(lat);
 				}}));
+	}
+
+	/**
+	 * Comprobamos si el nombre del fichero pasado como parametro ya se ha descargado con anterioridad
+	 * @param fileName - Nombre del fichero a descargar
+	 * @return - Booleano indicando respuesta
+	 */
+	public static boolean checkNew(String fileName) {
+		File dir = new File("."+File.separator+"documents"+File.separator+"HISTORICO"+File.separator);//directorio con el historico de ficheros descargados
+		FileFilter fileFilter = new WildcardFileFilter(fileName.substring(0,fileName.lastIndexOf('.'))+".zip");//patron de busqueda
+		if(dir.listFiles(fileFilter).length>0){
+			return true;//existe un fichero con ese nombre
+		}
+		return false;//no existe
+	}
+
+	/**
+	 * Borra los directorios y ficheros de la carpeta documents
+	 */
+	public static void vaciarDocuments() {
+		File folder = new File("."+File.separator+"documents"+File.separator);
+		for (File fileEntry : folder.listFiles()) {
+			if (!fileEntry.getName().equals("HISTORICO")) {
+				try {
+					FileUtils.deleteDirectory(fileEntry);
+				} catch (IOException e) {
+					if (fileEntry.isDirectory()) {
+						System.err.println("No se puede borrar el directorio '"+fileEntry.getName()+".\n"+e.getMessage());
+					}else{
+						System.err.println("No se puede borrar el fichero '"+fileEntry.getName()+".\n"+e.getMessage());
+					}
+				}
+			}
+		}
+	}
+	
+	public static void deleteFile(FileFilter fileFilter, File dir) throws IOException{
+		File dest = new File("./documents/HISTORICO/"+dir.listFiles(fileFilter)[0].getName().substring(0,dir.listFiles(fileFilter)[0].getName().lastIndexOf('.'))+".zip");
+		File src = new File(dir.listFiles(fileFilter)[0].getPath());
+		compressFile(dest, src);
+		FileUtils.forceDelete(src);//borramos origen
+	}
+
+	public static void deleteFile(File fileEntry) throws IOException{
+		File dest = new File("./documents/HISTORICO/"+fileEntry.getName().substring(0,fileEntry.getName().lastIndexOf('.'))+".zip");
+		File src = new File(fileEntry.getPath());
+		compressFile(dest, src);
+		FileUtils.forceDelete(src);//borramos origen
+	}
+
+	private static void compressFile(File dest, File src) throws IOException{
+		FileOutputStream fos = new FileOutputStream(dest);
+		ZipOutputStream out = new ZipOutputStream(fos);
+		ZipEntry e = new ZipEntry(src.getName());
+		out.putNextEntry(e);
+		FileInputStream fis =  new FileInputStream(src);
+		byte[] data =  IOUtils.toByteArray(fis);
+		out.write(data, 0, data.length);
+		out.closeEntry();
+		out.close();
+		fos.close();
+		fis.close();
 	}
 }

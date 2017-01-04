@@ -31,7 +31,7 @@ public class DatosGobES {
 	public DatosGobES(){
 		getDatosGobEs();
 	}
-	
+
 	private enum Meses {
 		ENERO,
 		FEBRERO,
@@ -200,14 +200,17 @@ public class DatosGobES {
 					if(pos>=0&&checkTitleList(titulos, title)){//es el formato deseado y no se ha descargado uno con el mismo nombre de diferente fecha
 						if(tr.get(pos-1).select("th").text().equals("URL")){
 							String link  = tr.get(pos-1).select("td").select("a").attr("href");//cogemos el link de descargs
-							//Descargamos fichero de datos
-							File csv = new File(".\\documents\\"+link.substring(link.lastIndexOf('/') + 1));
-							//System.out.println(link);
-							FileUtils.copyURLToFile(new URL(link), csv, 5000, 30000);
-							titulos.add(title);
-							System.out.println("Se ha descargado "+link.substring(link.lastIndexOf('/') + 1)+".");
-							dataset_ID.put(link.substring(link.lastIndexOf('/') + 1), ID);
-							fileDown = true;
+							if(!Funciones.checkNew(link.substring(link.lastIndexOf('/') + 1))){//Descargamos fichero de datos
+								File csv = new File(".\\documents\\"+link.substring(link.lastIndexOf('/') + 1));
+								FileUtils.copyURLToFile(new URL(link), csv, 5000, 30000);
+								titulos.add(title);
+								System.out.println("Se ha descargado '"+link.substring(link.lastIndexOf('/') + 1)+"'.");
+								dataset_ID.put(link.substring(link.lastIndexOf('/') + 1), ID);
+								fileDown = true;
+							}else{
+								titulos.add(title);
+								fileDown = true;
+							}
 						}
 					}
 				}
@@ -218,10 +221,10 @@ public class DatosGobES {
 				System.err.println("Se ha excedido el tiempo para descargar un dataset de la ID '"+ID+"'.");
 				//			e.printStackTrace();
 			} catch (MalformedURLException e) {
-				System.err.println("La url pasada para la descarga del dataset de la ID "+ID+" no es valida.");
+				System.err.println("La url pasada para la descarga del dataset de la ID '"+ID+"' no es valida.");
 				//					e.printStackTrace();
 			} catch (IOException e) {
-				System.err.println("Un dataset de la ID '"+ID+"' está inaccesible en estos momentos.");
+				System.err.println("Un dataset del grupo de ID '"+ID+"' está inaccesible en estos momentos.");
 				//			e.printStackTrace();
 			}
 		}
@@ -229,6 +232,12 @@ public class DatosGobES {
 		return false;
 	}
 
+	/**
+	 * 
+	 * @param titulos
+	 * @param title
+	 * @return
+	 */
 	private boolean checkTitleList(List<String> titulos, String title){
 		for(String t:titulos){
 			if(t.equals(title)){

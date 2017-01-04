@@ -2,12 +2,11 @@ package preprocesamiento;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -16,10 +15,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -47,6 +42,7 @@ public class Almacenar {
 	private MongoDatabase database;
 	private MongoCollection<Document> collection;
 	private Geocode geo;
+	private SimpleDateFormat formatoFecha;
 
 	public Almacenar(HashMap<String, String> dataset_ID){
 		this.dataset_ID = dataset_ID;
@@ -61,7 +57,7 @@ public class Almacenar {
 	}
 
 	/**
-	 * 
+	 * Procesa todos los ficheros descargados y los almacena en la base de datos
 	 */
 	private void cargarDatos(){
 		List<Document> distritos = null;
@@ -72,99 +68,102 @@ public class Almacenar {
 			//generamos los 21 distritos y sus barrios en base al padron
 			if(distritos!= null && !distritos.isEmpty() && distritos.size()==21){
 				System.out.println("Estructura basica de distritos y barrios creada.");
-				generarZonas(distritos);//formato PK
-				System.out.println("Insertadas las zonas con formato PK.");
-				generarCatastro(distritos);
-				generarDistritoFormat(distritos);
-				generarEstaciones(distritos);
-				System.out.println("Insertada toda la informacion disponible a nivel de distrito.");
-				guardarElecciones("*elecciones-ayuntamiento-madrid.*", distritos);
-				generarMultas(distritos);
-				generarRadares(distritos);
-
-				conDB();
-				collection.drop();
-				collection.insertMany(distritos);//insertamos los distritos con su informacion
-				client.close();
+				lanzarCargas(distritos);//lanzamos las cargas
 			}else{
 				System.out.println("La carga inicial de distritos y barrios es erronea.");
 			}
-		}else{
+		}else{//ya existe una coleccion
 			FindIterable<Document> list = collection.find();
 			MongoCursor<Document> cursor = list.iterator();
 			distritos = new ArrayList<Document>();
 			while (cursor.hasNext()) {
 				distritos.add(cursor.next());
 			}
-//						collection.updateMany(new Document(), new Document("$unset", new Document("radares","")));
-						generarRadares(distritos);
-						collection.drop();
-						collection.insertMany(distritos);//insertamos los distritos con su informacion
 			client.close();
-			//			Auxiliar para probar sueltas funciones de almacenar
+			lanzarCargas(distritos);//lanzamos las cargas
 		}
+	}
+
+	/**
+	 * Lanza el procesamiento y almacenamiento de datos en base al formato del fichero
+	 * @param distritos - coleccion de distritos
+	 */
+	private void lanzarCargas(List<Document> distritos){
+		generarZonas(distritos);//formato PK
+		generarCatastro(distritos);
+		generarDistritoFormat(distritos);
+		generarEstaciones(distritos);
+		guardarElecciones("*elecciones-ayuntamiento-madrid.*", distritos);
+		generarMultas(distritos);
+		generarRadares(distritos);
+		conDB();
+		collection.drop();
+		collection.insertMany(distritos);//insertamos los distritos con su informacion
+		client.close();
 	}
 
 	private void generarRadares(List<Document> distritos) {
 		try {
 			File dir = new File("./documents/UNKNOW_FORMAT/");
 			FileFilter fileFilter = new WildcardFileFilter("*300049-0-radares-fijos-moviles*");
-			CsvReader radares = new CsvReader(dir.listFiles(fileFilter)[0].getAbsolutePath(),';');
-			radares.readHeaders();
-			while (radares.readRecord()){//recorremos el CSV
-				String lon, lat;
-				double lonDouble = 0;
-				double latDouble = 0;
-				lon = "-"+buscarValor(radares, "longitud", "1");
-				lat = buscarValor(radares, "latitud", "1");
-				String CP = null;
-				if(lat != null && lon != null && !lon.equals("") && !lat.equals("")){
-					lonDouble = Double.parseDouble(lon.replaceAll("\\s+", ""));
-					latDouble = Double.parseDouble(lat.replaceAll("\\s+", ""));
-					CP = geo.getCPbyCoordinates(lonDouble, latDouble);
-				}
-				if(CP==null){//buscamos por calle si no hay coordenadas o no hubo resultado para las dadas
-					String ubicacion = buscarValor(radares, "ubicacion", "text");
-					if(ubicacion.matches(".*\\(.*\\)$")){
-						ubicacion = ubicacion.substring(ubicacion.indexOf('(')+1, ubicacion.lastIndexOf(')')).split("-")[0];
-					}else{
-						ubicacion = ubicacion.split(",")[0];
-					}
-					CP = geo.getCPbyStreet(StringUtils.stripAccents(ubicacion));
-				}
-				if(CP != null && Funciones.checkCP(CP)){
-					int index = getDistritoByCP(distritos, CP);//devuelve la posicion que ocupa el distrito con ese CP
-					if(index>=0){
-						Document dist = distritos.get(index);
-						Document radar = new Document();//documento donde se guardara la info de la estacion
-						String attr;
-						List<String> attrList = getCampos("radares", null);
-						for(String label:attrList){
-							if((attr = buscarValor(radares, label.split("&&")[0], label.split("&&")[1]))!=null && !label.split("&&")[0].equals("geo")){
-								if(NumberUtils.isNumber(label.split("&&")[1])){
-									radar.append(label.split("&&")[0], Integer.parseInt(attr));
-								}else{
-									radar.append(label.split("&&")[0], attr);
+			if(dir.exists() && dir.listFiles(fileFilter).length > 0){
+				File auxFile = dir.listFiles(fileFilter)[0];
+				if(auxFile.exists()){
+					CsvReader radares = new CsvReader(auxFile.getAbsolutePath(),';');
+					radares.readHeaders();
+					while (radares.readRecord()){//recorremos el CSV
+						String lon, lat;
+						double lonDouble = 0;
+						double latDouble = 0;
+						lon = "-"+buscarValor(radares, "longitud", "1");
+						lat = buscarValor(radares, "latitud", "1");
+						String CP = null;
+						if(lat != null && lon != null && !lon.equals("") && !lat.equals("")){
+							lonDouble = Double.parseDouble(lon.replaceAll("\\s+", ""));
+							latDouble = Double.parseDouble(lat.replaceAll("\\s+", ""));
+							CP = geo.getCPbyCoordinates(lonDouble, latDouble);
+						}
+						if(CP==null){//buscamos por calle si no hay coordenadas o no hubo resultado para las dadas
+							String ubicacion = buscarValor(radares, "ubicacion", "text");
+							if(ubicacion.matches(".*\\(.*\\)$")){
+								ubicacion = ubicacion.substring(ubicacion.indexOf('(')+1, ubicacion.lastIndexOf(')')).split("-")[0];
+							}else{
+								ubicacion = ubicacion.split(",")[0];
+							}
+							CP = geo.getCPbyStreet(StringUtils.stripAccents(ubicacion));
+						}
+						if(CP != null && Funciones.checkCP(CP)){
+							int index = getDistritoByCP(distritos, CP);//devuelve la posicion que ocupa el distrito con ese CP
+							if(index>=0){
+								Document dist = distritos.get(index);
+								Document radar = new Document();//documento donde se guardara la info de la estacion
+								String attr;
+								List<String> attrList = getCampos("radares", null);
+								for(String label:attrList){
+									if((attr = buscarValor(radares, label.split("&&")[0], label.split("&&")[1]))!=null && !label.split("&&")[0].equals("geo")){
+										if(NumberUtils.isNumber(label.split("&&")[1])){
+											radar.append(label.split("&&")[0], Integer.parseInt(attr));
+										}else{
+											radar.append(label.split("&&")[0], attr);
+										}
+									}else if(lonDouble != 0 && latDouble != 0 && label.split("&&")[0].equals("geo")){
+										Funciones.setCoordinates(radar, latDouble, lonDouble);
+									}
 								}
-							}else if(lonDouble != 0 && latDouble != 0 && label.split("&&")[0].equals("geo")){
-								Funciones.setCoordinates(radar, latDouble, lonDouble);
+								if(dist.get("radares")!=null && !((List<Document>) dist.get("radares")).isEmpty()){
+									((List<Document>) dist.get("radares")).add(radar);
+								}else{
+									dist.append("radares", new ArrayList<Document>(){{add(radar);}});
+								}
+								distritos.remove(index);
+								distritos.add(dist);
 							}
 						}
-						if(dist.get("radares")!=null && !((List<Document>) dist.get("radares")).isEmpty()){
-							((List<Document>) dist.get("radares")).add(radar);
-						}else{
-							dist.append("radares", new ArrayList<Document>(){{add(radar);}});
-						}
-						distritos.remove(index);
-						distritos.add(dist);
 					}
+					radares.close();
+					Funciones.deleteFile(fileFilter, dir);
 				}
 			}
-			radares.close();
-			File dest = new File("./documents/HISTORICO/"+dir.listFiles(fileFilter)[0].getName().replaceAll(".csv", ".zip"));
-			File src = new File(dir.listFiles(fileFilter)[0].getAbsolutePath());
-			compressFile(dest, src);
-			FileUtils.forceDeleteOnExit(src);//borramos origen
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -172,66 +171,61 @@ public class Almacenar {
 		}
 	}
 
-	private void compressFile(File dest, File src) throws IOException{
-		ZipOutputStream out = new ZipOutputStream(new FileOutputStream(dest));
-		ZipEntry e = new ZipEntry(src.getName());
-		out.putNextEntry(e);
-
-		byte[] data =  IOUtils.toByteArray( new FileInputStream(src));
-		out.write(data, 0, data.length);
-		out.closeEntry();
-		out.close();
-	}
 	private void generarCatastro(List<Document> distritos) {
 		try {
 			File dir = new File("./documents/DISTRICT_BARRIO_FORMAT/");
 			FileFilter fileFilter = new WildcardFileFilter("*valores-catastrales-barrio.*");
-			CsvReader catastro_barrios = new CsvReader(dir.listFiles(fileFilter)[0].getAbsolutePath(),';');
-			catastro_barrios.readHeaders();
-			int index = 0;//posicion en la lista del distrito
-			int[] dist_barrio_index = null;
-			while (catastro_barrios.readRecord()){
-				if( (dist_barrio_index = buscarDistritoBarrioInfo(catastro_barrios, 2)) !=null ){//obtenemos la posicion de las cabeceras nombre distrito y barrio en el CSV
-					index = buscarDistrito_Barrio_Zona(distritos, catastro_barrios.get(dist_barrio_index[0]).trim(), "_id");//obtenemos la posicion en la lista del doc del distrito
-					if(index>=0){//LOCALIZAR POR COORDENADAS SI NO TIENE BARRIO O DISTTRITO EN EL CSV!!
-						Document dist = distritos.get(index);//cogemos el documento del distrito
-						List<Document> barrios = (List<Document>) dist.get("barrios");//cogemos su lista de barrios asociada al distrito
-						String aux = catastro_barrios.get(dist_barrio_index[1]).trim();
-						int index_b = buscarDistrito_Barrio_Zona(barrios, aux.substring(aux.length()-1), "_id");//posicion en la lista del barrio
-						//								System.out.println("INDEX B "+index_b);
-						if(index_b>=0){
-							Document barrio = barrios.get(index_b);//cogemos el documento del barrio
-							List<String> attrZonas = getCampos("catastro", "barrios");
-							Document catastro = new Document();
-							String attr = null;
-							for(String label:attrZonas){
-								if((attr = buscarValor(catastro_barrios, label.split("&&")[0], label.split("&&")[1]))!=null){
-									if(NumberUtils.isNumber(label.split("&&")[1])){
-										catastro.append(label.split("&&")[0], Double.parseDouble(attr));
-									}else{
-										catastro.append(label.split("&&")[0], attr);
+			if(dir.exists() && dir.listFiles(fileFilter).length>0){
+				File auxFile = dir.listFiles(fileFilter)[0];
+				if(auxFile.exists()){
+					CsvReader catastro_barrios = new CsvReader(auxFile.getAbsolutePath(),';');
+					catastro_barrios.readHeaders();
+					int index = 0;//posicion en la lista del distrito
+					int[] dist_barrio_index = null;
+					while (catastro_barrios.readRecord()){
+						if( (dist_barrio_index = buscarDistritoBarrioInfo(catastro_barrios, 2)) !=null ){//obtenemos la posicion de las cabeceras nombre distrito y barrio en el CSV
+							index = buscarDistrito_Barrio_Zona(distritos, catastro_barrios.get(dist_barrio_index[0]).trim(), "_id");//obtenemos la posicion en la lista del doc del distrito
+							if(index>=0){//LOCALIZAR POR COORDENADAS SI NO TIENE BARRIO O DISTTRITO EN EL CSV!!
+								Document dist = distritos.get(index);//cogemos el documento del distrito
+								List<Document> barrios = (List<Document>) dist.get("barrios");//cogemos su lista de barrios asociada al distrito
+								String aux = catastro_barrios.get(dist_barrio_index[1]).trim();
+								int index_b = buscarDistrito_Barrio_Zona(barrios, aux.substring(aux.length()-1), "_id");//posicion en la lista del barrio
+								//								System.out.println("INDEX B "+index_b);
+								if(index_b>=0){
+									Document barrio = barrios.get(index_b);//cogemos el documento del barrio
+									List<String> attrZonas = getCampos("catastro", "barrios");
+									Document catastro = new Document();
+									String attr = null;
+									for(String label:attrZonas){
+										if((attr = buscarValor(catastro_barrios, label.split("&&")[0], label.split("&&")[1]))!=null){
+											if(NumberUtils.isNumber(label.split("&&")[1])){
+												catastro.append(label.split("&&")[0], Double.parseDouble(attr));
+											}else{
+												catastro.append(label.split("&&")[0], attr);
+											}
+										}
 									}
+									List<Document> auxList = (List<Document>) barrio.get("catastro");
+									if(auxList!=null && !auxList.isEmpty()){
+										auxList.add(catastro);
+										barrio.replace("catastro", auxList);
+									}else{
+										barrio.append("catastro", new ArrayList<Document>(){{add(catastro);}});
+									}
+									barrios.remove(index_b);
+									barrios.add(barrio);	
+									dist.replace("barrios", barrios);	
+									distritos.remove(index);//actualizamos
+									distritos.add(dist);//añade distrito actualizado	
 								}
 							}
-
-							List<Document> auxList = (List<Document>) barrio.get("catastro");
-							if(auxList!=null && !auxList.isEmpty()){
-								auxList.add(catastro);
-								barrio.replace("catastro", auxList);
-							}else{
-								barrio.append("catastro", new ArrayList<Document>(){{add(catastro);}});
-							}
-							barrios.remove(index_b);
-							barrios.add(barrio);	
-							dist.replace("barrios", barrios);	
-							distritos.remove(index);//actualizamos
-							distritos.add(dist);//añade distrito actualizado	
 						}
 					}
+					catastro_barrios.close();
+					Funciones.deleteFile(fileFilter, dir);
+					System.out.println("Generados los valores catastrales a nivel de barrio.");
 				}
 			}
-			FileUtils.copyFile(new File(dir.listFiles(fileFilter)[0].getAbsolutePath()), new File("."+File.separator+"documents"+File.separator+"HISTORICO"+File.separator+dir.listFiles(fileFilter)[0].getName()));//copiamos archivo
-			FileUtils.forceDelete(new File(dir.listFiles(fileFilter)[0].getAbsolutePath()));//borramos origen
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -240,75 +234,84 @@ public class Almacenar {
 	private void generarEstaciones(List<Document> distritos) {
 		File dir = new File("./documents/ESTACIONES_CALIDAD/");
 		try{
-			addAireAcustica(distritos, dir, new WildcardFileFilter("*calidad-aire.*"), "aire");
-			addAireAcustica(distritos, dir, new WildcardFileFilter("*calidad-acustica.*"), "acustico");
+			if(dir.exists() && dir.listFiles().length>0){
+				formatoFecha = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				addAireAcustica(distritos, dir, new WildcardFileFilter("*calidad-aire.*"), "aire");
+				addAireAcustica(distritos, dir, new WildcardFileFilter("*calidad-acustica.*"), "acustico");
+				System.out.println("Generadas las estaciones de calidad del aire y ruido junto sus valores actuales.");
+			}
 		}catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	private void addAireAcustica(List<Document> distritos, File dir, FileFilter ff, String document) throws IOException{
-		CsvReader estaciones = new CsvReader (dir.listFiles(ff)[0].getAbsolutePath(), ';');
-		estaciones.readHeaders();
-		while (estaciones.readRecord()){//recorremos el CSV
-			String lon = estaciones.get("longitud").replaceAll("\\s+", "");
-			String lat = estaciones.get("latitud").replaceAll("\\s+", "");
+	private void addAireAcustica(List<Document> distritos, File dir, FileFilter ff, String document) throws IOException, java.text.ParseException{
+		if(dir.exists() && dir.listFiles(ff).length>0){
+			File auxFile = dir.listFiles(ff)[0];
+			if(auxFile.exists()){
+				CsvReader estaciones = new CsvReader (auxFile.getAbsolutePath(), ';');
+				estaciones.readHeaders();
+				while (estaciones.readRecord()){//recorremos el CSV
+					String lon = estaciones.get("longitud").replaceAll("\\s+", "");
+					String lat = estaciones.get("latitud").replaceAll("\\s+", "");
 
-			double lonDegree = Double.parseDouble(lon.split("[º|°]")[0].replaceAll(",", ".").trim()); 
-			double lonMinutes = Double.parseDouble(lon.split("[º|°]")[1].split("'")[0].replaceAll(",", ".").trim());
-			double lonSecond = Double.parseDouble(lon.split("[º|°]")[1].split("'")[1].split("[\"|'][O?]")[0].replaceAll(",", ".").replaceAll("'|º|O", "").trim());
-			double lonDouble = (-1)*Math.signum(lonDegree) * (Math.abs(lonDegree) + (lonMinutes / 60.0) + (lonSecond / 3600.0));
+					double lonDegree = Double.parseDouble(lon.split("[º|°]")[0].replaceAll(",", ".").trim()); 
+					double lonMinutes = Double.parseDouble(lon.split("[º|°]")[1].split("'")[0].replaceAll(",", ".").trim());
+					double lonSecond = Double.parseDouble(lon.split("[º|°]")[1].split("'")[1].split("[\"|'][O?]")[0].replaceAll(",", ".").replaceAll("'|º|O", "").trim());
+					double lonDouble = (-1)*Math.signum(lonDegree) * (Math.abs(lonDegree) + (lonMinutes / 60.0) + (lonSecond / 3600.0));
 
-			double latDegree = Double.parseDouble(lat.split("[º|°]")[0].replaceAll(",", ".").trim()); 
-			double latMinutes = Double.parseDouble(lat.split("[º|°]")[1].split("'")[0].replaceAll(",", ".").trim());
-			double latSecond = Double.parseDouble(lat.split("[º|°]")[1].split("'")[1].split("[\"|'][N?]")[0].replaceAll(",", ".").replaceAll("'|º|O", "").trim());
-			double latDouble = Math.signum(latDegree) * (Math.abs(latDegree) + (latMinutes / 60.0) + (latSecond / 3600.0));
+					double latDegree = Double.parseDouble(lat.split("[º|°]")[0].replaceAll(",", ".").trim()); 
+					double latMinutes = Double.parseDouble(lat.split("[º|°]")[1].split("'")[0].replaceAll(",", ".").trim());
+					double latSecond = Double.parseDouble(lat.split("[º|°]")[1].split("'")[1].split("[\"|'][N?]")[0].replaceAll(",", ".").replaceAll("'|º|O", "").trim());
+					double latDouble = Math.signum(latDegree) * (Math.abs(latDegree) + (latMinutes / 60.0) + (latSecond / 3600.0));
 
-			String CP = geo.getCPbyCoordinates(lonDouble, latDouble);
-			if(CP != null && Funciones.checkCP(CP)){
-				int index = getDistritoByCP(distritos, CP);//devuelve la posicion que ocupa el distrito con ese CP
-				if(index>=0){
-					Document dist = distritos.get(index);
-					Document estacion = new Document();//documento donde se guardara la info de la estacion
-					String attr;
-					List<String> attrList = getCampos(document, null);
-					for(String label:attrList){
-						if((attr = buscarValor(estaciones, label.split("&&")[0], label.split("&&")[1]))!=null && !label.split("&&")[0].equals("geo") && !label.split("&&")[0].equals("valores")){
-							if(NumberUtils.isNumber(label.split("&&")[1])){
-								estacion.append(label.split("&&")[0], Integer.parseInt(attr));
+					String CP = geo.getCPbyCoordinates(lonDouble, latDouble);
+					if(CP != null && Funciones.checkCP(CP)){
+						int index = getDistritoByCP(distritos, CP);//devuelve la posicion que ocupa el distrito con ese CP
+						if(index>=0){
+							Document dist = distritos.get(index);
+							Document estacion = new Document();//documento donde se guardara la info de la estacion
+							String attr;
+							List<String> attrList = getCampos(document, null);
+							for(String label:attrList){
+								if((attr = buscarValor(estaciones, label.split("&&")[0], label.split("&&")[1]))!=null && !label.split("&&")[0].equals("fecha") && !label.split("&&")[0].equals("geo") && !label.split("&&")[0].equals("valores")){
+									if(NumberUtils.isNumber(label.split("&&")[1])){
+										estacion.append(label.split("&&")[0], (int)Double.parseDouble(attr));
+									}else{
+										estacion.append(label.split("&&")[0], attr);
+									}
+								}else if(label.split("&&")[0].equals("geo")){
+									Funciones.setCoordinates(estacion, latDouble, lonDouble);
+								}else if(label.split("&&")[0].equals("fecha")){
+									estacion.append(label.split("&&")[0], formatoFecha.parse(attr));
+								}
+							}
+							List<Document> valores = new ArrayList<Document>();
+							for(String head:estaciones.getHeaders()){//guardamos las medidas tomadas
+								if(!head.equals("numero")){
+									String value = estaciones.get(head);//cogemos el valor
+									if(NumberUtils.isNumber(value.replaceAll(",", "."))){//vemos si es un numero
+										valores.add(new Document("id", head).append("valor", Double.parseDouble(value)));
+									}
+								}
+							}
+							if(!valores.isEmpty()){
+								estacion.append("valores", valores);
+							}
+							if(dist.get(document)!=null && !((List<Document>) dist.get(document)).isEmpty()){
+								((List<Document>) dist.get(document)).add(estacion);
 							}else{
-								estacion.append(label.split("&&")[0], attr);
+								dist.append(document, new ArrayList<Document>(){{add(estacion);}});
 							}
-						}else if(label.split("&&")[0].equals("geo")){
-							Funciones.setCoordinates(estacion, latDouble, lonDouble);
+							distritos.remove(index);
+							distritos.add(dist);
 						}
 					}
-					List<Document> valores = new ArrayList<Document>();
-					for(String head:estaciones.getHeaders()){//guardamos las medidas tomadas
-						if(!head.equals("numero")){
-							String value = estaciones.get(head);//cogemos el valor
-							if(NumberUtils.isNumber(value.replaceAll(",", "."))){//vemos si es un numero
-								valores.add(new Document("id", head).append("valor", Double.parseDouble(value)));
-							}
-						}
-					}
-					if(!valores.isEmpty()){
-						estacion.append("valores", valores);
-					}
-
-					if(dist.get(document)!=null && !((List<Document>) dist.get(document)).isEmpty()){
-						((List<Document>) dist.get(document)).add(estacion);
-					}else{
-						dist.append(document, new ArrayList<Document>(){{add(estacion);}});
-					}
-					distritos.remove(index);
-					distritos.add(dist);
 				}
+				estaciones.close();
+				Funciones.deleteFile(ff, dir);
 			}
 		}
-		estaciones.close();
-		FileUtils.copyFile(new File(dir.listFiles(ff)[0].getAbsolutePath()), new File("."+File.separator+"documents"+File.separator+"HISTORICO"+File.separator+dir.listFiles(ff)[0].getName()));//copiamos archivo
-		FileUtils.forceDelete(new File(dir.listFiles(ff)[0].getAbsolutePath()));//borramos origen
 	}
 
 	private int getDistritoByCP(List<Document> distritos, String CP) {
@@ -330,46 +333,48 @@ public class Almacenar {
 	private void generarDistritoFormat(List<Document> distritos) {
 		try{
 			File folder = new File(".\\documents\\DISTRICT_FORMAT");
-			List<File> listFiles = new ArrayList<File>();
-			for (File fileEntry : folder.listFiles()){ 
-				if (!fileEntry.isDirectory()) {
-					CsvReader distritos_locs = new CsvReader(fileEntry.getAbsolutePath(),';');
-					distritos_locs.readHeaders();
-					String[] names = {"animal", "ropa", "pila", "fuente", "deportes"};
-					int i;
-					for(i = 0; i < names.length; i++){
-						if(fileEntry.getName().contains(names[i])) break;
+			if(folder.exists() && folder.listFiles().length>0){
+				List<File> listFiles = new ArrayList<File>();
+				for (File fileEntry : folder.listFiles()){ 
+					if (!fileEntry.isDirectory()) {
+						CsvReader distritos_locs = new CsvReader(fileEntry.getAbsolutePath(),';');
+						distritos_locs.readHeaders();
+						String[] names = {"animal", "ropa", "pila", "fuente", "deportes"};
+						int i;
+						for(i = 0; i < names.length; i++){
+							if(fileEntry.getName().contains(names[i])) break;
+						}
+						switch(i) {
+						case 0:
+							distritos = addDistritoLoc(distritos, distritos_locs, "censo_animales_domesticos", null);
+							listFiles.add(fileEntry);
+							break;
+						case 1:
+							distritos = addDistritoLoc(distritos, distritos_locs, "contenedores", "ropa");
+							listFiles.add(fileEntry);
+							break;
+						case 2:
+							distritos = addDistritoLoc(distritos, distritos_locs, "contenedores", "pila");
+							listFiles.add(fileEntry);
+							break;
+						case 3:
+							distritos = addDistritoLoc(distritos, distritos_locs, "fuentes_potables", null);
+							listFiles.add(fileEntry);
+							break;
+						case 4:
+							distritos = addDistritoLoc(distritos, distritos_locs, "actividades_deportivas", null);
+							listFiles.add(fileEntry);
+							break;
+						default:
+							System.out.println("No hay desarrolo para preprocesar "+fileEntry.getName());
+						}
+						distritos_locs.close();
 					}
-					switch(i) {
-					case 0:
-						distritos = addDistritoLoc(distritos, distritos_locs, "censo_animales_domesticos", null);
-						listFiles.add(fileEntry);
-						break;
-					case 1:
-						distritos = addDistritoLoc(distritos, distritos_locs, "contenedores", "ropa");
-						listFiles.add(fileEntry);
-						break;
-					case 2:
-						distritos = addDistritoLoc(distritos, distritos_locs, "contenedores", "pila");
-						listFiles.add(fileEntry);
-						break;
-					case 3:
-						distritos = addDistritoLoc(distritos, distritos_locs, "fuentes_potables", null);
-						listFiles.add(fileEntry);
-						break;
-					case 4:
-						distritos = addDistritoLoc(distritos, distritos_locs, "actividades_deportivas", null);
-						listFiles.add(fileEntry);
-						break;
-					default:
-						System.out.println("No hay desarrolo para preprocesar "+fileEntry.getName());
-					}
-					distritos_locs.close();
 				}
-			}
-			for(File fileEntry:listFiles){
-				FileUtils.copyFile(fileEntry, new File("."+File.separator+"documents"+File.separator+"HISTORICO"+File.separator+fileEntry.getName()));//copiamos archivo
-				FileUtils.forceDelete(fileEntry);//borramos origen
+				for(File fileEntry:listFiles){
+					Funciones.deleteFile(fileEntry);
+				}
+				System.out.println("Generada informacion variada a nivel de distrito.");
 			}
 		}catch (Exception e) {
 			e.printStackTrace();
@@ -448,61 +453,67 @@ public class Almacenar {
 		File dir = new File("./documents/UNKNOW_FORMAT/");
 		FileFilter fileFilter = new WildcardFileFilter("*multas-circulacion-detalle.*");
 		try {
-			CsvReader multas = new CsvReader (dir.listFiles(fileFilter)[0].getAbsolutePath(), ';');
-			multas.readHeaders();
-			List<String> attrPadron = getCampos("multas", null);
-			while (multas.readRecord()){//recorremos el CSV
-				String CP = geo.getCPbyStreet(StringUtils.stripAccents(buscarValor(multas, "lugar", "text")));
-				if(CP != null && Funciones.checkCP(CP)){
-					int index = getDistritoByCP(distritos, CP);//devuelve la posicion que ocupa el distrito con ese CP
-					if(index>=0){
-						Document dist = distritos.get(index);
-						Document doc = new Document();//documenbto a insertar
-						for(String label:attrPadron){
-							String attr = null;
-							switch (label.split("&&")[0]) {
-							case "geo":
-								String east, nort;
-								if((east = buscarValor(multas, "coord X", "text"))!=null
-										&& (nort = buscarValor(multas, "coord Y", "text"))!=null){
-									LatLon coordinates = UTMCoord.locationFromUTMCoord(30, AVKey.NORTH, Double.parseDouble(east.replaceAll(",", ".")), Double.parseDouble(nort.replaceAll(",", ".")));
-									Funciones.setCoordinates(doc, coordinates.getLatitude().getDegrees(), coordinates.getLongitude().getDegrees());
-								}
-								break;
-							case "fecha":
-								String mes, anio;
-								if((mes = buscarValor(multas, "mes", "text"))!=null
+			if(dir.exists() && dir.listFiles(fileFilter).length>0){
+				File auxFile = dir.listFiles(fileFilter)[0];
+				if(auxFile.exists()){
+					String mes = "";
+					String anio = "";
+					CsvReader multas = new CsvReader (auxFile.getAbsolutePath(), ';');
+					multas.readHeaders();
+					List<String> attrPadron = getCampos("multas", null);
+					while (multas.readRecord()){//recorremos el CSV
+						String CP = geo.getCPbyStreet(StringUtils.stripAccents(buscarValor(multas, "lugar", "text")));
+						if(CP != null && Funciones.checkCP(CP)){
+							int index = getDistritoByCP(distritos, CP);//devuelve la posicion que ocupa el distrito con ese CP
+							if(index>=0){
+								Document dist = distritos.get(index);
+								Document doc = new Document();//documenbto a insertar
+								for(String label:attrPadron){
+									String attr = null;
+									switch (label.split("&&")[0]) {
+									case "geo":
+										String east, nort;
+										if((east = buscarValor(multas, "coord X", "text"))!=null
+												&& (nort = buscarValor(multas, "coord Y", "text"))!=null){
+											LatLon coordinates = UTMCoord.locationFromUTMCoord(30, AVKey.NORTH, Double.parseDouble(east.replaceAll(",", ".")), Double.parseDouble(nort.replaceAll(",", ".")));
+											Funciones.setCoordinates(doc, coordinates.getLatitude().getDegrees(), coordinates.getLongitude().getDegrees());
+										}
+										break;
+									case "fecha":
+										if((mes = buscarValor(multas, "mes", "text"))!=null
 										&& (anio = buscarValor(multas, "anio", "text"))!=null){
-									doc.append("fecha",mes+"/"+anio);
-								}
-								break;
-							default:
-								if((attr = buscarValor(multas, label.split("&&")[0], label.split("&&")[1]))!=null){
-									if(NumberUtils.isNumber(label.split("&&")[1])){
-										doc.append(label.split("&&")[0], Integer.parseInt(attr));
-									}else{
-										doc.append(label.split("&&")[0], attr);
+											doc.append("fecha",mes+"/"+anio);
+										}
+										break;
+									default:
+										if((attr = buscarValor(multas, label.split("&&")[0], label.split("&&")[1]))!=null){
+											if(NumberUtils.isNumber(label.split("&&")[1])){
+												doc.append(label.split("&&")[0], Integer.parseInt(attr));
+											}else{
+												doc.append(label.split("&&")[0], attr);
+											}
+										}
+										break;
 									}
 								}
-								break;
+								List<Document> documents =  (List<Document>) dist.get("multas");
+								if(documents!=null){
+									documents.add(doc);
+									dist.replace("multas", documents);
+								}else{
+									dist.append("multas", new ArrayList<Document>(){{
+										add(doc);}});
+								}
+								distritos.remove(index);
+								distritos.add(dist);
 							}
 						}
-						List<Document> documents =  (List<Document>) dist.get("multas");
-						if(documents!=null){
-							documents.add(doc);
-							dist.replace("multas", documents);
-						}else{
-							dist.append("multas", new ArrayList<Document>(){{
-								add(doc);}});
-						}
-						distritos.remove(index);
-						distritos.add(dist);
 					}
+					multas.close();
+					Funciones.deleteFile(fileFilter, dir);
+					System.out.println("Generadas las multas a nivel de distrtito para fecha: "+mes+"/"+anio+".");
 				}
 			}
-			multas.close();
-			FileUtils.copyFile(new File(dir.listFiles(fileFilter)[0].getAbsolutePath()), new File("."+File.separator+"documents"+File.separator+"HISTORICO"+File.separator+dir.listFiles(fileFilter)[0].getName()));//copiamos archivo
-			FileUtils.forceDelete(new File(dir.listFiles(fileFilter)[0].getAbsolutePath()));//borramos origen
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -515,86 +526,90 @@ public class Almacenar {
 		File dir = new File("./documents/DISTRICT_BARRIO_FORMAT/");
 		FileFilter fileFilter = new WildcardFileFilter("*padron.*");
 		try{
-			CsvReader distritos_barrios = new CsvReader (dir.listFiles(fileFilter)[0].getAbsolutePath(), ';');
-			distritos_barrios.readHeaders();
-			List<Document> distritos = new ArrayList<>();
-			List<String> attrPadron = getCampos("padron", "barrios");
-			int[] dist_barrio_index = null;
-			while (distritos_barrios.readRecord()){//recorremos el CSV
-				int index = 0;//posicion en la lista del distrito
-				if( (dist_barrio_index = buscarDistritoBarrioInfo(distritos_barrios, 2)) !=null ){//obtenemos la posicion de las cabeceras nombre distrito y barrio
-					if(distritos.isEmpty() || (index = buscarDistrito_Barrio_Zona(distritos, distritos_barrios.get(dist_barrio_index[0]).trim(), "nombre"))<0){//distrito nuevo
-						Document dist = new Document("_id", distritos_barrios.get("COD_DISTRITO")).append("nombre", distritos_barrios.get(dist_barrio_index[0]).trim());//cogemos el documento del distrito
-						List<Document> barrios = new ArrayList<Document>();//lista de barrios del sitrito
-						Document bar = completarBarrio(distritos_barrios, dist_barrio_index);
-						bar = completarBarrio(distritos_barrios, dist_barrio_index);
-						if(!bar.get("nombre").equals("")&&!bar.get("_id").equals("")){//el formato es correcto, lo añadimos a la lista de barrios
-							List<Document> padron = new ArrayList<Document>();
-							padron.add(addNewAgePadron(distritos_barrios, attrPadron));
-							bar.append("padron", padron);
-							barrios.add(bar);
-						}
-						dist.append("barrios", barrios);
-						distritos.add(dist);	
-					}else{//ya existe distrito, añadimos barrio
-						Document dist = distritos.get(index);//cogemos el documento del distrito
-						List<Document> barrios = (List<Document>) dist.get("barrios");//cogemos su lista de barrios asociada al distrito
-						int index_b = 0;//posicion en la lista del barrio						
-						if(!barrios.isEmpty() && (index_b = buscarDistrito_Barrio_Zona(barrios, distritos_barrios.get(dist_barrio_index[1]).trim(), "nombre"))>=0){//ya contiene ese barrio
-							Document bar = barrios.get(index_b);
-							List<Document> padron = (List<Document>) bar.get("padron");
-							if(padron!=null){
-								boolean cambiado = false;
-								for(Document pad:padron){
-									if(pad.getInteger("cod_edad")==Integer.parseInt((buscarValor(distritos_barrios, "cod_edad", "0")))){
-										//actualizar padron
-										for(String label:attrPadron){
-											if(!label.split("&&")[0].equals("cod_edad")){
-												String valor;
-												if((valor = buscarValor(distritos_barrios, label.split("&&")[0], label.split("&&")[1]))!=null){
-													if(pad.get(label.split("&&")[0])!=null){
-														pad.replace(label.split("&&")[0], pad.getInteger(label.split("&&")[0])+Integer.valueOf(valor));
-													}else{//todavia no se tomo valores para ese tipo
-														pad.append(label.split("&&")[0], Integer.valueOf(valor));
-													}
-												}
-											}
-										}
-										cambiado=true;
-										break;
-									}
-								}
-								if(!cambiado){
-									padron.add(addNewAgePadron(distritos_barrios, attrPadron));
-								}
-							}
-							bar.replace("padron", padron);
-							barrios.remove(index_b);
-							barrios.add(bar);
-							dist.replace("barrios", barrios);
-							distritos.remove(index);
-							distritos.add(dist);
-							//añadir si no se actualizo, meter boolean o algo
-						}else{//no tiene el barrio
+			if(dir.exists() && dir.listFiles(fileFilter).length>0){
+				CsvReader distritos_barrios = new CsvReader (dir.listFiles(fileFilter)[0].getAbsolutePath(), ';');
+				distritos_barrios.readHeaders();
+				List<Document> distritos = new ArrayList<>();
+				List<String> attrPadron = getCampos("padron", "barrios");
+				int[] dist_barrio_index = null;
+				while (distritos_barrios.readRecord()){//recorremos el CSV
+					int index = 0;//posicion en la lista del distrito
+					if( (dist_barrio_index = buscarDistritoBarrioInfo(distritos_barrios, 2)) !=null ){//obtenemos la posicion de las cabeceras nombre distrito y barrio
+						if(distritos.isEmpty() || (index = buscarDistrito_Barrio_Zona(distritos, distritos_barrios.get(dist_barrio_index[0]).trim(), "nombre"))<0){//distrito nuevo
+							Document dist = new Document("_id", distritos_barrios.get("COD_DISTRITO")).append("nombre", distritos_barrios.get(dist_barrio_index[0]).trim());//cogemos el documento del distrito
+							List<Document> barrios = new ArrayList<Document>();//lista de barrios del sitrito
 							Document bar = completarBarrio(distritos_barrios, dist_barrio_index);
+							bar = completarBarrio(distritos_barrios, dist_barrio_index);
 							if(!bar.get("nombre").equals("")&&!bar.get("_id").equals("")){//el formato es correcto, lo añadimos a la lista de barrios
 								List<Document> padron = new ArrayList<Document>();
 								padron.add(addNewAgePadron(distritos_barrios, attrPadron));
 								bar.append("padron", padron);
 								barrios.add(bar);
 							}
-							//							dist.append("barrios", barrios);
-							dist.replace("barrios", barrios);
-							distritos.remove(index);//actualizamos
-							distritos.add(dist);//añade distrito actualizado
+							dist.append("barrios", barrios);
+							distritos.add(dist);	
+						}else{//ya existe distrito, añadimos barrio
+							Document dist = distritos.get(index);//cogemos el documento del distrito
+							List<Document> barrios = (List<Document>) dist.get("barrios");//cogemos su lista de barrios asociada al distrito
+							int index_b = 0;//posicion en la lista del barrio						
+							if(!barrios.isEmpty() && (index_b = buscarDistrito_Barrio_Zona(barrios, distritos_barrios.get(dist_barrio_index[1]).trim(), "nombre"))>=0){//ya contiene ese barrio
+								Document bar = barrios.get(index_b);
+								List<Document> padron = (List<Document>) bar.get("padron");
+								if(padron!=null){
+									boolean cambiado = false;
+									for(Document pad:padron){
+										if(pad.getInteger("cod_edad")==Integer.parseInt((buscarValor(distritos_barrios, "cod_edad", "0")))){
+											//actualizar padron
+											for(String label:attrPadron){
+												if(!label.split("&&")[0].equals("cod_edad")){
+													String valor;
+													if((valor = buscarValor(distritos_barrios, label.split("&&")[0], label.split("&&")[1]))!=null){
+														if(pad.get(label.split("&&")[0])!=null){
+															pad.replace(label.split("&&")[0], pad.getInteger(label.split("&&")[0])+Integer.valueOf(valor));
+														}else{//todavia no se tomo valores para ese tipo
+															pad.append(label.split("&&")[0], Integer.valueOf(valor));
+														}
+													}
+												}
+											}
+											cambiado=true;
+											break;
+										}
+									}
+									if(!cambiado){
+										padron.add(addNewAgePadron(distritos_barrios, attrPadron));
+									}
+								}
+								bar.replace("padron", padron);
+								barrios.remove(index_b);
+								barrios.add(bar);
+								dist.replace("barrios", barrios);
+								distritos.remove(index);
+								distritos.add(dist);
+								//añadir si no se actualizo, meter boolean o algo
+							}else{//no tiene el barrio
+								Document bar = completarBarrio(distritos_barrios, dist_barrio_index);
+								if(!bar.get("nombre").equals("")&&!bar.get("_id").equals("")){//el formato es correcto, lo añadimos a la lista de barrios
+									List<Document> padron = new ArrayList<Document>();
+									padron.add(addNewAgePadron(distritos_barrios, attrPadron));
+									bar.append("padron", padron);
+									barrios.add(bar);
+								}
+								//							dist.append("barrios", barrios);
+								dist.replace("barrios", barrios);
+								distritos.remove(index);//actualizamos
+								distritos.add(dist);//añade distrito actualizado
+							}
 						}
 					}
 				}
+				distritos_barrios.close();
+				Funciones.deleteFile(fileFilter, dir);
+				File dirAux = new File("./documents/DISTRICT_BARRIO_FORMAT/");
+				FileFilter fileFilterAux = new WildcardFileFilter("*distritos-barrios.*");
+				Funciones.deleteFile(fileFilterAux, dirAux);
+				return distritos;
 			}
-			distritos_barrios.close();
-			FileUtils.copyFile(new File(dir.listFiles(fileFilter)[0].getAbsolutePath()), new File("."+File.separator+"documents"+File.separator+"HISTORICO"+File.separator+dir.listFiles(fileFilter)[0].getName()));//copiamos archivo
-			FileUtils.forceDelete(new File(dir.listFiles(fileFilter)[0].getAbsolutePath()));//borramos origen
-			return distritos;
 		}catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -605,7 +620,7 @@ public class Almacenar {
 		String nombre =  distritos_barrios.get(dist_barrio_index[1]).trim();
 		Document barrio = new Document("_id", distritos_barrios.get("COD_BARRIO")).append("nombre", nombre);
 		File dir = new File("./documents/DISTRICT_BARRIO_FORMAT/");
-		FileFilter fileFilter = new WildcardFileFilter("*distritos-barrios.csv");
+		FileFilter fileFilter = new WildcardFileFilter("*distritos-barrios.*");
 		CsvReader info_barrio = new CsvReader (dir.listFiles(fileFilter)[0].getAbsolutePath(), ';');
 		info_barrio.readHeaders();
 		while (info_barrio.readRecord()){//recorremos el CSV
@@ -648,68 +663,73 @@ public class Almacenar {
 	private void generarZonas(List<Document> distritos){
 		try{
 			File folder = new File(".\\documents\\PK_FORMAT");
-			List<File> listFiles = new ArrayList<File>();
-			for (File fileEntry : folder.listFiles()) {
-				if (!fileEntry.isDirectory()) {
-					CsvReader distritos_zonas = new CsvReader(fileEntry.getAbsolutePath(),';');
-					distritos_zonas.readHeaders();
-					int index = 0;//posicion en la lista del distrito
-					int[] dist_barrio_index = null;
-					Set<String> topics = getRol(fileEntry.getName());
-					while (distritos_zonas.readRecord()){
-						if( (dist_barrio_index = buscarDistritoBarrioInfo(distritos_zonas, 2)) !=null ){//obtenemos la posicion de las cabeceras nombre distrito y barrio en el CSV
-							index = buscarDistrito_Barrio_Zona(distritos, distritos_zonas.get(dist_barrio_index[0]).trim(), "nombre");//obtenemos la posicion en la lista del doc del distrito
-							if(index>=0){//LOCALIZAR POR COORDENADAS O CP SI NO TIENE BARRIO O DISTTRITO EN EL CSV!!
-								Document dist = distritos.get(index);//cogemos el documento del distrito
-								List<Document> barrios = (List<Document>) dist.get("barrios");//cogemos su lista de barrios asociada al distrito
-								int index_b = buscarDistrito_Barrio_Zona(barrios, distritos_zonas.get(dist_barrio_index[1]).trim(), "nombre");//posicion en la lista del barrio
-								if(index_b>=0){
-									Document barrio = barrios.get(index_b);//cogemos el documento del barrio
-									String cod_postal = buscarValor(distritos_zonas, "codigo_postal", "1");
-									if(cod_postal!=null && !cod_postal.equals("") && Funciones.checkCP(cod_postal)){//codigo postal no valido o nulo
-										if(barrio.get("codigo_postal")!=null&&!barrio.get("codigo_postal").equals("")){
-											((Set<Integer>)barrio.get("codigo_postal")).add(Integer.parseInt(cod_postal));
-										}else{
-											barrio.append("codigo_postal",  new HashSet<Integer>(){{
-												add(Integer.parseInt(cod_postal));}});
-										}
-										if(barrio.get("zonas")!=null&&!barrio.get("zonas").equals("")){//ya hay zonas guardadas para ese barrio
-											int index_z;
-											if((index_z = buscarDistrito_Barrio_Zona((List<Document>) barrio.get("zonas"), distritos_zonas.get("PK"), "PK")) < 0){
-												((List<Document>) barrio.get("zonas")).add(addZona(distritos_zonas, topics));
+			if(folder.exists() && folder.listFiles().length>0){//hay contenido en la carpeta
+				List<File> listFiles = new ArrayList<File>();
+				for (File fileEntry : folder.listFiles()) {
+					if (!fileEntry.isDirectory()) {
+						CsvReader distritos_zonas = new CsvReader(fileEntry.getAbsolutePath(),';');
+						distritos_zonas.readHeaders();
+						int index = 0;//posicion en la lista del distrito
+						int[] dist_barrio_index = null;
+						Set<String> topics = getRol(fileEntry.getName());
+						while (distritos_zonas.readRecord()){
+							if( (dist_barrio_index = buscarDistritoBarrioInfo(distritos_zonas, 2)) !=null ){//obtenemos la posicion de las cabeceras nombre distrito y barrio en el CSV
+								index = buscarDistrito_Barrio_Zona(distritos, distritos_zonas.get(dist_barrio_index[0]).trim(), "nombre");//obtenemos la posicion en la lista del doc del distrito
+								if(index>=0){//LOCALIZAR POR COORDENADAS O CP SI NO TIENE BARRIO O DISTTRITO EN EL CSV!!
+									Document dist = distritos.get(index);//cogemos el documento del distrito
+									List<Document> barrios = (List<Document>) dist.get("barrios");//cogemos su lista de barrios asociada al distrito
+									int index_b = buscarDistrito_Barrio_Zona(barrios, distritos_zonas.get(dist_barrio_index[1]).trim(), "nombre");//posicion en la lista del barrio
+									if(index_b>=0){
+										Document barrio = barrios.get(index_b);//cogemos el documento del barrio
+										String cod_postal = buscarValor(distritos_zonas, "codigo_postal", "1");
+										if(cod_postal!=null && !cod_postal.equals("") && Funciones.checkCP(cod_postal)){//codigo postal no valido o nulo
+											if(barrio.get("codigo_postal")!=null&&!barrio.get("codigo_postal").equals("")){
+												Set<Integer> aux = new HashSet<Integer>((Collection<? extends Integer>) barrio.get("codigo_postal"));
+												aux.add(Integer.parseInt(cod_postal));
+												barrio.replace("codigo_postal", aux);
+												//												((Set<Integer>)((Collection<? extends Integer>)barrio.get("codigo_postal"))).add();
 											}else{
-												if(topics!=null && !topics.isEmpty()){
-													if(((Document)((List<Document>) barrio.get("zonas")).get(index_z)).get("rol")!=null){
-														for(String top:topics){
-															((Set<String>)((Document)((List<Document>) barrio.get("zonas")).get(index_z)).get("rol")).add(top);
-														}
-													}else{//no tiene rol la zona
-														((Document)((List<Document>) barrio.get("zonas")).get(index_z)).append("rol", topics);
-													}
-												}	
+												barrio.append("codigo_postal",  new HashSet<Integer>(){{
+													add(Integer.parseInt(cod_postal));}});
 											}
-										}else{
-											barrio.append("zonas", new ArrayList<Document>(){{
-												add(addZona(distritos_zonas, topics));
-											}});
+											if(barrio.get("zonas")!=null&&!barrio.get("zonas").equals("")){//ya hay zonas guardadas para ese barrio
+												int index_z;
+												if((index_z = buscarDistrito_Barrio_Zona((List<Document>) barrio.get("zonas"), distritos_zonas.get("PK"), "PK")) < 0){
+													((List<Document>) barrio.get("zonas")).add(addZona(distritos_zonas, topics));
+												}else{
+													if(topics!=null && !topics.isEmpty()){
+														if(((Document)((List<Document>) barrio.get("zonas")).get(index_z)).get("rol")!=null){
+															for(String top:topics){
+																((Set<String>)((Document)((List<Document>) barrio.get("zonas")).get(index_z)).get("rol")).add(top);
+															}
+														}else{//no tiene rol la zona
+															((Document)((List<Document>) barrio.get("zonas")).get(index_z)).append("rol", topics);
+														}
+													}	
+												}
+											}else{
+												barrio.append("zonas", new ArrayList<Document>(){{
+													add(addZona(distritos_zonas, topics));
+												}});
+											}
+											barrios.remove(index_b);
+											barrios.add(barrio);	
+											dist.replace("barrios", barrios);	
+											distritos.remove(index);//actualizamos
+											distritos.add(dist);//añade distrito actualizado	
 										}
-										barrios.remove(index_b);
-										barrios.add(barrio);	
-										dist.replace("barrios", barrios);	
-										distritos.remove(index);//actualizamos
-										distritos.add(dist);//añade distrito actualizado	
-									}
-								}	
+									}	
+								}
 							}
 						}
+						distritos_zonas.close();
+						listFiles.add(fileEntry);
 					}
-					distritos_zonas.close();
-					listFiles.add(fileEntry);
 				}
-			}
-			for(File fileEntry:listFiles){
-				FileUtils.copyFile(fileEntry, new File("."+File.separator+"documents"+File.separator+"HISTORICO"+File.separator+fileEntry.getName()));//copiamos archivo
-				FileUtils.forceDelete(fileEntry);//borramos origen
+				for(File fileEntry:listFiles){
+					Funciones.deleteFile(fileEntry);
+				}
+				System.out.println("Generadas las zonas con formato PK a nivel de barrio.");
 			}
 		}catch (IOException e) {
 			e.printStackTrace();
@@ -842,51 +862,55 @@ public class Almacenar {
 		try {
 			File dir = new File("./documents/DISTRICT_BARRIO_FORMAT/");
 			FileFilter fileFilter = new WildcardFileFilter(document);
-			CsvReader elecciones = new CsvReader(dir.listFiles(fileFilter)[0].getAbsolutePath(),';');
-			elecciones.readHeaders();
-			int index = 0;//posicion en la lista del distrito
-			int[] dist_barrio_index = null;
-			while (elecciones.readRecord()){
-				if( (dist_barrio_index = buscarDistritoBarrioInfo(elecciones, 2)) !=null ){//obtenemos la posicion de las cabeceras nombre distrito y barrio en el CSV
-					index = buscarDistrito_Barrio_Zona(distritos, elecciones.get(dist_barrio_index[0]).trim(), "_id");//obtenemos la posicion en la lista del doc del distrito
-					//							System.out.println("INDEX D "+index);
-					if(index>=0){//LOCALIZAR POR COORDENADAS SI NO TIENE BARRIO O DISTTRITO EN EL CSV!!
-						Document dist = distritos.get(index);//cogemos el documento del distrito
-						List<Document> barrios = (List<Document>) dist.get("barrios");//cogemos su lista de barrios asociada al distrito
-						int index_b = buscarDistrito_Barrio_Zona(barrios, elecciones.get(dist_barrio_index[1]).trim(), "_id");//posicion en la lista del barrio
-						//								System.out.println("INDEX B "+index_b);
-						if(index_b>=0){
-							Document barrio = barrios.get(index_b);//cogemos el documento del barrio
-							List<String> attrZonas = getCampos("elecciones", "barrios");
-							Document votos = new Document();
-							String attr = null;
-							for(String label:attrZonas){
-								attr = buscarValor(elecciones, label.split("&&")[0], label.split("&&")[1]);
-								if(attr!=null&&!label.split("&&")[0].equals("votos")){
-									votos.append(label.split("&&")[0], Integer.parseInt(attr));
-								}else if(label.split("&&")[0].equals("votos")){
-									List<Document> votos_partidos = new ArrayList<Document>();
-									for(int i = 7; i<elecciones.getHeaderCount(); i++){
-										votos_partidos.add(new Document()
-												.append("partido", elecciones.getHeaders()[i])
-												.append("total", elecciones.get(i)) );
+			if(dir.exists() && dir.listFiles(fileFilter).length>0){
+				File auxFile = dir.listFiles(fileFilter)[0];
+				if(auxFile.exists()){
+					CsvReader elecciones = new CsvReader(auxFile.getAbsolutePath(),';');
+					elecciones.readHeaders();
+					int index = 0;//posicion en la lista del distrito
+					int[] dist_barrio_index = null;
+					while (elecciones.readRecord()){
+						if( (dist_barrio_index = buscarDistritoBarrioInfo(elecciones, 2)) !=null ){//obtenemos la posicion de las cabeceras nombre distrito y barrio en el CSV
+							index = buscarDistrito_Barrio_Zona(distritos, elecciones.get(dist_barrio_index[0]).trim(), "_id");//obtenemos la posicion en la lista del doc del distrito
+							//							System.out.println("INDEX D "+index);
+							if(index>=0){//LOCALIZAR POR COORDENADAS SI NO TIENE BARRIO O DISTTRITO EN EL CSV!!
+								Document dist = distritos.get(index);//cogemos el documento del distrito
+								List<Document> barrios = (List<Document>) dist.get("barrios");//cogemos su lista de barrios asociada al distrito
+								int index_b = buscarDistrito_Barrio_Zona(barrios, elecciones.get(dist_barrio_index[1]).trim(), "_id");//posicion en la lista del barrio
+								//								System.out.println("INDEX B "+index_b);
+								if(index_b>=0){
+									Document barrio = barrios.get(index_b);//cogemos el documento del barrio
+									List<String> attrZonas = getCampos("elecciones", "barrios");
+									Document votos = new Document();
+									String attr = null;
+									for(String label:attrZonas){
+										attr = buscarValor(elecciones, label.split("&&")[0], label.split("&&")[1]);
+										if(attr!=null&&!label.split("&&")[0].equals("votos")){
+											votos.append(label.split("&&")[0], Integer.parseInt(attr));
+										}else if(label.split("&&")[0].equals("votos")){
+											List<Document> votos_partidos = new ArrayList<Document>();
+											for(int i = 7; i<elecciones.getHeaderCount(); i++){
+												votos_partidos.add(new Document()
+														.append("partido", elecciones.getHeaders()[i])
+														.append("total", elecciones.get(i)) );
+											}
+											votos.append(label.split("&&")[0], votos_partidos);
+										}
 									}
-									votos.append(label.split("&&")[0], votos_partidos);
+									barrio.append("elecciones", votos);
+									barrios.remove(index_b);
+									barrios.add(barrio);	
+									dist.replace("barrios", barrios);	
+									distritos.remove(index);//actualizamos
+									distritos.add(dist);//añade distrito actualizado	
 								}
 							}
-							barrio.append("elecciones", votos);
-							barrios.remove(index_b);
-							barrios.add(barrio);	
-							dist.replace("barrios", barrios);	
-							distritos.remove(index);//actualizamos
-							distritos.add(dist);//añade distrito actualizado	
 						}
 					}
+					elecciones.close();
+					Funciones.deleteFile(fileFilter, dir);
 				}
 			}
-			elecciones.close();
-			FileUtils.copyFile(new File(dir.listFiles(fileFilter)[0].getAbsolutePath()), new File("."+File.separator+"documents"+File.separator+"HISTORICO"+File.separator+dir.listFiles(fileFilter)[0].getName()));//copiamos archivo
-			FileUtils.forceDelete(new File(dir.listFiles(fileFilter)[0].getAbsolutePath()));//borramos origen
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {

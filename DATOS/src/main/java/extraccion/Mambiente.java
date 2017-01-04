@@ -12,8 +12,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
-
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.poi.hssf.usermodel.HSSFCell;
@@ -59,7 +57,6 @@ public class Mambiente {
 	 */
 	private void calidadAire(String url) throws IOException{
 		List<HashMap<String, String>> estaciones = new ArrayList<HashMap<String, String>>();
-		HashMap<String, List<String>> infoEstacion = leerExcelEstaciones("estaciones-control-aire");
 		UrlValidator defaultValidator = new UrlValidator(); 
 		Document doc = null;
 		String fechaHora = null;
@@ -67,23 +64,26 @@ public class Mambiente {
 			doc = Jsoup.connect(url).timeout(30000).get();
 			Element content = doc.select("table.inf_diario").first();
 			fechaHora = content.select("caption").select("span.tabla_titulo").select("span.tabla_titulo_hora").text();//cogemos la fecha y hora
-			Element table = content.select("tbody").first();
-			Elements tableContent = table.select("tr");
-			for(Element tc:tableContent){
-				if(!tc.className().equals("thcabecera") && !tc.className().equals("separador")){//nueva estacion
-					HashMap<String, String> cabeceras = new HashMap<String, String>();
-					cabeceras.put("fecha", fechaHora);
-					Elements columns = tc.select("td");
-					for(Element c:columns){
-						cabeceras.put(c.attr("headers"), c.text());
+			if(!Funciones.checkNew(fechaHora.replaceAll(":", "-")+"_calidad-aire.csv")){
+				HashMap<String, List<String>> infoEstacion = leerExcelEstaciones("estaciones-control-aire");
+				Element table = content.select("tbody").first();
+				Elements tableContent = table.select("tr");
+				for(Element tc:tableContent){
+					if(!tc.className().equals("thcabecera") && !tc.className().equals("separador")){//nueva estacion
+						HashMap<String, String> cabeceras = new HashMap<String, String>();
+						cabeceras.put("fecha", fechaHora);
+						Elements columns = tc.select("td");
+						for(Element c:columns){
+							cabeceras.put(c.attr("headers"), c.text());
+						}
+						completarEstacion(cabeceras, infoEstacion, 0);
+						estaciones.add(cabeceras);
 					}
-					completarEstacion(cabeceras, infoEstacion, 0);
-					estaciones.add(cabeceras);
 				}
+				volcarCSV(estaciones, fechaHora.replaceAll(":", "-")+"_calidad-aire.csv");
+				System.out.println("Se ha descargado los valores de calidad del aire a fecha de "+fechaHora);
 			}
 		}
-		volcarCSV(estaciones, fechaHora.replaceAll(":", "-")+"_calidad-aire.csv");
-		System.out.println("Se ha descargado los valores de calidad del aire a fecha de "+fechaHora);
 	}
 
 	/**
@@ -93,7 +93,6 @@ public class Mambiente {
 	 */
 	private void calidadAcustica(String url) throws IOException{
 		List<HashMap<String, String>> estaciones = new ArrayList<HashMap<String, String>>();
-		HashMap<String, List<String>> infoEstacion = leerExcelEstaciones("estaciones-acusticas");
 		UrlValidator defaultValidator = new UrlValidator(); 
 		Document doc = null;
 		String fecha = null;
@@ -101,25 +100,28 @@ public class Mambiente {
 			doc = Jsoup.connect(url).timeout(30000).get();
 			Element content = doc.select("table.inf_diario").first();
 			fecha = content.select("caption").select("span.tabla_titulo").select("span.tabla_titulo_fecha").text();//cogemos la fecha
-			Element table = content.select("tbody").first();
-			Elements tableContent = table.select("tr");
-			for(Element tc:tableContent){
-				if(!tc.className().equals("thcabecera") && !tc.className().equals("separador")){//nueva estacion
-					HashMap<String, String> cabeceras = new HashMap<String, String>();
-					cabeceras.put("fecha", fecha);
-					Elements columns = tc.select("td");
-					for(Element c:columns){
-						cabeceras.put(c.attr("headers"), c.text());
+			if(!Funciones.checkNew(fecha.replaceAll(":", "-")+"_calidad-acustica.csv")){
+				HashMap<String, List<String>> infoEstacion = leerExcelEstaciones("estaciones-acusticas");
+				Element table = content.select("tbody").first();
+				Elements tableContent = table.select("tr");
+				for(Element tc:tableContent){
+					if(!tc.className().equals("thcabecera") && !tc.className().equals("separador")){//nueva estacion
+						HashMap<String, String> cabeceras = new HashMap<String, String>();
+						cabeceras.put("fecha", fecha);
+						Elements columns = tc.select("td");
+						for(Element c:columns){
+							cabeceras.put(c.attr("headers"), c.text());
+						}
+						completarEstacion(cabeceras, infoEstacion, 1);
+						estaciones.add(cabeceras);
 					}
-					completarEstacion(cabeceras, infoEstacion, 1);
-					estaciones.add(cabeceras);
 				}
+				volcarCSV(estaciones, fecha.replaceAll(":", "-")+"_calidad-acustica.csv");
+				System.out.println("Se ha descargado los valores de calidad acústica a fecha de "+fecha);	
 			}
 		}
-		volcarCSV(estaciones, fecha.replaceAll(":", "-")+"_calidad-acustica.csv");
-		System.out.println("Se ha descargado los valores de calidad acústica a fecha de "+fecha);
 	}
-	
+
 	/**
 	 * Vuelca en un CSV con la estructa deseada la informacion completa de las estaciones de calidad aire y acustica
 	 * @param estaciones - Estrucutra con la informacion de las estaciones
@@ -265,7 +267,6 @@ public class Mambiente {
 			}
 			wb.close();
 			fs.close();
-			FileUtils.forceDelete(new File(dir.listFiles(fileFilter)[0].getAbsolutePath()));//borramos origen
 		} catch(Exception ioe) {
 			ioe.printStackTrace();
 		}
