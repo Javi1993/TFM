@@ -159,7 +159,7 @@ public class Limpieza {
 		wb.close();
 		fs.close();
 		FileUtils.forceDelete(fileEntry);
-		volcarCSV(fusionarFilas(mesas), headers, fileEntry.getName().substring(fileEntry.getName().lastIndexOf(".")+1));
+		volcarCSV(fusionarFilas(mesas), headers, fileEntry.getName().substring(0,fileEntry.getName().lastIndexOf(".")));
 	}
 
 	private List<List<String>> fusionarFilas(List<List<String>> mesas) {

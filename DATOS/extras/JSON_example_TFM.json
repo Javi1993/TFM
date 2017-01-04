@@ -204,6 +204,16 @@
 	      }
 	  }
    ],
+  "radares": [
+	  {
+	    "cod_radar":1,
+	    "ubicacion":"ubicacion",
+	    "geo": {
+	       "type": "Point",
+	        "coordinates": [1.1, 1.1]
+	      }
+	  }
+   ],
   "censo_animales_domesticos": [
   {
     "año":1,

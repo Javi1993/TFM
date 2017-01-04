@@ -33,7 +33,6 @@ public class Geocode {
 
 	public String getCPbyStreet(String street){
 		street = street.replaceAll("\\s", "+");
-		street = street.replaceAll("Ñ", "N");
 		String cp;
 		if((cp = locCP.get(street))!=null){
 			return cp;
@@ -67,7 +66,7 @@ public class Geocode {
 			System.err.println("La URL '"+dir+"' no es valida.");
 			//			e.printStackTrace();
 		} catch (IOException e) {
-			System.out.println(e.getMessage());
+			System.err.println(e.getMessage());
 			//			e.printStackTrace();
 		} catch (JSONException e) {
 			System.err.println("No existe código postal para la localizacion pasada o se ha superado el límite de peticiones para la key.");
