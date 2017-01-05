@@ -12,7 +12,7 @@ l01280796-instalaciones-accesibles-no-municipales
 l01280796-instalaciones-accesibles-municipales
 //l01280796-mercados-municipales-locales-comerciales-nombres-comerciales-y-actividades
 l01280796-mercados-municipales
-//l01280796-instalaciones-municipales-con-zonas-wifi-gratuitas (NO TIENE CONTENIDO)
+l01280796-instalaciones-municipales-con-zonas-wifi-gratuitas
 l01280796-centros-de-la-escuela-oficial-de-idiomas-en-madrid
 l01280796-zonas-ser-distintivos-y-parquimetros
 l01280796-calidad-del-aire-estaciones-de-control
@@ -29,11 +29,11 @@ l01280796-deportes-centros-deportivos-municipales-polideportivos
 l01280796-salas-de-estudio-y-lectura
 //l01280796-farmacias-de-guardia
 l01280796-sedes-institutos-de-investigacion
-l01280796-censo-de-locales-y-sus-actividades
+//l01280796-censo-de-locales-y-sus-actividades
 l01280796-centros-para-personas-con-discapacidad
 l01280796-centros-de-servicios-sociales-municipales
-l01280796-taxi-reservas-de-paradas-en-via-publica
-l01280796-plazas-de-estacionamiento-para-personas-de-movilidad-reducida
+//l01280796-taxi-reservas-de-paradas-en-via-publica
+//l01280796-plazas-de-estacionamiento-para-personas-de-movilidad-reducida
 l01280796-deportes-instalaciones-deportivas-basicas-municipales
 l01280796-contenedores-de-pilas-en-marquesinas-de-autobus
 l01280796-contenedores-de-ropa-oficiales-del-ayuntamiento-de-madrid

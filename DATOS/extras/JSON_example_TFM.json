@@ -37,7 +37,7 @@
           "rol": ["rol1","rol2"],
           "nombre":"name",
           "descripcion":"descripcion",
-          "nombre-via":"text",
+          "nombre_via":"text",
           "horario":"horario",
           "trasnporte":"desc. de lineas",
           "telefono":"telefono",
