@@ -1,24 +1,20 @@
 {
   "_id" : 1,
   "nombre" : "name",
-  "barrios" : [
-    {
+  "barrios" : [{
       "_id":1,
       "nombre":"name",
       "codigo_postal":[11111, 3333, 2222],
       "superficie":1,
       "perimetro":1,
-      "padron": [
-        {
+      "padron": [{
           "cod_edad": 1,
           "n_españoles_hombres":1,
           "n_extranjeros_hombres":1,
           "n_españoles_mujeres":1,
           "n_extranjeros_mujeres":1
-        }
-        ],
-      "catastro": [
-        {
+        }],
+      "catastro": [{
           "uso_cod":"A",
           "uso_denomin": "uso",
           "inmuebles":1,
@@ -29,12 +25,10 @@
           "sup_suelo_media":1,
           "val_catastro":1,
           "val_catastro_medio":1
-        }
-        ],
-      "zonas":[
-        {
+        }],
+      "zonas":[{
           "PK": 1,
-          "rol": ["rol1","rol2"],
+          "rol": ["rol1","rol2","roln"],
           "nombre":"name",
           "descripcion":"descripcion",
           "nombre_via":"text",
@@ -48,8 +42,7 @@
            "type": "Point",
             "coordinates": [1.1, 1.1]
           }
-        }
-        ],
+        }],
       "zona_ser":{
           "parquimetros":[{
 	          "matricula_id":1,
@@ -57,53 +50,23 @@
 	          "geo": {
 	           "type": "Point",
 	            "coordinates": [1.1, 1.1]
-          }
-         }],
-		 "plazas":[{
-		 	"color":"color",
-		 	"n_plazas_color":1
-		 }
-		 ]},
-      "plazas_aparcamiento(COGER LAS QUE TENGAN LA GEO, el otro csv no vale)":[
-        {
-          "color":"color",
-          "cantidad_linea":1,
-          "cantidad_bateria":1
-        }
-        ],
-      "plazas_aparcamiento_minusvalidos": {
-          "cantidad_linea":1,
-          "cantidad_bateria":1,
-          "cantidad_no-especificado":1
-        },
-      "paradas_taxi": {
-          "cantidad_linea":1,
-          "cantidad_bateria":1
-        },
-      "elecciones":[
-        {
+          }}],
+    		 "plazas":[{
+    		 	  "color":"color",
+    		 	  "n_plazas_color":1
+		 }]},
+      "elecciones":[{
           "censo":1,
           "total":1,
           "abstencion":1,
           "nulos":1,
-          "votos":[
-            {
+          "votos":[{
               "partido":"partido",
               "total":1
-            }
-            ]
-        }
-        ]
-    }
-  ],
-  "policia":[
-    {
-      "detenciones(DATASET MENSUAL)":1,
-      "accidentes(con/sin heridos)(DATASET MENSUAL)":[1,1]
-    }
-  ],
-  "aire":[
-    {
+            }]
+        }]
+    }],
+  "aire":[{
       "numero":1,
       "estacion":"estacion",
       "fecha":"fecha",
@@ -129,10 +92,8 @@
         "type": "Point",
           "coordinates": [1.1, 1.1]
         }
-    }
-  ],
-  "acustico":[
-    {
+    }],
+  "acustico":[{
       "numero":1,
       "estacion":"estacion",
       "fecha":"fecha",
@@ -154,10 +115,8 @@
         "type": "Point",
           "coordinates": [1.1, 1.1]
         }
-    }
-  ],
-  "actividades_deportivas":[
-  {
+    }],
+  "actividades_deportivas":[{
   	"ID_evento":1,
   	"titulo":"titulo",
   	"fecha":"fecha",
@@ -167,20 +126,21 @@
         "type": "Point",
         "coordinates": [1.1, 1.1]
       }
-  }
-  ],
-  "fuentes_potables":[
-    {
+  }],
+  "monumentos":[{
+    "cod":1,
+    "titulo":"titulo",
+    "localizacion":"loc"
+    }],
+  "fuentes_potables":[{
       "codigo":"cod",
       "estado":"estado",
       "geo": {
         "type": "Point",
         "coordinates": [1.1, 1.1]
       }
-    }
-  ],
-  "contenedores":[
-    {
+    }],
+  "contenedores":[{
       "tipo":"ropa/pilas(si parana null es ropa)",
       "parada":1,
       "linea":"lineas",
@@ -188,10 +148,8 @@
         "type": "Point",
         "coordinates": [1.1, 1.1]
       }
-    }
-  ],
-  "multas": [
-	  {
+    }],
+  "multas": [{
 	    "lugar":"lugar",
 	    "calificacion":"calif",
 	    "fecha":"fecha",
@@ -207,23 +165,18 @@
 	       "type": "Point",
 	        "coordinates": [1.1, 1.1]
 	      }
-	  }
-   ],
-  "radares": [
-	  {
+	  }],
+  "radares": [{
 	    "cod_radar":1,
 	    "ubicacion":"ubicacion",
 	    "geo": {
 	       "type": "Point",
 	        "coordinates": [1.1, 1.1]
 	      }
-	  }
-   ],
-  "censo_animales_domesticos": [
-  {
+	  }],
+  "censo_animales_domesticos": [{
     "año":1,
     "n_especie_canina":1,
     "n_especie_felina":1
-  }
-  ]
+  }]
 }
