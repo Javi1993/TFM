@@ -37,6 +37,7 @@
           "rol": ["rol1","rol2"],
           "nombre":"name",
           "descripcion":"descripcion",
+          "nombre-via":"text",
           "horario":"horario",
           "trasnporte":"desc. de lineas",
           "telefono":"telefono",
@@ -49,16 +50,20 @@
           }
         }
         ],
-      "parquimetros":[
-        {
-          "matricula_id":"matricula",
-          "fecha de alta":"date",
-          "geo(TENER EN CUENTA LAS QUE VIENEN EN ED50.ZONA30 para cambio a WGS84": {
-           "type": "Point",
-            "coordinates": [1.1, 1.1]
+      "zona_ser":{
+          "parquimetros":[{
+	          "matricula_id":1,
+	          "fecha_alta":"date",
+	          "geo": {
+	           "type": "Point",
+	            "coordinates": [1.1, 1.1]
           }
-        }
-        ],
+         }],
+		 "plazas":[{
+		 	"color":"color",
+		 	"n_plazas_color":1
+		 }
+		 ]},
       "plazas_aparcamiento(COGER LAS QUE TENGAN LA GEO, el otro csv no vale)":[
         {
           "color":"color",

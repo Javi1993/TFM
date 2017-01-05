@@ -132,13 +132,6 @@ public class Funciones {
 			}
 		}
 	}
-	
-	public static void deleteFile(FileFilter fileFilter, File dir) throws IOException{
-		File dest = new File("./documents/HISTORICO/"+dir.listFiles(fileFilter)[0].getName().substring(0,dir.listFiles(fileFilter)[0].getName().lastIndexOf('.'))+".zip");
-		File src = new File(dir.listFiles(fileFilter)[0].getPath());
-		compressFile(dest, src);
-		FileUtils.forceDelete(src);//borramos origen
-	}
 
 	public static void deleteFile(File fileEntry) throws IOException{
 		File dest = new File("./documents/HISTORICO/"+fileEntry.getName().substring(0,fileEntry.getName().lastIndexOf('.'))+".zip");
