@@ -120,7 +120,7 @@
   	"ID_evento":1,
   	"titulo":"titulo",
   	"fecha":"fecha",
-  	"dias":"dias",
+  	"dias(VER SI ESTA COGIENDOLO)":"dias",
   	"nombre_instalacion":"instalacion",
   	"geo": {
         "type": "Point",
@@ -160,7 +160,6 @@
 	    "imp_":1,
 	    "vel_limite": 1,
 	    "vel_circula": 1,
-	    "importe":1,
 	    "geo": {
 	       "type": "Point",
 	        "coordinates": [1.1, 1.1]
