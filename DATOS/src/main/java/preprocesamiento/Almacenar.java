@@ -92,7 +92,7 @@ public class Almacenar {
 		generarDistritoFormat(distritos);
 		generarEstaciones(distritos);
 		guardarElecciones("*elecciones-ayuntamiento-madrid.*", distritos);
-//		generarMultas(distritos);
+		//				generarMultas(distritos);
 		generarRadares(distritos);
 		generarZonaSER(distritos);
 		conDB();
@@ -282,20 +282,19 @@ public class Almacenar {
 					int[] dist_barrio_index = null;
 					while (catastro_barrios.readRecord()){
 						if( (dist_barrio_index = buscarDistritoBarrioInfo(catastro_barrios, 2)) !=null ){//obtenemos la posicion de las cabeceras nombre distrito y barrio en el CSV
-							index = buscarDistrito_Barrio_Zona(distritos, catastro_barrios.get(dist_barrio_index[0]).trim(), "_id");//obtenemos la posicion en la lista del doc del distrito
+							index = buscarDistrito_Barrio_Zona(distritos, catastro_barrios.get(dist_barrio_index[0]).replaceAll("^0", "").trim(), "_id");//obtenemos la posicion en la lista del doc del distrito
 							if(index>=0){//LOCALIZAR POR COORDENADAS SI NO TIENE BARRIO O DISTTRITO EN EL CSV!!
 								Document dist = distritos.get(index);//cogemos el documento del distrito
 								List<Document> barrios = (List<Document>) dist.get("barrios");//cogemos su lista de barrios asociada al distrito
 								String aux = catastro_barrios.get(dist_barrio_index[1]).trim();
 								int index_b = buscarDistrito_Barrio_Zona(barrios, aux.substring(aux.length()-1), "_id");//posicion en la lista del barrio
-								//								System.out.println("INDEX B "+index_b);
 								if(index_b>=0){
 									Document barrio = barrios.get(index_b);//cogemos el documento del barrio
 									List<String> attrZonas = getCampos("catastro", "barrios", null);
 									Document catastro = new Document();
 									String attr = null;
 									for(String label:attrZonas){
-										if((attr = buscarValor(catastro_barrios, label.split("&&")[0], label.split("&&")[1]))!=null){
+										if((attr = buscarValor(catastro_barrios, label.split("&&")[0], label.split("&&")[1]))!=null && attr!=""){
 											if(NumberUtils.isNumber(label.split("&&")[1])){
 												catastro.append(label.split("&&")[0], Double.parseDouble(attr));
 											}else{
@@ -898,17 +897,21 @@ public class Almacenar {
 			String value = csvDoc.get(header);
 			if(!value.equals("")){
 				if(NumberUtils.isNumber(tipo)){//cogemos solo la parte numerica
-					value = value.replaceAll("\\s+","").replaceAll(",", "\\.");
-					Pattern p = Pattern.compile("(\\d+\\.\\d+)");//numero decimal
-					Matcher m = p.matcher(value);
-					if (m.find()) {
-						return m.group(1);
-					}else{
-						p = Pattern.compile("(\\d+)");//numero entero
-						m = p.matcher(value);
+					if(!value.matches(".+\\d+\\.\\d+,\\d+")){
+						value = value.replaceAll("\\s+","").replaceAll(",", "\\.");
+						Pattern p = Pattern.compile("(\\d+\\.\\d+)");//numero decimal
+						Matcher m = p.matcher(value);
 						if (m.find()) {
 							return m.group(1);
+						}else{
+							p = Pattern.compile("(\\d+)");//numero entero
+							m = p.matcher(value);
+							if (m.find()) {
+								return m.group(1);
+							}
 						}
+					}else{
+						return value.replaceAll("\\.", "").replaceAll(",", ".");
 					}
 				}
 				return value.trim();
@@ -1058,9 +1061,9 @@ public class Almacenar {
 		//		String a = "02";
 		//		System.out.println(Integer.parseInt(a));
 		//		alm.client.close();
-//														String a = "Nº Plazas por color";
-//														String b = "n_plazas_color";
-//														System.out.println(Funciones.similarity(a, b));
+		//														String a = "Nº Plazas por color";
+		//														String b = "n_plazas_color";
+		//														System.out.println(Funciones.similarity(a, b));
 		// omp parallel for schedule(dynamic)
 		//        for (int i = 2; i < 20; i += 3) {
 		//            System.out.println("  @" + i);
