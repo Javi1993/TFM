@@ -92,7 +92,7 @@ public class Almacenar {
 		generarDistritoFormat(distritos);
 		generarEstaciones(distritos);
 		guardarElecciones("*elecciones-ayuntamiento-madrid.*", distritos);
-		generarMultas(distritos);
+//		generarMultas(distritos);
 		generarRadares(distritos);
 		generarZonaSER(distritos);
 		conDB();
@@ -800,9 +800,16 @@ public class Almacenar {
 												}else{
 													if(topics!=null && !topics.isEmpty()){
 														if(((Document)((List<Document>) barrio.get("zonas")).get(index_z)).get("rol")!=null){
+															List<Document> zonas =  (List<Document>) barrio.get("zonas");
+															Document zona = zonas.get(index_z);
+															Set<String> aux = new HashSet<String>((Collection<? extends String>) zona.get("rol"));
 															for(String top:topics){
-																((Set<String>)((Document)((List<Document>) barrio.get("zonas")).get(index_z)).get("rol")).add(top);
+																aux.add(top);
 															}
+															zona.replace("rol", aux);
+															zonas.remove(index_z);
+															zonas.add(zona);
+															barrio.replace("zonas", zonas);
 														}else{//no tiene rol la zona
 															((Document)((List<Document>) barrio.get("zonas")).get(index_z)).append("rol", topics);
 														}
