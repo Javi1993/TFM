@@ -120,7 +120,7 @@
   	"ID_evento":1,
   	"titulo":"titulo",
   	"fecha":"fecha",
-  	"dias(VER SI ESTA COGIENDOLO)":"dias",
+  	"dias_semana":"dias",
   	"nombre_instalacion":"instalacion",
   	"geo": {
         "type": "Point",

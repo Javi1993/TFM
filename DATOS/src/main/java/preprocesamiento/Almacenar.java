@@ -92,13 +92,75 @@ public class Almacenar {
 		generarDistritoFormat(distritos);
 		generarEstaciones(distritos);
 		guardarElecciones("*elecciones-ayuntamiento-madrid.*", distritos);
-		//				generarMultas(distritos);
+//		generarMultas(distritos);
 		generarRadares(distritos);
 		generarZonaSER(distritos);
+		generarMonumentos(distritos);
 		conDB();
 		collection.drop();
 		collection.insertMany(distritos);//insertamos los distritos con su informacion
 		client.close();
+	}
+
+	private void generarMonumentos(List<Document> distritos) {
+		File dir = new File("./documents/UNKNOW_FORMAT/");
+		FileFilter fileFilter = new WildcardFileFilter("*monumentos-madrid.*");
+		try {
+			if(dir.exists() && dir.listFiles(fileFilter).length>0){
+				File auxFile = dir.listFiles(fileFilter)[0];
+				if(auxFile.exists()){
+					CsvReader monumentos = new CsvReader (auxFile.getAbsolutePath(), ';');
+					monumentos.readHeaders();
+					List<String> attrPadron = getCampos("monumentos", null, null);
+					while (monumentos.readRecord()){//recorremos el CSV
+						String place = StringUtils.stripAccents(buscarValor(monumentos, "localizacion", "text"));
+						String CP = null;
+						if(place!=null){
+							if(place.matches(".*\\(.*\\)$")){
+								CP = geo.getCPbyStreet(place.substring(0, place.indexOf('(')).trim().replaceAll("\\.", "").replaceAll(",", "").replaceAll("º", "").replaceAll("ª", ""));
+							}else{
+								CP = geo.getCPbyStreet(place.replaceAll("\\.", "").replaceAll(",", "").replaceAll("º", "").replaceAll("ª", ""));
+							}
+							if(CP != null && Funciones.checkCP(CP)){
+								int index = getDistritoByCP(distritos, CP);//devuelve la posicion que ocupa el distrito con ese CP
+								if(index>=0){
+									Document dist = distritos.get(index);
+									Document doc = new Document();//documenbto a insertar
+									for(String label:attrPadron){
+										String attr = null;
+										if((attr = buscarValor(monumentos, label.split("&&")[0], label.split("&&")[1]))!=null){
+											if(NumberUtils.isNumber(label.split("&&")[1])){
+												doc.append(label.split("&&")[0], Integer.parseInt(attr));
+											}else{
+												doc.append(label.split("&&")[0], attr);
+											}
+										}
+
+									}
+									List<Document> documents =  (List<Document>) dist.get("monumentos");
+									if(documents!=null){
+										documents.add(doc);
+										dist.replace("monumentos", documents);
+									}else{
+										dist.append("monumentos", new ArrayList<Document>(){{
+											add(doc);}});
+									}
+									distritos.remove(index);
+									distritos.add(dist);
+								}
+							}
+						}
+					}
+					monumentos.close();
+					Funciones.deleteFile(dir.listFiles(fileFilter)[0]);
+					System.out.println("Generados los monumentos a nivel de distrtito.");
+				}
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void generarZonaSER(List<Document> distritos) {
@@ -203,7 +265,7 @@ public class Almacenar {
 	private void generarRadares(List<Document> distritos) {
 		try {
 			File dir = new File("./documents/UNKNOW_FORMAT/");
-			FileFilter fileFilter = new WildcardFileFilter("*300049-0-radares-fijos-moviles*");
+			FileFilter fileFilter = new WildcardFileFilter("*radares-fijos-moviles*");
 			if(dir.exists() && dir.listFiles(fileFilter).length > 0){
 				File auxFile = dir.listFiles(fileFilter)[0];
 				if(auxFile.exists()){
@@ -562,7 +624,7 @@ public class Almacenar {
 					multas.readHeaders();
 					List<String> attrPadron = getCampos("multas", null, null);
 					while (multas.readRecord()){//recorremos el CSV
-						String CP = geo.getCPbyStreet(StringUtils.stripAccents(buscarValor(multas, "lugar", "text")));
+						String CP = geo.getCPbyStreet(StringUtils.stripAccents(buscarValor(multas, "lugar", "text")).replaceAll("\\.", "").replaceAll(",", ""));
 						if(CP != null && Funciones.checkCP(CP)){
 							int index = getDistritoByCP(distritos, CP);//devuelve la posicion que ocupa el distrito con ese CP
 							if(index>=0){

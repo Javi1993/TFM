@@ -1,11 +1,17 @@
 package preprocesamiento;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -16,6 +22,10 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
+import jxl.Cell;
+import jxl.Sheet;
+import jxl.Workbook;
+import jxl.WorkbookSettings;
 
 @SuppressWarnings("deprecation")
 public class Limpieza {
@@ -80,9 +90,11 @@ public class Limpieza {
 		for (File fileEntry : folder.listFiles()) {
 			try {
 				if (!fileEntry.isDirectory() && FilenameUtils.getExtension(fileEntry.getAbsolutePath()).equals("xls")) {
-					//De momento solo elecciones
-					if(fileEntry.getName().contains("elecciones-ayuntamiento-madrid")){
+					String name = fileEntry.getName();
+					if(name.contains("elecciones-ayuntamiento-madrid")){
 						leerExcelElecciones(fileEntry);
+					}else if(name.contains("monumentos-madrid")){
+						leerExcelMonumentos(fileEntry);
 					}
 				}
 			} catch (IOException e) {
@@ -91,6 +103,55 @@ public class Limpieza {
 			}
 		}
 
+	}
+
+	private void leerExcelMonumentos(File fileEntry) {
+		try{
+			//File to store data in form of CSV
+			File f = new File(".\\documents\\"+fileEntry.getName().substring(0,fileEntry.getName().lastIndexOf("."))+".csv");
+			OutputStream os = (OutputStream)new FileOutputStream(f);
+			String encoding = "ISO-8859-1";
+			OutputStreamWriter osw = new OutputStreamWriter(os, encoding);
+			BufferedWriter bw = new BufferedWriter(osw);
+			//Excel document to be imported
+			WorkbookSettings ws = new WorkbookSettings();
+			ws.setLocale(new Locale("es", "ES"));
+			Workbook w = Workbook.getWorkbook(fileEntry,ws);
+			// Gets the sheets from workbook
+			for(int sheet = 0; sheet < w.getNumberOfSheets(); sheet++){
+				Sheet s = w.getSheet(sheet);
+				Cell[] row = null;
+				// Gets the cells from sheet
+				for(int i = 0 ; i < s.getRows() ; i++){
+					row = s.getRow(i);
+					if (row.length > 0 && i > 0){
+						bw.write(row[0].getContents());
+						for (int j = 1; j < row.length; j++){
+							bw.write(';');
+							bw.write(row[j].getContents());
+						}
+						bw.newLine();
+					}else if(row.length > 0 && i == 0){
+						bw.write(row[0].getContents().replaceAll("\\s+", ";"));
+						bw.newLine();
+					}else{
+						break;
+					}
+				}
+			}
+			w.close();
+			bw.flush();
+			bw.close();
+			osw.close();
+			os.close();
+			FileUtils.forceDelete(fileEntry);
+		}catch (UnsupportedEncodingException e){
+			e.printStackTrace();
+		}catch (IOException e){
+			e.printStackTrace();
+		}catch (Exception e){
+			e.printStackTrace();;
+		}
 	}
 
 	private void leerExcelElecciones(File fileEntry) throws IOException {
