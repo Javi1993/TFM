@@ -34,12 +34,17 @@ public class Geocode {
 	public String getCPbyStreet(String street){
 		street = street.replaceAll("\\s", "+");
 		String cp;
-		if((cp = locCP.get(street))!=null){
+		if((cp = locCP.get(street))!=null){//ya se ha comprobado esta calle/lugar
+			if(cp.equals("")) return null;
 			return cp;
 		}else{
 			String dir = "https://maps.googleapis.com/maps/api/geocode/json?address="+street+"+MADRID";
 			cp = doRequest(dir, 0);
-			locCP.put(street, cp);
+			if(cp!=null){
+				locCP.put(street, cp);
+			}else{
+				locCP.put(street, "");	
+			}
 			return cp;
 		}
 	}
@@ -69,21 +74,27 @@ public class Geocode {
 			System.err.println(e.getMessage());
 			//			e.printStackTrace();
 		} catch (JSONException e) {
-			System.err.println("No existe código postal para la localizacion pasada o se ha superado el límite de peticiones para la key.");
-			System.err.println(jsonObj.toString());
 			try {
 				if(jsonObj.get("status").equals("OVER_QUERY_LIMIT") && Funciones.getLineNumber("."+File.separator+"extras"+File.separator+"google-keys")<number)
 					return doRequest(dir, number++);
 			} catch (JSONException e1) {
+				System.err.println("No existe código postal para la url pasada ('"+dir+"') o se ha superado el límite de peticiones para las key.");
+				System.err.println(jsonObj.toString());
 				return null;
 			}
 		}
 		return null;
 	}
 
+	/**
+	 * Obtiene una API key de la lista para usarla en las peticiones
+	 * @param number - numero de linea de la API key a coger
+	 * @return Devuelve la key
+	 * @throws IOException
+	 */
 	private String getKey(int number) throws IOException{
-		Stream<String> lines = Files.lines(Paths.get("."+File.separator+"extras"+File.separator+"google-keys"));
-		String line = lines.skip(number).findFirst().get();
+		Stream<String> lines = Files.lines(Paths.get("."+File.separator+"extras"+File.separator+"google-keys"));//abrimos el fichero de keys
+		String line = lines.skip(number).findFirst().get();//obtenemos la linea
 		lines.close();
 		if(!line.equals("")){
 			line = "&key="+line;

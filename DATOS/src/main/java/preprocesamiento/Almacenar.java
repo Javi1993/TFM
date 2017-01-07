@@ -92,7 +92,7 @@ public class Almacenar {
 		generarDistritoFormat(distritos);
 		generarEstaciones(distritos);
 		guardarElecciones("*elecciones-ayuntamiento-madrid.*", distritos);
-//		generarMultas(distritos);
+		generarMultas(distritos);
 		generarRadares(distritos);
 		generarZonaSER(distritos);
 		generarMonumentos(distritos);

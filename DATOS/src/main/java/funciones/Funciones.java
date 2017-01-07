@@ -107,9 +107,11 @@ public class Funciones {
 	 */
 	public static boolean checkNew(String fileName) {
 		File dir = new File("."+File.separator+"documents"+File.separator+"HISTORICO"+File.separator);//directorio con el historico de ficheros descargados
-		FileFilter fileFilter = new WildcardFileFilter(fileName.substring(0,fileName.lastIndexOf('.'))+".zip");//patron de busqueda
-		if(dir.listFiles(fileFilter).length>0){
-			return true;//existe un fichero con ese nombre
+		if(dir.exists()){
+			FileFilter fileFilter = new WildcardFileFilter(fileName.substring(0,fileName.lastIndexOf('.'))+".zip");//patron de busqueda
+			if(dir.listFiles(fileFilter).length>0){
+				return true;//existe un fichero con ese nombre
+			}
 		}
 		return false;//no existe
 	}
