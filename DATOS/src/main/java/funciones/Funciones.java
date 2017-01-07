@@ -97,6 +97,7 @@ public class Funciones {
 					add(lon);
 					add(lat);
 				}}));
+		doc.append("latitud", lat).append("longitud", lon);
 	}
 
 	/**
