@@ -15,6 +15,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -92,16 +93,18 @@ public class Funciones {
 	 */
 	@SuppressWarnings("serial")
 	public static void setCoordinates(org.bson.Document doc, double lat, double lon){
-		doc.append("geo", new org.bson.Document("type","Point")
-				.append("coordinates", new ArrayList<Double>(){{
-					add(lon);
-					add(lat);
-				}}));
-		doc.append("latitud", lat).append("longitud", lon);
+		if(lat>40 && lat<41 && lon<-3 && lon>-4){//comprobamos que no hay coordenadas erroneas
+			doc.append("geo", new org.bson.Document("type","Point")
+					.append("coordinates", new ArrayList<Double>(){{
+						add(lon);
+						add(lat);
+					}}));
+			doc.append("latitud", lat).append("longitud", lon);
+		}
 	}
 
 	/**
-	 * Comprobamos si el nombre del fichero pasado como parametro ya se ha descargado con anterioridad
+	 * Comprueba si el nombre del fichero pasado como parametro ya se ha descargado con anterioridad
 	 * @param fileName - Nombre del fichero a descargar
 	 * @return - Booleano indicando respuesta
 	 */
@@ -117,16 +120,16 @@ public class Funciones {
 	}
 
 	/**
-	 * Borra los directorios y ficheros de la carpeta documents
+	 * Borra los directorios y ficheros almacenados en la carpeta documents
 	 */
 	public static void vaciarDocuments() {
 		File folder = new File("."+File.separator+"documents"+File.separator);
 		for (File fileEntry : folder.listFiles()) {
-			if (!fileEntry.getName().equals("HISTORICO")) {
+			if (!fileEntry.getName().equals("HISTORICO")){//si es diferente de la carpeta hitorico eliminamos
 				try {
 					FileUtils.deleteDirectory(fileEntry);
-				} catch (IOException e) {
-					if (fileEntry.isDirectory()) {
+				} catch (IOException e){
+					if (fileEntry.isDirectory()){
 						System.err.println("No se puede borrar el directorio '"+fileEntry.getName()+".\n"+e.getMessage());
 					}else{
 						System.err.println("No se puede borrar el fichero '"+fileEntry.getName()+".\n"+e.getMessage());
@@ -136,6 +139,26 @@ public class Funciones {
 		}
 	}
 
+	/**
+	 * Añade al document los atributos comunes que se han extraido del dataset
+	 * @param doc - documento JSON
+	 * @param attr - atributo a añadir
+	 * @param label - campo
+	 */
+	@SuppressWarnings("deprecation")
+	public static void setComunAttr(org.bson.Document doc, String attr, String label) {
+		if(NumberUtils.isNumber(label.split("&&")[1])){
+			doc.append(label.split("&&")[0], Double.parseDouble(attr));
+		}else{
+			doc.append(label.split("&&")[0], attr);
+		}
+	}
+
+	/**
+	 * Borra el fichero recibido
+	 * @param fileEntry - fichero origen
+	 * @throws IOException
+	 */
 	public static void deleteFile(File fileEntry) throws IOException{
 		File dest = new File("./documents/HISTORICO/"+fileEntry.getName().substring(0,fileEntry.getName().lastIndexOf('.'))+".zip");
 		File src = new File(fileEntry.getPath());
@@ -143,6 +166,12 @@ public class Funciones {
 		FileUtils.forceDelete(src);//borramos origen
 	}
 
+	/**
+	 * Comprime un fichero en formato ZIP
+	 * @param dest - fichero destino
+	 * @param src - fichero origen
+	 * @throws IOException
+	 */
 	private static void compressFile(File dest, File src) throws IOException{
 		FileOutputStream fos = new FileOutputStream(dest);
 		ZipOutputStream out = new ZipOutputStream(fos);
