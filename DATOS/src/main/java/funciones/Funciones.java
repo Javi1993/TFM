@@ -185,4 +185,12 @@ public class Funciones {
 		fos.close();
 		fis.close();
 	}
+
+	/**
+	 * Asigna como propiedades de la aplicacion variables como rutas, usuarios, db, etc. Para de esta manera tener un unico origen
+	 */
+	public static void loadPropierties() {
+			System.setProperty("extras", "."+File.separator+"extras"+File.separator);
+			System.setProperty("documents", "."+File.separator+"documents"+File.separator);
+	  }
 }
