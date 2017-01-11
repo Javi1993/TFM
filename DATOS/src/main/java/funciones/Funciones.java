@@ -190,7 +190,15 @@ public class Funciones {
 	 * Asigna como propiedades de la aplicacion variables como rutas, usuarios, db, etc. Para de esta manera tener un unico origen
 	 */
 	public static void loadPropierties() {
-			System.setProperty("extras", "."+File.separator+"extras"+File.separator);
-			System.setProperty("documents", "."+File.separator+"documents"+File.separator);
-	  }
+		System.setProperty("server", "localhost");
+		System.setProperty("db", "tfm");
+		System.setProperty("colection", "distritos");
+		System.setProperty("extras", "."+File.separator+"extras"+File.separator);
+		System.setProperty("documents", "."+File.separator+"documents"+File.separator);
+		System.setProperty("pk", System.getProperty("documents")+"PK_FORMAT"+File.separator);
+		System.setProperty("district_barrio_format", System.getProperty("documents")+"DISTRICT_BARRIO_FORMAT"+File.separator);
+		System.setProperty("district_format", System.getProperty("documents")+"DISTRICT_FORMAT"+File.separator);
+		System.setProperty("estaciones_calidad", System.getProperty("documents")+"ESTACIONES_CALIDAD"+File.separator);
+		System.setProperty("unknow_format", System.getProperty("documents")+"UNKNOW_FORMAT"+File.separator);
+	}
 }

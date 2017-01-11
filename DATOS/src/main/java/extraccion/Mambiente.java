@@ -178,7 +178,7 @@ public class Mambiente {
 	 * @param name - Acustica o aire
 	 */
 	private void volcarCSV(List<HashMap<String, String>> estaciones, String name) {
-		String outputFile = System.getProperty("docuemnts")+name;
+		String outputFile = System.getProperty("documents")+name;
 		try {
 			if(estaciones != null && !estaciones.isEmpty()){
 				CsvWriter csvOutput = new CsvWriter(new FileWriter(outputFile, false), ';');

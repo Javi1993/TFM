@@ -9,16 +9,16 @@
       "perimetro":1,
       "padron": [{
           "cod_edad": 1,
-          "n_españoles_hombres":1,
+          "n_espanoles_hombres":1,
           "n_extranjeros_hombres":1,
-          "n_españoles_mujeres":1,
+          "n_espanoles_mujeres":1,
           "n_extranjeros_mujeres":1
         }],
       "catastro": [{
           "uso_cod":"A",
           "uso_denomin": "uso",
           "inmuebles":1,
-          "año_medio":1,
+          "ano_medio":1,
           "sup_cons_barrio":1,
           "sup_cons_media":1,
           "sup_suelo":1,
@@ -174,7 +174,7 @@
 	      }
 	  }],
   "censo_animales_domesticos": [{
-    "año":1,
+    "ano":1,
     "n_especie_canina":1,
     "n_especie_felina":1
   }]
