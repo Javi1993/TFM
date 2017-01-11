@@ -107,6 +107,9 @@ public class Mambiente {
 		try {
 			File dir = new File(System.getProperty("documents"));
 			FileFilter fileFilter = new WildcardFileFilter("*"+doucment+".*");
+			
+			//SI NULL BUSCAR EN HSITORICO, DESCOMPRIMIR Y LEER, LUEGO BORRAR, VER  DONDE ESTA COMRPIMIENDOLO DE NUEVO 
+			
 			POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(dir.listFiles(fileFilter)[0].getAbsolutePath()));
 			HSSFWorkbook wb = new HSSFWorkbook(fs);
 			HSSFSheet sheet = wb.getSheetAt(0);

@@ -107,95 +107,103 @@ public class Almacenar {
 	 * @param distritos - coleccion de los distrtitos
 	 */
 	private void generarUnknownFormat(List<Document> distritos){
-		try {
-			File folder = new File(System.getProperty("unknow_format"));//cogemos la carpeta
+
+		File folder = new File(System.getProperty("unknow_format"));//cogemos la carpeta
+		List<File> aux = new ArrayList<File>();
+		try{
 			if(folder.exists()){//comprobamos que existe
 				for (File fileEntry : folder.listFiles()){//recorremos cada uno de los datasets que contiene
 					String name = fileEntry.getName();
 					if(name.contains("monumentos-madrid.") || name.contains("multas-circulacion-detalle.")){
 						generarMonumentosMultas(distritos, fileEntry);
+						aux.add(fileEntry);
 					}else if(name.contains("radares-fijos-moviles.")){
 						generarRadares(distritos);
+						aux.add(fileEntry);
 					}else{
 						if(!name.contains("estaciones")){System.out.println("No hay funcion para pre-procesar "+name+".");}
 					}
 				}
-				for (File fileEntry : folder.listFiles()){
+				for (File fileEntry : aux){
 					Funciones.deleteFile(fileEntry);
 				}
 			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
+		}catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	private void generarMonumentosMultas(List<Document> distritos, File file) throws NumberFormatException, IOException {
+	private void generarMonumentosMultas(List<Document> distritos, File file) throws IOException {
 		if(file.exists()){
 			CsvReader csv = new CsvReader (file.getAbsolutePath(), ';');
 			csv.readHeaders();
 			String tipe = file.getName().split("-")[2];
 			List<String> attrPadron = getCampos(tipe, null, null);
 			while (csv.readRecord()){//recorremos el CSV
-				String place = null;
-				if(tipe.equals("monumentos")){
-					place = StringUtils.stripAccents(buscarValor(csv, "localizacion", "text"));
-				}else{
-					place = StringUtils.stripAccents(buscarValor(csv, "lugar", "text"));
-				}
-				String CP = null;
-				if(place!=null){
-					if(place.matches(".*\\(.*\\)$")){
-						CP = geo.getCPbyStreet(place.substring(0, place.indexOf('(')).trim().replaceAll("\\.", "").replaceAll(",", "").replaceAll("º", "").replaceAll("ª", ""));
+				try {
+					String place = null;
+					if(tipe.equals("monumentos")){
+						place = StringUtils.stripAccents(buscarValor(csv, "localizacion", "text"));
 					}else{
-						CP = geo.getCPbyStreet(place.replaceAll("\\.", "").replaceAll(",", "").replaceAll("º", "").replaceAll("ª", ""));
+						place = StringUtils.stripAccents(buscarValor(csv, "lugar", "text"));
 					}
-					if(CP != null && Funciones.checkCP(CP)){
-						int index = getDistritoByCP(distritos, CP);//devuelve la posicion que ocupa el distrito con ese CP
-						if(index>=0){
-							Document dist = distritos.get(index);
-							Document doc = new Document();//documenbto a insertar
-							for(String label:attrPadron){
-								String attr = null;
-								switch (label.split("&&")[0]) {
-								case "geo":
-									String east, nort;
-									if((east = buscarValor(csv, "coord X", "text"))!=null
-											&& (nort = buscarValor(csv, "coord Y", "text"))!=null && tipe.equals("multas")){
-										LatLon coordinates = UTMCoord.locationFromUTMCoord(30, AVKey.NORTH, Double.parseDouble(east.replaceAll(",", ".")), Double.parseDouble(nort.replaceAll(",", ".")));
-										Funciones.setCoordinates(doc, coordinates.getLatitude().getDegrees(), coordinates.getLongitude().getDegrees());
+					String CP = null;
+					if(place!=null){
+						if(place.matches(".*\\(.*\\)$")){
+							CP = geo.getCPbyStreet(place.substring(0, place.indexOf('(')).trim().replaceAll("\\.", "").replaceAll(",", "").replaceAll("º", "").replaceAll("ª", ""));
+						}else{
+							CP = geo.getCPbyStreet(place.replaceAll("\\.", "").replaceAll(",", "").replaceAll("º", "").replaceAll("ª", ""));
+						}
+						if(CP != null && Funciones.checkCP(CP)){
+							int index = getDistritoByCP(distritos, CP);//devuelve la posicion que ocupa el distrito con ese CP
+							if(index>=0){
+								Document dist = distritos.get(index);
+								Document doc = new Document();//documenbto a insertar
+								for(String label:attrPadron){
+									String attr = null;
+									switch (label.split("&&")[0]) {
+									case "geo":
+										String east, nort;
+										if((east = buscarValor(csv, "coord X", "text"))!=null
+												&& (nort = buscarValor(csv, "coord Y", "text"))!=null && tipe.equals("multas")){
+											LatLon coordinates = UTMCoord.locationFromUTMCoord(30, AVKey.NORTH, Double.parseDouble(east.replaceAll(",", ".")), Double.parseDouble(nort.replaceAll(",", ".")));
+											Funciones.setCoordinates(doc, coordinates.getLatitude().getDegrees(), coordinates.getLongitude().getDegrees());
+										}
+										break;
+									case "fecha":
+										String mes, anio;
+										if((mes = buscarValor(csv, "mes", "text"))!=null
+												&& (anio = buscarValor(csv, "anio", "text"))!=null && tipe.equals("multas")){
+											doc.append("fecha",mes+"/"+anio);
+										}
+										break;
+									default:
+										if((attr = buscarValor(csv, label.split("&&")[0], label.split("&&")[1]))!=null){
+											Funciones.setComunAttr(doc, attr, label);
+										}
+										break;
 									}
-									break;
-								case "fecha":
-									String mes, anio;
-									if((mes = buscarValor(csv, "mes", "text"))!=null
-											&& (anio = buscarValor(csv, "anio", "text"))!=null && tipe.equals("multas")){
-										doc.append("fecha",mes+"/"+anio);
-									}
-									break;
-								default:
-									if((attr = buscarValor(csv, label.split("&&")[0], label.split("&&")[1]))!=null){
-										Funciones.setComunAttr(doc, attr, label);
-									}
-									break;
 								}
+								List<Document> documents =  (List<Document>) dist.get(tipe);
+								if(documents!=null){
+									documents.add(doc);
+									dist.replace(tipe, documents);
+								}else{
+									dist.append(tipe, new ArrayList<Document>(){{
+										add(doc);}});
+								}
+								distritos.remove(index);
+								distritos.add(dist);
 							}
-							List<Document> documents =  (List<Document>) dist.get(tipe);
-							if(documents!=null){
-								documents.add(doc);
-								dist.replace(tipe, documents);
-							}else{
-								dist.append(tipe, new ArrayList<Document>(){{
-									add(doc);}});
-							}
-							distritos.remove(index);
-							distritos.add(dist);
 						}
 					}
+					csv.close();
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
 			}
-			csv.close();
 		}
 	}
 
