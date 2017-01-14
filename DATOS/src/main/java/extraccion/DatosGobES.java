@@ -144,7 +144,7 @@ public class DatosGobES {
 		}
 		return title;
 	}
-	
+
 	/**
 	 * Comprueba que el titulo del dataset a descargar no haya sido bajado ya para otra fecha mas actual
 	 * @param titulos - lista con los titulos asociados a la ID de ese dataset
@@ -214,10 +214,10 @@ public class DatosGobES {
 	 * Lanza el proceso de extraccion de los datasets de www.datos.gob.es
 	 */
 	private void getDatosGobEs(){
-		try{
-			String[] ids = getIdsDataGob();//se crea el array con todas las IDs de los datasets a bajar de datos.gob.es
-			if(ids!=null){
-				for(int i = 0; i<ids.length; i++){//se recorre el array 
+		String[] ids = getIdsDataGob();//se crea el array con todas las IDs de los datasets a bajar de datos.gob.es
+		if(ids!=null){
+			for(int i = 0; i<ids.length; i++){//se recorre el array 
+				try{
 					if(!ids[i].startsWith("//")){//las IDs 'comentadas' se ignoran
 						StringBuilder result = new StringBuilder();
 						URL url = new URL("http://datos.gob.es/apidata/catalog/distribution/dataset/"+ids[i]+"?_sort=-title&_pageSize=20&_page=0");
@@ -236,15 +236,15 @@ public class DatosGobES {
 							downloadDS(urls, "XLS", ids[i]);//si no existe ninguno en ese formato se bajan las url con datasets en formato xls
 						}
 					}
+				}catch (JSONException e) {
+					System.err.println("El formato de JSON devuelvto por Datos.Gob.es no es valido para la ID '"+ids[i]+"'.");
+				} catch (MalformedURLException e) {
+					System.err.println("La URL para solicitar el dataset cuya ID es '"+ids[i]+"' es incorrecta.");
+				} catch (IOException e) {
+					System.err.println("El servicio de Datos.Gob.es no está disponible para la ID '"+ids[i]+"'.");
 				}
-				System.out.println("Descarga de 'http://datos.gob.es/' finalizada.");
 			}
-		}catch (JSONException e) {
-			e.printStackTrace();
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+			System.out.println("Descarga de 'http://datos.gob.es/' finalizada.");
 		}
 	}
 }

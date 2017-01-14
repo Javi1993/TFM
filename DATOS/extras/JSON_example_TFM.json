@@ -151,6 +151,7 @@
     }],
   "multas": [{
 	    "lugar":"lugar",
+	    "CP":1,
 	    "calificacion":"calif",
 	    "fecha":"fecha",
 	    "hora":"hora",
@@ -167,6 +168,7 @@
 	  }],
   "radares": [{
 	    "cod_radar":1,
+	    "CP":1,
 	    "ubicacion":"ubicacion",
 	    "geo": {
 	       "type": "Point",

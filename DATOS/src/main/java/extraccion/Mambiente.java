@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.poi.hssf.usermodel.HSSFCell;
@@ -25,6 +26,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import com.csvreader.CsvWriter;
 import funciones.Funciones;
+import net.lingala.zip4j.core.ZipFile;
 
 public class Mambiente {
 
@@ -102,15 +104,25 @@ public class Mambiente {
 	 * @param doucment - String con identificador de si son de aire o acusticas
 	 * @return Hashmap de 'nombre estacion' como key y sus atributos como value.
 	 */
-	private HashMap<String, List<String>> leerExcelEstaciones(String doucment){
+	private HashMap<String, List<String>> leerExcelEstaciones(String document){
 		HashMap<String, List<String>> infoAux = new HashMap<String, List<String>>();
 		try {
 			File dir = new File(System.getProperty("documents"));
-			FileFilter fileFilter = new WildcardFileFilter("*"+doucment+".*");
-			
-			//SI NULL BUSCAR EN HSITORICO, DESCOMPRIMIR Y LEER, LUEGO BORRAR, VER  DONDE ESTA COMRPIMIENDOLO DE NUEVO 
-			
-			POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(dir.listFiles(fileFilter)[0].getAbsolutePath()));
+			FileFilter fileFilter = new WildcardFileFilter("*"+document+".*");
+			POIFSFileSystem fs = null;
+			if(dir.listFiles(fileFilter)==null || dir.listFiles(fileFilter).length==0){
+				if(Funciones.checkNew(document+".zip")){//se tiene copia en historico
+					File dirHist = new File("."+File.separator+"documents"+File.separator+"HISTORICO"+File.separator);//directorio con el historico de ficheros descargados
+					if(dirHist.listFiles(fileFilter)!=null && dirHist.listFiles(fileFilter).length>0){
+						System.out.println("ENTRO "+document);
+						ZipFile zipFile = new ZipFile(dirHist.listFiles(fileFilter)[0]);
+						zipFile.extractFile(dirHist.listFiles(fileFilter)[0].getName().replaceAll("zip", "xls"), System.getProperty("documents"));
+					}
+				}else{//no se tiene actual ni copia
+					return null;
+				}
+			}
+			fs = new POIFSFileSystem(new FileInputStream(dir.listFiles(fileFilter)[0]));
 			HSSFWorkbook wb = new HSSFWorkbook(fs);
 			HSSFSheet sheet = wb.getSheetAt(0);
 			HSSFRow row;
@@ -169,12 +181,13 @@ public class Mambiente {
 			}
 			wb.close();
 			fs.close();
+			Funciones.deleteFile(dir.listFiles(fileFilter)[0]);
 		} catch(Exception ioe) {
 			ioe.printStackTrace();
 		}
 		return infoAux;
 	}
-	
+
 	/**
 	 * Vuelca en un CSV con la estructa deseada la informacion completa de las estaciones de calidad aire y acustica
 	 * @param estaciones - Estrucutra con la informacion de las estaciones
@@ -202,7 +215,7 @@ public class Mambiente {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * Lee de la URL pasada la informacion medida por la estaciones de calidad del aire
 	 * @param url - URL donde estan los datos
@@ -219,22 +232,24 @@ public class Mambiente {
 			fechaHora = content.select("caption").select("span.tabla_titulo").select("span.tabla_titulo_hora").text();//cogemos la fecha y hora
 			if(!Funciones.checkNew(fechaHora.replaceAll(":", "-")+"_calidad-aire.csv")){
 				HashMap<String, List<String>> infoEstacion = leerExcelEstaciones("estaciones-control-aire");
-				Element table = content.select("tbody").first();
-				Elements tableContent = table.select("tr");
-				for(Element tc:tableContent){
-					if(!tc.className().equals("thcabecera") && !tc.className().equals("separador")){//nueva estacion
-						HashMap<String, String> cabeceras = new HashMap<String, String>();
-						cabeceras.put("fecha", fechaHora);
-						Elements columns = tc.select("td");
-						for(Element c:columns){
-							cabeceras.put(c.attr("headers"), c.text());
+				if(infoEstacion!=null){
+					Element table = content.select("tbody").first();
+					Elements tableContent = table.select("tr");
+					for(Element tc:tableContent){
+						if(!tc.className().equals("thcabecera") && !tc.className().equals("separador")){//nueva estacion
+							HashMap<String, String> cabeceras = new HashMap<String, String>();
+							cabeceras.put("fecha", fechaHora);
+							Elements columns = tc.select("td");
+							for(Element c:columns){
+								cabeceras.put(c.attr("headers"), c.text());
+							}
+							completarEstacion(cabeceras, infoEstacion, 0);
+							estaciones.add(cabeceras);
 						}
-						completarEstacion(cabeceras, infoEstacion, 0);
-						estaciones.add(cabeceras);
 					}
+					volcarCSV(estaciones, fechaHora.replaceAll(":", "-")+"_calidad-aire.csv");
+					System.out.println("Se ha descargado los valores de calidad del aire a fecha de "+fechaHora);
 				}
-				volcarCSV(estaciones, fechaHora.replaceAll(":", "-")+"_calidad-aire.csv");
-				System.out.println("Se ha descargado los valores de calidad del aire a fecha de "+fechaHora);
 			}
 		}
 	}
@@ -255,22 +270,24 @@ public class Mambiente {
 			fecha = content.select("caption").select("span.tabla_titulo").select("span.tabla_titulo_fecha").text();//cogemos la fecha
 			if(!Funciones.checkNew(fecha.replaceAll(":", "-")+"_calidad-acustica.csv")){
 				HashMap<String, List<String>> infoEstacion = leerExcelEstaciones("estaciones-acusticas");
-				Element table = content.select("tbody").first();
-				Elements tableContent = table.select("tr");
-				for(Element tc:tableContent){
-					if(!tc.className().equals("thcabecera") && !tc.className().equals("separador")){//nueva estacion
-						HashMap<String, String> cabeceras = new HashMap<String, String>();
-						cabeceras.put("fecha", fecha);
-						Elements columns = tc.select("td");
-						for(Element c:columns){
-							cabeceras.put(c.attr("headers"), c.text());
+				if(infoEstacion!=null){
+					Element table = content.select("tbody").first();
+					Elements tableContent = table.select("tr");
+					for(Element tc:tableContent){
+						if(!tc.className().equals("thcabecera") && !tc.className().equals("separador")){//nueva estacion
+							HashMap<String, String> cabeceras = new HashMap<String, String>();
+							cabeceras.put("fecha", fecha);
+							Elements columns = tc.select("td");
+							for(Element c:columns){
+								cabeceras.put(c.attr("headers"), c.text());
+							}
+							completarEstacion(cabeceras, infoEstacion, 1);
+							estaciones.add(cabeceras);
 						}
-						completarEstacion(cabeceras, infoEstacion, 1);
-						estaciones.add(cabeceras);
 					}
+					volcarCSV(estaciones, fecha.replaceAll(":", "-")+"_calidad-acustica.csv");
+					System.out.println("Se ha descargado los valores de calidad acústica a fecha de "+fecha);	
 				}
-				volcarCSV(estaciones, fecha.replaceAll(":", "-")+"_calidad-acustica.csv");
-				System.out.println("Se ha descargado los valores de calidad acústica a fecha de "+fecha);	
 			}
 		}
 	}
