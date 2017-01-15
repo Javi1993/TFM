@@ -172,8 +172,8 @@ public class Almacenar {
 								switch (label.split("&&")[0]) {
 								case "geo":
 									String east, nort;
-									if((east = buscarValor(csv, "coord X", "text"))!=null
-											&& (nort = buscarValor(csv, "coord Y", "text"))!=null && tipe.equals("multas")){
+									if(tipe.equals("multas") &&(east = buscarValor(csv, "coordenada X", "text"))!=null
+											&& (nort = buscarValor(csv, "coordenada Y", "text"))!=null){
 										LatLon coordinates = UTMCoord.locationFromUTMCoord(30, AVKey.NORTH, Double.parseDouble(east.replaceAll(",", ".")), Double.parseDouble(nort.replaceAll(",", ".")));
 										Funciones.setCoordinates(doc, coordinates.getLatitude().getDegrees(), coordinates.getLongitude().getDegrees());
 									}
