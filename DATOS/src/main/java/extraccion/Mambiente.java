@@ -114,7 +114,6 @@ public class Mambiente {
 				if(Funciones.checkNew(document+".zip")){//se tiene copia en historico
 					File dirHist = new File("."+File.separator+"documents"+File.separator+"HISTORICO"+File.separator);//directorio con el historico de ficheros descargados
 					if(dirHist.listFiles(fileFilter)!=null && dirHist.listFiles(fileFilter).length>0){
-						System.out.println("ENTRO "+document);
 						ZipFile zipFile = new ZipFile(dirHist.listFiles(fileFilter)[0]);
 						zipFile.extractFile(dirHist.listFiles(fileFilter)[0].getName().replaceAll("zip", "xls"), System.getProperty("documents"));
 					}

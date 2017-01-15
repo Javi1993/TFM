@@ -392,7 +392,7 @@ public class Almacenar {
 									Document catastro = new Document();
 									String attr = null;
 									for(String label:attrZonas){
-										if((attr = buscarValor(catastro_barrios, label.split("&&")[0], label.split("&&")[1]))!=null && attr!=""){
+										if((attr = buscarValor(catastro_barrios, label.split("&&")[0], label.split("&&")[1], "a"))!=null && attr!=""){
 											Funciones.setComunAttr(catastro, attr, label);
 										}
 									}
@@ -923,7 +923,7 @@ public class Almacenar {
 	 * @return Valor encontrado
 	 * @throws IOException 
 	 */
-	private String buscarValor(CsvReader csvDoc, String aprox, String tipo) throws IOException {
+	private String buscarValor(CsvReader csvDoc, String aprox, String tipo, String... catastro) throws IOException {
 		String[] headers = csvDoc.getHeaders();
 		double max = 0.0;
 		double aux = 0.0;
@@ -938,6 +938,9 @@ public class Almacenar {
 		if(!value.equals("")){
 			if(NumberUtils.isNumber(tipo)){//cogemos solo la parte numerica
 				if(!value.matches(".+\\d+\\.\\d+,\\d+")){
+					if(catastro!=null){
+						value = value.replaceAll("\\.", "");//NO VAAAAAAAAAA
+					}
 					value = value.replaceAll("\\s+","").replaceAll(",", "\\.");
 					Pattern p = Pattern.compile("(\\d+\\.\\d+)");//numero decimal
 					Matcher m = p.matcher(value);

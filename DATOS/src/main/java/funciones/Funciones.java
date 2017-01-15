@@ -197,6 +197,7 @@ public class Funciones {
 		System.setProperty("documents", "."+File.separator+"documents"+File.separator);
 		System.setProperty("pk", System.getProperty("documents")+"PK_FORMAT"+File.separator);
 		System.setProperty("district_barrio_format", System.getProperty("documents")+"DISTRICT_BARRIO_FORMAT"+File.separator);
+		System.setProperty("barrio_format", System.getProperty("documents")+"BARRIO_FORMAT"+File.separator);
 		System.setProperty("district_format", System.getProperty("documents")+"DISTRICT_FORMAT"+File.separator);
 		System.setProperty("estaciones_calidad", System.getProperty("documents")+"ESTACIONES_CALIDAD"+File.separator);
 		System.setProperty("unknow_format", System.getProperty("documents")+"UNKNOW_FORMAT"+File.separator);

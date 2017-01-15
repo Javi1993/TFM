@@ -30,9 +30,9 @@ import jxl.WorkbookSettings;
 @SuppressWarnings("deprecation")
 public class Limpieza {
 
-	public void separacionCarpetas(String path){
+	public void separacionCarpetas(){
 		try {
-			File folder = new File(path);
+			File folder = new File(System.getProperty("documents"));
 			transformarExcelToCSV(folder);//transformamos los Excels a formato CSV
 			for (File fileEntry : folder.listFiles()) {
 				if (!fileEntry.isDirectory()) {
@@ -41,7 +41,7 @@ public class Limpieza {
 					dataset.readHeaders();
 					if(dataset.getHeaders()[0].equals("PK")){//archivos formato PK
 						dataset.close();	
-						File dest = new File(folder+File.separator+"PK_FORMAT"+File.separator+fileEntry.getName());
+						File dest = new File(System.getProperty("pk")+fileEntry.getName());
 						FileUtils.copyFile(src, dest);
 						FileUtils.forceDelete(src);
 					}else{
@@ -62,16 +62,16 @@ public class Limpieza {
 						dataset.close();
 						File dest = null;
 						if(!barrio&&distrito){//archivos con solo distrito
-							dest = new File(folder+File.separator+"DISTRICT_FORMAT"+File.separator+fileEntry.getName());
+							dest = new File(System.getProperty("district_format")+fileEntry.getName());
 						}else if(barrio&&distrito){
-							dest = new File(folder+File.separator+"DISTRICT_BARRIO_FORMAT"+File.separator+fileEntry.getName());
+							dest = new File(System.getProperty("district_barrio_format")+fileEntry.getName());
 						}else if(barrio&&!distrito){	
-							dest = new File(folder+File.separator+"BARRIO_FORMAT"+File.separator+fileEntry.getName());
+							dest = new File(System.getProperty("barrio_format")+fileEntry.getName());
 						}else{
 							if(fileEntry.getName().contains("calidad-aire")||fileEntry.getName().contains("calidad-acustica")){
-								dest = new File(folder+File.separator+"ESTACIONES_CALIDAD"+File.separator+fileEntry.getName());
+								dest = new File(System.getProperty("estaciones_calidad")+fileEntry.getName());
 							}else{
-								dest = new File(folder+File.separator+"UNKNOW_FORMAT"+File.separator+fileEntry.getName());
+								dest = new File(System.getProperty("unknow_format")+fileEntry.getName());
 							}
 						}
 						FileUtils.copyFile(src, dest);//copiamos archivo
@@ -108,7 +108,7 @@ public class Limpieza {
 	private void leerExcelMonumentos(File fileEntry) {
 		try{
 			//File to store data in form of CSV
-			File f = new File(".\\documents\\"+fileEntry.getName().substring(0,fileEntry.getName().lastIndexOf("."))+".csv");
+			File f = new File(System.getProperty("documents")+fileEntry.getName().substring(0,fileEntry.getName().lastIndexOf("."))+".csv");
 			OutputStream os = (OutputStream)new FileOutputStream(f);
 			String encoding = "ISO-8859-1";
 			OutputStreamWriter osw = new OutputStreamWriter(os, encoding);
@@ -256,7 +256,7 @@ public class Limpieza {
 	}
 
 	private void volcarCSV(List<List<String>> list, String[] headers, String name) {
-		String outputFile = "./documents/"+name+".csv";
+		String outputFile = System.getProperty("documents")+name+".csv";
 		try {
 			if(list != null && !list.isEmpty()){
 				CsvWriter csvOutput = new CsvWriter(new FileWriter(outputFile, false), ';');
