@@ -19,8 +19,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.xml.parsers.ParserConfigurationException;
-import org.xml.sax.SAXException;
 import org.bson.Document;
 import org.json.JSONException;
 
@@ -79,71 +77,5 @@ public class ClassClient {
 			System.err.println(JSON.toJson());
 			return null;
 		}
-	}
-
-	public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
-
-//		ClassClient cc = new ClassClient();
-//		Set<String> ja = cc.tematicaDataset("l01280796-centros-para-personas-sin-hogar");
-//		System.out.println(ja.size());
-//		System.out.println(ja.get(0));
-//		System.out.println(ja.get(1));
-
-//		String a = "centro de educacion (es)";
-//		System.out.println(a.replaceAll("\\(.+\\)", "").trim());
-		// Show response
-		/*System.out.println("Response");
-      System.out.println("============");
-      System.out.println(response);
-
-      // Prints the specific fields in the response (categories)
-      DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
-      DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-      Document doc = docBuilder.parse(new ByteArrayInputStream(response.getBytes("UTF-8")));
-      doc.getDocumentElement().normalize();
-      Element response_node = doc.getDocumentElement();
-      System.out.println("\nCategories:");
-      System.out.println("==============");
-      try {
-        NodeList status_list = response_node.getElementsByTagName("status");
-        Node status = status_list.item(0);
-        NamedNodeMap attributes = status.getAttributes();
-        Node code = attributes.item(0);
-        if(!code.getTextContent().equals("0")) {
-          System.out.println("Not found");
-        } else {
-          NodeList category_list = response_node.getElementsByTagName("category_list");
-          if(category_list.getLength()>0){
-            Node categories = category_list.item(0);          
-            NodeList category = categories.getChildNodes();
-            String output = "";
-            for(int i=0; i<category.getLength(); i++) {
-              Node info_category = category.item(i);  
-              NodeList child_category = info_category.getChildNodes();
-              String label = "";
-              String code_cat = "";
-              String relevance = "";
-              for(int j=0; j<child_category.getLength(); j++){
-                Node n = child_category.item(j);
-                String name = n.getNodeName();
-                if(name.equals("code"))
-                  code_cat = n.getTextContent();
-                else if(name.equals("label"))
-                  label = n.getTextContent();
-                else if(name.equals("relevance"))
-                  relevance = n.getTextContent();
-              }
-              output += " + " + label + " (" +  code_cat + ")\n";
-              output += "   -> relevance: " + relevance + "\n";
-            }
-            if(output.isEmpty())
-              System.out.println("Not found");
-            else
-              System.out.print(output);
-          }
-        }
-      } catch (Exception e) {
-        System.out.println("Not found");
-      }*/
 	}
 }
