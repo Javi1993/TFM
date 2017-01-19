@@ -32,7 +32,6 @@ public class Main {
 		Funciones.loadPropierties();
 		Main main = new Main();
 		main.showButtonDemo();
-		Funciones.vaciarDocuments();
 	}
 
 	private void prepareGUI(){
@@ -73,6 +72,8 @@ public class Main {
 				new Mambiente();
 				new Limpieza().separacionCarpetas();
 				new Almacenar(dgES.getDataset_ID());
+				statusLabel.setText("Proceso finalizado.");
+				Funciones.vaciarDocuments();
 			}          
 		});
 
@@ -81,6 +82,8 @@ public class Main {
 				dgES.getDatosGobEs();
 				new Limpieza().separacionCarpetas();
 				new Almacenar(dgES.getDataset_ID());
+				statusLabel.setText("Proceso finalizado.");
+				Funciones.vaciarDocuments();
 			}
 		});
 
@@ -89,9 +92,10 @@ public class Main {
 				new Mambiente();
 				new Limpieza().separacionCarpetas();
 				new Almacenar(null);
+				statusLabel.setText("Proceso finalizado.");
+				Funciones.vaciarDocuments();
 			}
 		});
-		statusLabel.setText("Proceso finalizado.");
 		controlPanel.add(extraerButton);
 		controlPanel.add(datosButton);
 		controlPanel.add(mambButton);       
