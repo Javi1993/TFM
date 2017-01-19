@@ -193,6 +193,7 @@ public class Funciones {
 		System.setProperty("server", "localhost");
 		System.setProperty("db", "tfm");
 		System.setProperty("colection", "distritos");
+		System.setProperty("resources", "."+File.separator+"resources"+File.separator);
 		System.setProperty("extras", "."+File.separator+"extras"+File.separator);
 		System.setProperty("documents", "."+File.separator+"documents"+File.separator);
 		System.setProperty("pk", System.getProperty("documents")+"PK_FORMAT"+File.separator);

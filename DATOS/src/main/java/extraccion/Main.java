@@ -6,7 +6,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -59,27 +58,13 @@ public class Main {
 		mainFrame.setVisible(true);  
 	}
 
-	private static ImageIcon createImageIcon(String path, 
-			String description) {
-		java.net.URL imgURL = Main.class.getResource(path);
-		if (imgURL != null) {
-			return new ImageIcon(imgURL, description);
-		} else {            
-			System.err.println("No se encuentra el archivo: " + path);
-			return null;
-		}
-	}   
-
 	private void showButtonDemo(){
 
-		headerLabel.setText("Elija la acción a realizar:"); 
+		headerLabel.setText("Elija la fuente donde extraer:"); 
 
-		//resources folder should be inside SWING folder.
-		ImageIcon icon = createImageIcon("/resources/java_icon.png","Java");
-
-		JButton extraerButton = new JButton("Extraer");        
-		JButton datosButton = new JButton("DatosGobEs", icon);
-		JButton mambButton = new JButton("Mambiente", icon);
+		JButton extraerButton = new JButton("Todas");        
+		JButton datosButton = new JButton("DatosGobEs");
+		JButton mambButton = new JButton("Mambiente");
 		mambButton.setHorizontalTextPosition(SwingConstants.LEFT);   
 
 		extraerButton.addActionListener(new ActionListener() {
