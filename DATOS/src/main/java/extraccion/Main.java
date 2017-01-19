@@ -69,7 +69,6 @@ public class Main {
 
 		extraerButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				statusLabel.setText("Comprobando y descargando datasets...");
 				dgES.getDatosGobEs();
 				new Mambiente();
 				new Limpieza().separacionCarpetas();
@@ -79,8 +78,6 @@ public class Main {
 
 		datosButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				//aqui llamar a funcion del boton
-				statusLabel.setText("Comprobando y descargando datasets de http://www.datos.gob.es...");
 				dgES.getDatosGobEs();
 				new Limpieza().separacionCarpetas();
 				new Almacenar(dgES.getDataset_ID());
@@ -89,14 +86,12 @@ public class Main {
 
 		mambButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				//aqui llamar a funcion del boton
-				statusLabel.setText("Comprobando y descargando datasets de http://www.mambiente.munimadrid.es/...");
 				new Mambiente();
 				new Limpieza().separacionCarpetas();
 				new Almacenar(null);
 			}
 		});
-
+		statusLabel.setText("Proceso finalizado.");
 		controlPanel.add(extraerButton);
 		controlPanel.add(datosButton);
 		controlPanel.add(mambButton);       
