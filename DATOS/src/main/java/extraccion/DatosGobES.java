@@ -44,10 +44,6 @@ public class DatosGobES {
 		DICIEMBRE;
 	}
 
-	public DatosGobES(){
-		getDatosGobEs();
-	}
-
 	public HashMap<String, String> getDataset_ID(){
 		return this.dataset_ID;
 	}
@@ -213,7 +209,7 @@ public class DatosGobES {
 	/**
 	 * Lanza el proceso de extraccion de los datasets de www.datos.gob.es
 	 */
-	private void getDatosGobEs(){
+	protected void getDatosGobEs(){
 		String[] ids = getIdsDataGob();//se crea el array con todas las IDs de los datasets a bajar de datos.gob.es
 		if(ids!=null){
 			for(int i = 0; i<ids.length; i++){//se recorre el array 
