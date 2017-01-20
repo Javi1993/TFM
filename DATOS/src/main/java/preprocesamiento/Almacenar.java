@@ -959,8 +959,6 @@ public class Almacenar {
 							return m.group(1);
 						}
 					}
-				}else{
-					return value.replaceAll("\\.", "").replaceAll(",", ".");
 				}
 			}
 			return value.trim();
