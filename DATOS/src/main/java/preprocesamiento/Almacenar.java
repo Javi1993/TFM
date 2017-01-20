@@ -391,7 +391,7 @@ public class Almacenar {
 									Document catastro = new Document();
 									String attr = null;
 									for(String label:attrZonas){
-										if((attr = buscarValor(catastro_barrios, label.split("&&")[0], label.split("&&")[1], "a"))!=null && attr!=""){
+										if((attr = buscarValor(catastro_barrios, label.split("&&")[0], label.split("&&")[1]+"1"))!=null && attr!=""){
 											Funciones.setComunAttr(catastro, attr, label);
 										}
 									}
@@ -875,7 +875,6 @@ public class Almacenar {
 						}
 						listFiles.add(fileEntry);
 					}
-					System.out.println(fileEntry.getName());
 					distritos_zonas.close();		
 				}
 			}
@@ -929,7 +928,7 @@ public class Almacenar {
 	 * @return Valor encontrado
 	 * @throws IOException 
 	 */
-	private String buscarValor(CsvReader csvDoc, String aprox, String tipo, String... catastro) throws IOException {
+	private String buscarValor(CsvReader csvDoc, String aprox, String tipo) throws IOException {
 		String[] headers = csvDoc.getHeaders();
 		double max = 0.0;
 		double aux = 0.0;
@@ -943,21 +942,19 @@ public class Almacenar {
 		String value = csvDoc.get(header);
 		if(!value.equals("")){
 			if(NumberUtils.isNumber(tipo)){//cogemos solo la parte numerica
-				if(!value.matches(".+\\d+\\.\\d+,\\d+")){
-					if(catastro!=null){
-						value = value.replaceAll("\\.", "");//NO VAAAAAAAAAA
-					}
-					value = value.replaceAll("\\s+","").replaceAll(",", "\\.");
-					Pattern p = Pattern.compile("(\\d+\\.\\d+)");//numero decimal
-					Matcher m = p.matcher(value);
+				if(tipo.length()>1){//catastro
+					value = value.replaceAll("\\.", "");
+				}
+				value = value.replaceAll("\\s+","").replaceAll(",", "\\.");
+				Pattern p = Pattern.compile("(\\d+\\.\\d+)");//numero decimal
+				Matcher m = p.matcher(value);
+				if (m.find()) {
+					return m.group(1);
+				}else{
+					p = Pattern.compile("(\\d+)");//numero entero
+					m = p.matcher(value);
 					if (m.find()) {
 						return m.group(1);
-					}else{
-						p = Pattern.compile("(\\d+)");//numero entero
-						m = p.matcher(value);
-						if (m.find()) {
-							return m.group(1);
-						}
 					}
 				}
 			}
