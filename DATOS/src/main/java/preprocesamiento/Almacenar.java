@@ -816,7 +816,6 @@ public class Almacenar {
 					if(id!=null){
 						//						ClassClient mc = new ClassClient();
 						//						Set<String> topics = mc.tematicaDataset(dataset_ID.get(fileEntry.getName()));
-						Set<String> topics = new HashSet<String>();
 						while (distritos_zonas.readRecord()){
 							try{
 								if( (dist_barrio_index = buscarDistritoBarrioInfo(distritos_zonas, 2)) !=null ){//obtenemos la posicion de las cabeceras nombre distrito y barrio en el CSV
@@ -840,7 +839,7 @@ public class Almacenar {
 												if(barrio.get("zonas")!=null&&!barrio.get("zonas").equals("")){//ya hay zonas guardadas para ese barrio
 													int index_z;
 													if((index_z = buscarDistrito_Barrio_Zona((List<Document>) barrio.get("zonas"), distritos_zonas.get("PK"), "PK")) < 0){
-														((List<Document>) barrio.get("zonas")).add(addZona(distritos_zonas, topics));
+														((List<Document>) barrio.get("zonas")).add(addZona(distritos_zonas));
 													}else{
 														if(((Document)((List<Document>) barrio.get("zonas")).get(index_z)).get("rol")!=null){
 															List<Document> zonas =  (List<Document>) barrio.get("zonas");
@@ -856,12 +855,12 @@ public class Almacenar {
 															zonas.add(zona);
 															barrio.replace("zonas", zonas);
 														}else{//no tiene rol la zona
-															((Document)((List<Document>) barrio.get("zonas")).get(index_z)).append("rol", topics);
+															((Document)((List<Document>) barrio.get("zonas")).get(index_z)).append("rol", new HashSet<String>());
 														}
 													}
 												}else{
 													barrio.append("zonas", new ArrayList<Document>(){{
-														add(addZona(distritos_zonas, topics));
+														add(addZona(distritos_zonas));
 													}});
 												}
 												updateDistList(distritos, index, dist, barrios, index_b, barrio);
@@ -892,7 +891,7 @@ public class Almacenar {
 	 * @return Doucment
 	 * @throws IOException 
 	 */
-	private Document addZona(CsvReader distritos_zonas, Set<String> topics) throws IOException {
+	private Document addZona(CsvReader distritos_zonas) throws IOException {
 		List<String> attrZonas = getCampos("zonas", "barrios", null);
 		Document zona = new Document();
 		String attr = null;
@@ -900,20 +899,19 @@ public class Almacenar {
 			attr = buscarValor(distritos_zonas, label.split("&&")[0], label.split("&&")[1]);
 			if(attr!=null&&!label.split("&&")[0].equals("geo")&&!label.split("&&")[0].equals("rol")){
 				Funciones.setComunAttr(zona, attr, label);
-			}else{
-				if(label.split("&&")[0].equals("rol")){
-					String mRol = buscarValor(distritos_zonas, "tipo", "text");
-					if(mRol!=null){
-						String[] auxSp = mRol.split("/");
-						topics.add(auxSp[auxSp.length-1].replaceAll(("(?=\\p{Lu})"), " ").trim());
-					}
-					zona.append("rol", topics);
-				}else if(label.split("&&")[0].equals("geo")){
-					String lat, lon;
-					if((lat = buscarValor(distritos_zonas, "latitud", "text"))!=null
-							&& (lon = buscarValor(distritos_zonas, "longitud", "text"))!=null){
-						Funciones.setCoordinates(zona, Double.parseDouble(lat.replaceAll(",", "")), Double.parseDouble(lon.replaceAll(",", "")));
-					}
+			}else if(label.split("&&")[0].equals("rol")){
+				String mRol = buscarValor(distritos_zonas, "tipo", "text");
+				if(mRol!=null){
+					String[] auxSp = mRol.split("/");
+					zona.append("rol", new HashSet<String>().add(auxSp[auxSp.length-1].replaceAll(("(?=\\p{Lu})"), " ").trim()));
+				}else{
+					zona.append("rol", new HashSet<String>());
+				}
+			}else if(label.split("&&")[0].equals("geo")){
+				String lat, lon;
+				if((lat = buscarValor(distritos_zonas, "latitud", "text"))!=null
+						&& (lon = buscarValor(distritos_zonas, "longitud", "text"))!=null){
+					Funciones.setCoordinates(zona, Double.parseDouble(lat.replaceAll(",", "")), Double.parseDouble(lon.replaceAll(",", "")));
 				}
 			}
 		}

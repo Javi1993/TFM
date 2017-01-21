@@ -33,7 +33,7 @@
           "descripcion":"descripcion",
           "nombre_via":"text",
           "horario":"horario",
-          "trasnporte":"desc. de lineas",
+          "transporte":"desc. de lineas",
           "telefono":"telefono",
           "fax":"fax",
           "email":"email@email.com",
