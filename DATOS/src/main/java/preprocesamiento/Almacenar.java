@@ -903,7 +903,8 @@ public class Almacenar {
 				String mRol = buscarValor(distritos_zonas, "tipo", "text");
 				if(mRol!=null){
 					String[] auxSp = mRol.split("/");
-					zona.append("rol", new HashSet<String>().add(auxSp[auxSp.length-1].replaceAll(("(?=\\p{Lu})"), " ").trim()));
+//					zona.append("rol", new HashSet<String>().add(auxSp[auxSp.length-1].replaceAll(("(?=\\p{Lu})"), " ").trim()));
+					zona.append("rol", new HashSet<String>(){{add(auxSp[auxSp.length-1].replaceAll(("(?=\\p{Lu})"), " ").trim());}});
 				}else{
 					zona.append("rol", new HashSet<String>());
 				}
