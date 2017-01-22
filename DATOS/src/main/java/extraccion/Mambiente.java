@@ -53,7 +53,7 @@ public class Mambiente {
 	}
 
 	/**
-	 * Busca en la estructura pasada el atibuto equivalente al que se quiere almacenar en el JSON
+	 * Busca en la estructura pasada el atributo equivalente al que se quiere almacenar en el JSON
 	 * @param infoEstacion - Estrcuta con la informacion de la estacion
 	 * @param aprox - nombre aproximado del atributo buscado en la estructura
 	 * @param tipo - tipo de estacion (aire/acustica)
@@ -188,7 +188,7 @@ public class Mambiente {
 	}
 
 	/**
-	 * Vuelca en un CSV con la estructa deseada la informacion completa de las estaciones de calidad aire y acustica
+	 * Vuelca en un CSV con la estructura deseada la informacion completa de las estaciones de calidad aire y acustica
 	 * @param estaciones - Estrucutra con la informacion de las estaciones
 	 * @param name - Acustica o aire
 	 */

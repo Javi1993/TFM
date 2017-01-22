@@ -26,11 +26,22 @@ public class Geocode {
 		locCP = new HashMap<String, String>();
 	}
 
+	/**
+	 * Obtiene el CP de una zona en base a las coordenadas pasadas.
+	 * @param lon
+	 * @param lat
+	 * @return
+	 */
 	public String getCPbyCoordinates(double lon, double lat){
 		String dir = "https://maps.googleapis.com/maps/api/geocode/json?latlng="+lat+","+lon;
 		return doRequest(dir, 0);
 	}
 
+	/**
+	 * Obtiene el CP de una zona en base a la ubicacion pasada.
+	 * @param street
+	 * @return
+	 */
 	public String getCPbyStreet(String street){
 		street = street.replaceAll("\\s", "+");
 		String cp;
@@ -49,6 +60,12 @@ public class Geocode {
 		}
 	}
 
+	/**
+	 * Lanza la petición a la API de Geocode.
+	 * @param dir
+	 * @param number
+	 * @return
+	 */
 	private String doRequest(String dir, int number){
 		JSONObject jsonObj = null;
 		try {

@@ -13,7 +13,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import funciones.Funciones;
 import preprocesamiento.Almacenar;
-import preprocesamiento.Limpieza;
+import preprocesamiento.Ordenacion;
 
 public class Main {
 
@@ -70,7 +70,7 @@ public class Main {
 			public void actionPerformed(ActionEvent e) {
 				dgES.getDatosGobEs();
 				new Mambiente();
-				new Limpieza().separacionCarpetas();
+				new Ordenacion().separacionCarpetas();
 				new Almacenar(dgES.getDataset_ID());
 				statusLabel.setText("Proceso finalizado.");
 				Funciones.vaciarDocuments();
@@ -80,7 +80,7 @@ public class Main {
 		datosButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				dgES.getDatosGobEs();
-				new Limpieza().separacionCarpetas();
+				new Ordenacion().separacionCarpetas();
 				new Almacenar(dgES.getDataset_ID());
 				statusLabel.setText("Proceso finalizado.");
 				Funciones.vaciarDocuments();
@@ -90,7 +90,7 @@ public class Main {
 		mambButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				new Mambiente();
-				new Limpieza().separacionCarpetas();
+				new Ordenacion().separacionCarpetas();
 				new Almacenar(null);
 				statusLabel.setText("Proceso finalizado.");
 				Funciones.vaciarDocuments();

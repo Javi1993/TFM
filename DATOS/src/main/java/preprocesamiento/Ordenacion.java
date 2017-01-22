@@ -28,8 +28,11 @@ import jxl.Workbook;
 import jxl.WorkbookSettings;
 
 @SuppressWarnings("deprecation")
-public class Limpieza {
+public class Ordenacion {
 
+	/**
+	 * Separa los datasets descargados en una serie de carpetas en base a su formato.
+	 */
 	public void separacionCarpetas(){
 		try {
 			File folder = new File(System.getProperty("documents"));
@@ -86,6 +89,10 @@ public class Limpieza {
 		}
 	}
 
+	/**
+	 * Transforma un dataset en formato xls en CSV.
+	 * @param folder
+	 */
 	private void transformarExcelToCSV(File folder) {
 		for (File fileEntry : folder.listFiles()) {
 			try {
@@ -105,6 +112,10 @@ public class Limpieza {
 
 	}
 
+	/**
+	 * Transforma el excel de monumentos a un CSV
+	 * @param fileEntry
+	 */
 	private void leerExcelMonumentos(File fileEntry) {
 		try{
 			//File to store data in form of CSV
@@ -154,6 +165,11 @@ public class Limpieza {
 		}
 	}
 
+	/**
+	 * Transforma el excel de las elecciones municipales a un CSV.
+	 * @param fileEntry
+	 * @throws IOException
+	 */
 	private void leerExcelElecciones(File fileEntry) throws IOException {
 		String[] headers = new String[]{"distrito","barrio","censo (1)","abstención","total","nulos","blanco","PP","PSOE","Ahora Madrid","Ciudadanos","AES","PH","IUCM-LV","UPyD","ULEG","P-LIB","LV-GV","LCN","PCAS-TC-PACTO","MJS","SAIn","PACMA","PCPE","VOX","POSI","EB","FE DE LAS JONS","CILUS"};
 		POIFSFileSystem fs = new POIFSFileSystem(fileEntry);
@@ -223,6 +239,11 @@ public class Limpieza {
 		volcarCSV(fusionarFilas(mesas), headers, fileEntry.getName().substring(0,fileEntry.getName().lastIndexOf(".")));
 	}
 
+	/**
+	 * Agrupa los resultados de las mesas electorales del CSV de lecciones a un nivel por barrios
+	 * @param mesas
+	 * @return
+	 */
 	private List<List<String>> fusionarFilas(List<List<String>> mesas) {
 		String barrio = "";
 		String distrito = "";
@@ -255,6 +276,12 @@ public class Limpieza {
 		return mesasAux;
 	}
 
+	/**
+	 * Vuelca el contenido de una estructura de datos a un CSV
+	 * @param list
+	 * @param headers
+	 * @param name
+	 */
 	private void volcarCSV(List<List<String>> list, String[] headers, String name) {
 		String outputFile = System.getProperty("documents")+name+".csv";
 		try {
@@ -282,6 +309,12 @@ public class Limpieza {
 		}
 	}
 
+	/**
+	 * Busca la celda de un excel en base a un criterio
+	 * @param headerIndex
+	 * @param columnIndex
+	 * @return
+	 */
 	private int isCellChoosen(int[] headerIndex, int columnIndex){
 		for(int i = 0; i<headerIndex.length; i++){
 			if(columnIndex == headerIndex[i]){
@@ -291,9 +324,14 @@ public class Limpieza {
 		return -1;
 	}
 
+	/**
+	 * Busca el campo especifico de la condicion de la cabecera de elementos pasada
+	 * @param headers
+	 * @param cell
+	 * @return
+	 */
 	private int isHeaderChoosen(String[] headers, String cell){
-		int i = 0;
-		for(i = 0; i<headers.length; i++){
+		for(int i = 0; i<headers.length; i++){
 			if(cell.equals(headers[i].toLowerCase())){
 				return i;
 			}

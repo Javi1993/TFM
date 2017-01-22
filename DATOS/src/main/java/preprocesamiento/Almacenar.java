@@ -545,23 +545,23 @@ public class Almacenar {
 					}
 					switch(i) {
 					case 0:
-						distritos = addDistritoLoc(distritos, distritos_locs, "censo_animales_domesticos", null);
+						addDistritoLoc(distritos, distritos_locs, "censo_animales_domesticos", null);
 						listFiles.add(fileEntry);
 						break;
 					case 1:
-						distritos = addDistritoLoc(distritos, distritos_locs, "contenedores", "ropa");
+						addDistritoLoc(distritos, distritos_locs, "contenedores", "ropa");
 						listFiles.add(fileEntry);
 						break;
 					case 2:
-						distritos = addDistritoLoc(distritos, distritos_locs, "contenedores", "pila");
+						addDistritoLoc(distritos, distritos_locs, "contenedores", "pila");
 						listFiles.add(fileEntry);
 						break;
 					case 3:
-						distritos = addDistritoLoc(distritos, distritos_locs, "fuentes_potables", null);
+						addDistritoLoc(distritos, distritos_locs, "fuentes_potables", null);
 						listFiles.add(fileEntry);
 						break;
 					case 4:
-						distritos = addDistritoLoc(distritos, distritos_locs, "actividades_deportivas", null);
+						 addDistritoLoc(distritos, distritos_locs, "actividades_deportivas", null);
 						listFiles.add(fileEntry);
 						break;
 					default:
@@ -586,7 +586,7 @@ public class Almacenar {
 	 * @return
 	 * @throws IOException
 	 */
-	private List<Document> addDistritoLoc(List<Document> distritos, CsvReader distritos_locs, String document, String tipo) throws IOException {
+	private void addDistritoLoc(List<Document> distritos, CsvReader distritos_locs, String document, String tipo) throws IOException {
 		List<String> attrList = getCampos(document, null, null);
 		String attr;
 		int index = 0;
@@ -631,7 +631,6 @@ public class Almacenar {
 				}
 			}
 		}
-		return distritos;
 	}
 
 	/**
@@ -661,7 +660,7 @@ public class Almacenar {
 	}
 
 	/**
-	 * Genera los distritos y los barrios aosciados a estos
+	 * Genera los distritos y los barrios asociados a estos
 	 * @return - Lista con la estrutcuta basica de los distritos
 	 * @throws IOException
 	 */
@@ -798,7 +797,7 @@ public class Almacenar {
 	}
 
 	/**
-	 * Pre-procesa los datos de las elecciones municipales
+	 * Pre-procesa los datos de la carpeta PK_FORMAT
 	 * @param distritos - lista de distritos
 	 * @throws IOException
 	 */
@@ -920,7 +919,7 @@ public class Almacenar {
 	}
 
 	/**
-	 * Dado un dataset busca el valor correspondiente al que se quiere buscar
+	 * Dado un dataset busca el valor correspondiente al que se quiere buscar pasado por parametro
 	 * @param csvDoc - Dataset
 	 * @param aprox - Nombre del valor a buscar
 	 * @param tipo - tipo de dato del valor
