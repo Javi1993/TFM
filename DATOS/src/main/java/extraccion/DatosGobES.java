@@ -50,7 +50,7 @@ public class DatosGobES {
 
 	/**
 	 * Devuelve en un array las IDs de los datasets a comprobar en datos.gob.es
-	 * @return
+	 * @return IDs
 	 */
 	private String[] getIdsDataGob(){
 		String  thisLine = null;
@@ -65,7 +65,7 @@ public class DatosGobES {
 			}
 			br.close();
 			return ids;//se devuelve el array
-		}catch(Exception e){
+		}catch(IOException e){
 			e.printStackTrace();
 		}
 		return null;

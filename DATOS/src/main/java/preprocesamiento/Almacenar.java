@@ -82,7 +82,7 @@ public class Almacenar {
 				client.close();
 				lanzarCargas(distritos);//lanza las cargas
 			}
-		}catch (IOException e) {
+		}catch(IOException e) {
 			System.err.println("Error durante el pre-procesamiento de datos: "+e.getMessage());
 		}
 	}
@@ -131,7 +131,7 @@ public class Almacenar {
 					Funciones.deleteFile(fileEntry);
 				}
 			}
-		}catch (IOException e) {
+		}catch(IOException e) {
 			System.err.println("Error con un dataset de '"+folder.getName()+"': "+e.getMessage());
 		}
 	}
@@ -202,7 +202,7 @@ public class Almacenar {
 						}
 					}
 				}			
-			} catch (IOException e) {
+			} catch(IOException e) {
 				System.err.println("Error en la lectura de un registro de '"+file.getName()+"': "+e.getMessage());
 			}
 		}
@@ -289,7 +289,7 @@ public class Almacenar {
 										}
 									}
 								}
-							}catch (IOException e) {
+							}catch(IOException e) {
 								System.err.println("Error en la lectura de un registro de '"+auxFile.getName()+"': "+e.getMessage());
 							}
 						}
@@ -355,7 +355,7 @@ public class Almacenar {
 						updateDistList(distritos, index, dist, null, 0, null);
 					}
 				}
-			} catch (IOException e) {
+			}catch(IOException e) {
 				System.err.println("Error en la lectura de un registro de '"+fileEntry.getName()+"': "+e.getMessage());
 			}
 		}
@@ -406,7 +406,7 @@ public class Almacenar {
 								}
 							}
 						}
-					} catch (IOException e) {
+					} catch(IOException e) {
 						System.err.println("Error en la lectura de un registro de '"+auxFile.getName()+"': "+e.getMessage());
 					}
 				}
@@ -561,7 +561,7 @@ public class Almacenar {
 						listFiles.add(fileEntry);
 						break;
 					case 4:
-						 addDistritoLoc(distritos, distritos_locs, "actividades_deportivas", null);
+						addDistritoLoc(distritos, distritos_locs, "actividades_deportivas", null);
 						listFiles.add(fileEntry);
 						break;
 					default:
@@ -738,7 +738,7 @@ public class Almacenar {
 							}
 						}
 					}
-				}catch (Exception e) {
+				}catch (IOException e) {
 					System.err.println("Error en la lectura de un registro de '"+dir.listFiles(fileFilter)[0].getName()+"': "+e.getMessage());
 					e.printStackTrace();
 				}
@@ -902,7 +902,7 @@ public class Almacenar {
 				String mRol = buscarValor(distritos_zonas, "tipo", "text");
 				if(mRol!=null){
 					String[] auxSp = mRol.split("/");
-//					zona.append("rol", new HashSet<String>().add(auxSp[auxSp.length-1].replaceAll(("(?=\\p{Lu})"), " ").trim()));
+					//					zona.append("rol", new HashSet<String>().add(auxSp[auxSp.length-1].replaceAll(("(?=\\p{Lu})"), " ").trim()));
 					zona.append("rol", new HashSet<String>(){{add(auxSp[auxSp.length-1].replaceAll(("(?=\\p{Lu})"), " ").trim());}});
 				}else{
 					zona.append("rol", new HashSet<String>());

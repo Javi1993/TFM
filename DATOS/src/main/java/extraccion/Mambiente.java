@@ -27,6 +27,7 @@ import org.jsoup.select.Elements;
 import com.csvreader.CsvWriter;
 import funciones.Funciones;
 import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
 
 public class Mambiente {
 
@@ -47,7 +48,7 @@ public class Mambiente {
 			System.out.println("Descarga de 'http://www.mambiente.munimadrid.es' finalizada.");
 		}catch(FileNotFoundException e){
 			e.printStackTrace();
-		} catch (IOException e) {
+		}catch(IOException e) {
 			e.printStackTrace();
 		}
 	}
@@ -181,8 +182,10 @@ public class Mambiente {
 			wb.close();
 			fs.close();
 			Funciones.deleteFile(dir.listFiles(fileFilter)[0]);
-		} catch(Exception ioe) {
+		} catch(IOException ioe) {
 			ioe.printStackTrace();
+		} catch (ZipException e) {
+			e.printStackTrace();
 		}
 		return infoAux;
 	}

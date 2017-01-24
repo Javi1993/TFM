@@ -26,6 +26,7 @@ import jxl.Cell;
 import jxl.Sheet;
 import jxl.Workbook;
 import jxl.WorkbookSettings;
+import jxl.read.biff.BiffException;
 
 @SuppressWarnings("deprecation")
 public class Ordenacion {
@@ -160,8 +161,8 @@ public class Ordenacion {
 			e.printStackTrace();
 		}catch (IOException e){
 			e.printStackTrace();
-		}catch (Exception e){
-			e.printStackTrace();;
+		} catch (BiffException e) {
+			e.printStackTrace();
 		}
 	}
 
