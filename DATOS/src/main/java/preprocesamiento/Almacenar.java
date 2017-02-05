@@ -53,7 +53,7 @@ public class Almacenar {
 	private void conDB(){
 		client = new MongoClient(System.getProperty("server"), 27017);//conectamos
 		database = client.getDatabase(System.getProperty("db"));//elegimos bbdd
-		collection = database.getCollection(System.getProperty("colection"));//tomamos la coleccion de estaciones de aire
+		collection = database.getCollection(System.getProperty("colection"));//tomamos la coleccion
 	}
 
 	/**
@@ -643,7 +643,7 @@ public class Almacenar {
 	 */
 	private List<String> getCampos(String partOfJSON, String nivel1, String nivel2) throws IOException{
 		List<String> campos = new ArrayList<String>();
-		byte[] encoded = Files.readAllBytes(Paths.get(System.getProperty("extras")+"JSON_example_TFM.json"));
+		byte[] encoded = Files.readAllBytes(Paths.get(System.getProperty("extras")+"JSON_esquema_TFM.json"));
 		Document JSON = Document.parse(new String(encoded, "ISO-8859-1"));
 		if(nivel1 != null){//bajamos a subnivel en JSON
 			JSON = ((List<Document>) JSON.get(nivel1)).get(0);
