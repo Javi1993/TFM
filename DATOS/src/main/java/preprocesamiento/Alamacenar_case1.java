@@ -38,12 +38,11 @@ public class Alamacenar_case1 {
 	}
 
 	private void cargarDatos(){
-		List<Document> crimes = null;
 		try{
 			conDB();
-			generarCrimes(crimes);
 			collection.drop();
-			collection.insertMany(crimes);//insertamos los crimenes con su informacion
+			generarCrimes();
+			client.close();
 		}catch (IOException e) {
 			System.err.println("Error durante el pre-procesamiento");
 		}
@@ -95,11 +94,11 @@ public class Alamacenar_case1 {
 		return null;
 	}
 
-	private void generarCrimes(List<Document> crimes) throws IOException {
+	private void generarCrimes() throws IOException {
 		File dir = new File(System.getProperty("documents"));
 		FileFilter fileFilter = new WildcardFileFilter("Crimes*.csv");
 		if(dir.exists() && dir.listFiles(fileFilter).length>0){
-			CsvReader crimes_csv = new CsvReader (dir.listFiles(fileFilter)[0].getAbsolutePath(), ';');
+			CsvReader crimes_csv = new CsvReader (dir.listFiles(fileFilter)[0].getAbsolutePath(), ',');
 			crimes_csv.readHeaders();
 			List<String> attrPadron = getCampos();//obtenemos los campos del JSON esquema
 			while (crimes_csv.readRecord()){//recorremos el CSV
@@ -111,11 +110,14 @@ public class Alamacenar_case1 {
 						Funciones.setComunAttr(crime, attr, label);
 					}else if(label.split("&&")[0].equals("geo") && (lat = buscarValor(crimes_csv, "latitude", "text"))!=null
 							&& (lon = buscarValor(crimes_csv, "longitude", "text"))!=null){
-						Funciones.setCoordinates(crime, Double.parseDouble(lat), Double.parseDouble(lon));
+						
+						Funciones.setCoordinatesAux(crime, Double.parseDouble(lat), Double.parseDouble(lon));
 					}
 				}
-				crimes.add(crime);
+				collection.insertOne(crime);//insertamos los crimenes con su informacion
 			}
+			crimes_csv.close();
+			Funciones.deleteFile(dir.listFiles(fileFilter)[0]);
 		}
 	}
 }

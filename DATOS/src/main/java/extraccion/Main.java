@@ -12,6 +12,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import funciones.Funciones;
+import preprocesamiento.Alamacenar_case1;
 import preprocesamiento.Almacenar;
 import preprocesamiento.Ordenacion;
 
@@ -64,7 +65,8 @@ public class Main {
 		JButton extraerButton = new JButton("Todas");        
 		JButton datosButton = new JButton("DatosGobEs");
 		JButton mambButton = new JButton("Mambiente");
-		mambButton.setHorizontalTextPosition(SwingConstants.LEFT);   
+		JButton case1 = new JButton("Caso 1");
+		case1.setHorizontalTextPosition(SwingConstants.LEFT);   
 
 		extraerButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -96,9 +98,18 @@ public class Main {
 				Funciones.vaciarDocuments();
 			}
 		});
+		
+		case1.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				new DataGov_case1();
+				new Alamacenar_case1();
+				statusLabel.setText("Proceso finalizado.");
+			}
+		});
 		controlPanel.add(extraerButton);
 		controlPanel.add(datosButton);
-		controlPanel.add(mambButton);       
+		controlPanel.add(mambButton);    
+		controlPanel.add(case1); 
 
 		mainFrame.pack();
 		mainFrame.setLocationRelativeTo(null); 

@@ -102,6 +102,16 @@ public class Funciones {
 			doc.append("latitud", lat).append("longitud", lon);
 		}
 	}
+	
+	@SuppressWarnings("serial")
+	public static void setCoordinatesAux(org.bson.Document doc, double lat, double lon){
+			doc.append("geo", new org.bson.Document("type","Point")
+					.append("coordinates", new ArrayList<Double>(){{
+						add(lon);
+						add(lat);
+					}}));
+			doc.append("latitud", lat).append("longitud", lon);
+	}
 
 	/**
 	 * Comprueba si el nombre del fichero pasado como parametro ya se ha descargado con anterioridad

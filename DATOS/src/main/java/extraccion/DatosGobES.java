@@ -181,7 +181,7 @@ public class DatosGobES {
 								File fileDest = new File(System.getProperty("documents")+link.substring(link.lastIndexOf('/') + 1));
 								FileUtils.copyURLToFile(new URL(link), fileDest, 5000, 30000);//se descarga el contenido y se guarda en el fichero
 								titulos.add(title);//se añade el titulo a la lista
-								System.out.println("Se ha descargado '"+link.substring(link.lastIndexOf('/') + 1)+"'.");
+								System.out.println("Se ha descargado '"+fileDest.getName()+"'.");
 								dataset_ID.put(link.substring(link.lastIndexOf('/') + 1), ID);//se añade la ID asociada al dataset descargado
 								fileDown = true;//se marca como descargado
 							}else{

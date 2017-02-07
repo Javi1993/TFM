@@ -27,6 +27,7 @@ public class DataGov_case1 {
 			for(int j = 0; j<urls.length; j++){//se recorre el array 
 				File fileDest = new File(System.getProperty("documents")+"Crimes_2001.csv");
 				FileUtils.copyURLToFile(new URL(urls[j]), fileDest);//se descarga el contenido y se guarda en el fichero
+				System.out.println("Se ha descargado '"+fileDest.getName()+"'.");
 			}
 		}catch(IOException e) {
 			e.printStackTrace();
