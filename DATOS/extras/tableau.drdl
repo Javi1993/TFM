@@ -1,0 +1,1076 @@
+schema:
+- db: tfm
+  tables:
+  - table: distritos
+    collection: distritos
+    pipeline: []
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: nombre
+      MongoType: string
+      SqlName: nombre
+      SqlType: varchar
+  - table: distritos_actividades_deportivas
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: actividades_deportivas_idx
+        path: $actividades_deportivas
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: actividades_deportivas.ID_evento
+      MongoType: float64
+      SqlName: actividades_deportivas.ID_evento
+      SqlType: float64
+    - Name: actividades_deportivas.dias_semana
+      MongoType: string
+      SqlName: actividades_deportivas.dias_semana
+      SqlType: varchar
+    - Name: actividades_deportivas.fecha
+      MongoType: string
+      SqlName: actividades_deportivas.fecha
+      SqlType: varchar
+    - Name: actividades_deportivas.geo.type
+      MongoType: string
+      SqlName: actividades_deportivas.geo.type
+      SqlType: varchar
+    - Name: actividades_deportivas.latitud
+      MongoType: float64
+      SqlName: actividades_deportivas.latitud
+      SqlType: float64
+    - Name: actividades_deportivas.longitud
+      MongoType: float64
+      SqlName: actividades_deportivas.longitud
+      SqlType: float64
+    - Name: actividades_deportivas.nombre_instalacion
+      MongoType: string
+      SqlName: actividades_deportivas.nombre_instalacion
+      SqlType: varchar
+    - Name: actividades_deportivas.titulo
+      MongoType: string
+      SqlName: actividades_deportivas.titulo
+      SqlType: varchar
+    - Name: actividades_deportivas_idx
+      MongoType: int
+      SqlName: actividades_deportivas_idx
+      SqlType: int
+  - table: distritos_actividades_deportivas_geo_coordinates
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: actividades_deportivas_idx
+        path: $actividades_deportivas
+    - $unwind:
+        includeArrayIndex: actividades_deportivas.geo.coordinates_idx
+        path: $actividades_deportivas.geo.coordinates
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: actividades_deportivas.geo.coordinates
+      MongoType: float64
+      SqlName: actividades_deportivas.geo.coordinates
+      SqlType: float64
+    - Name: actividades_deportivas.geo.coordinates_idx
+      MongoType: int
+      SqlName: actividades_deportivas.geo.coordinates_idx
+      SqlType: int
+    - Name: actividades_deportivas_idx
+      MongoType: int
+      SqlName: actividades_deportivas_idx
+      SqlType: int
+  - table: distritos_acustico
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: acustico_idx
+        path: $acustico
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: acustico.estacion
+      MongoType: string
+      SqlName: acustico.estacion
+      SqlType: varchar
+    - Name: acustico.fecha
+      MongoType: date
+      SqlName: acustico.fecha
+      SqlType: timestamp
+    - Name: acustico.geo.type
+      MongoType: string
+      SqlName: acustico.geo.type
+      SqlType: varchar
+    - Name: acustico.latitud
+      MongoType: float64
+      SqlName: acustico.latitud
+      SqlType: float64
+    - Name: acustico.longitud
+      MongoType: float64
+      SqlName: acustico.longitud
+      SqlType: float64
+    - Name: acustico.numero
+      MongoType: float64
+      SqlName: acustico.numero
+      SqlType: float64
+    - Name: acustico_idx
+      MongoType: int
+      SqlName: acustico_idx
+      SqlType: int
+  - table: distritos_acustico_geo_coordinates
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: acustico_idx
+        path: $acustico
+    - $unwind:
+        includeArrayIndex: acustico.geo.coordinates_idx
+        path: $acustico.geo.coordinates
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: acustico.geo.coordinates
+      MongoType: float64
+      SqlName: acustico.geo.coordinates
+      SqlType: float64
+    - Name: acustico.geo.coordinates_idx
+      MongoType: int
+      SqlName: acustico.geo.coordinates_idx
+      SqlType: int
+    - Name: acustico_idx
+      MongoType: int
+      SqlName: acustico_idx
+      SqlType: int
+  - table: distritos_acustico_valores
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: acustico_idx
+        path: $acustico
+    - $unwind:
+        includeArrayIndex: acustico.valores_idx
+        path: $acustico.valores
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: acustico.valores.id
+      MongoType: string
+      SqlName: acustico.valores.id
+      SqlType: varchar
+    - Name: acustico.valores.valor
+      MongoType: float64
+      SqlName: acustico.valores.valor
+      SqlType: float64
+    - Name: acustico.valores_idx
+      MongoType: int
+      SqlName: acustico.valores_idx
+      SqlType: int
+    - Name: acustico_idx
+      MongoType: int
+      SqlName: acustico_idx
+      SqlType: int
+  - table: distritos_aire
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: aire_idx
+        path: $aire
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: aire.estacion
+      MongoType: string
+      SqlName: aire.estacion
+      SqlType: varchar
+    - Name: aire.fecha
+      MongoType: date
+      SqlName: aire.fecha
+      SqlType: timestamp
+    - Name: aire.geo.type
+      MongoType: string
+      SqlName: aire.geo.type
+      SqlType: varchar
+    - Name: aire.latitud
+      MongoType: float64
+      SqlName: aire.latitud
+      SqlType: float64
+    - Name: aire.longitud
+      MongoType: float64
+      SqlName: aire.longitud
+      SqlType: float64
+    - Name: aire.numero
+      MongoType: float64
+      SqlName: aire.numero
+      SqlType: float64
+    - Name: aire_idx
+      MongoType: int
+      SqlName: aire_idx
+      SqlType: int
+  - table: distritos_aire_geo_coordinates
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: aire_idx
+        path: $aire
+    - $unwind:
+        includeArrayIndex: aire.geo.coordinates_idx
+        path: $aire.geo.coordinates
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: aire.geo.coordinates
+      MongoType: float64
+      SqlName: aire.geo.coordinates
+      SqlType: float64
+    - Name: aire.geo.coordinates_idx
+      MongoType: int
+      SqlName: aire.geo.coordinates_idx
+      SqlType: int
+    - Name: aire_idx
+      MongoType: int
+      SqlName: aire_idx
+      SqlType: int
+  - table: distritos_aire_valores
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: aire_idx
+        path: $aire
+    - $unwind:
+        includeArrayIndex: aire.valores_idx
+        path: $aire.valores
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: aire.valores.id
+      MongoType: string
+      SqlName: aire.valores.id
+      SqlType: varchar
+    - Name: aire.valores.valor
+      MongoType: float64
+      SqlName: aire.valores.valor
+      SqlType: float64
+    - Name: aire.valores_idx
+      MongoType: int
+      SqlName: aire.valores_idx
+      SqlType: int
+    - Name: aire_idx
+      MongoType: int
+      SqlName: aire_idx
+      SqlType: int
+  - table: distritos_barrios
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: barrios_idx
+        path: $barrios
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: barrios._id
+      MongoType: string
+      SqlName: barrios._id
+      SqlType: varchar
+    - Name: barrios.elecciones.abstencion
+      MongoType: float64
+      SqlName: barrios.elecciones.abstencion
+      SqlType: float64
+    - Name: barrios.elecciones.censo
+      MongoType: float64
+      SqlName: barrios.elecciones.censo
+      SqlType: float64
+    - Name: barrios.elecciones.nulos
+      MongoType: float64
+      SqlName: barrios.elecciones.nulos
+      SqlType: float64
+    - Name: barrios.elecciones.total
+      MongoType: float64
+      SqlName: barrios.elecciones.total
+      SqlType: float64
+    - Name: barrios.nombre
+      MongoType: string
+      SqlName: barrios.nombre
+      SqlType: varchar
+    - Name: barrios.perimetro
+      MongoType: float64
+      SqlName: barrios.perimetro
+      SqlType: float64
+    - Name: barrios.superfice
+      MongoType: float64
+      SqlName: barrios.superfice
+      SqlType: float64
+    - Name: barrios_idx
+      MongoType: int
+      SqlName: barrios_idx
+      SqlType: int
+  - table: distritos_barrios_catastro
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: barrios_idx
+        path: $barrios
+    - $unwind:
+        includeArrayIndex: barrios.catastro_idx
+        path: $barrios.catastro
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: barrios.catastro.ano_medio
+      MongoType: float64
+      SqlName: barrios.catastro.ano_medio
+      SqlType: float64
+    - Name: barrios.catastro.inmuebles
+      MongoType: float64
+      SqlName: barrios.catastro.inmuebles
+      SqlType: float64
+    - Name: barrios.catastro.sup_cons_barrio
+      MongoType: float64
+      SqlName: barrios.catastro.sup_cons_barrio
+      SqlType: float64
+    - Name: barrios.catastro.sup_cons_media
+      MongoType: float64
+      SqlName: barrios.catastro.sup_cons_media
+      SqlType: float64
+    - Name: barrios.catastro.sup_suelo
+      MongoType: float64
+      SqlName: barrios.catastro.sup_suelo
+      SqlType: float64
+    - Name: barrios.catastro.sup_suelo_media
+      MongoType: float64
+      SqlName: barrios.catastro.sup_suelo_media
+      SqlType: float64
+    - Name: barrios.catastro.uso_cod
+      MongoType: string
+      SqlName: barrios.catastro.uso_cod
+      SqlType: varchar
+    - Name: barrios.catastro.uso_denomin
+      MongoType: string
+      SqlName: barrios.catastro.uso_denomin
+      SqlType: varchar
+    - Name: barrios.catastro.val_catastro
+      MongoType: float64
+      SqlName: barrios.catastro.val_catastro
+      SqlType: float64
+    - Name: barrios.catastro.val_catastro_medio
+      MongoType: float64
+      SqlName: barrios.catastro.val_catastro_medio
+      SqlType: float64
+    - Name: barrios.catastro_idx
+      MongoType: int
+      SqlName: barrios.catastro_idx
+      SqlType: int
+    - Name: barrios_idx
+      MongoType: int
+      SqlName: barrios_idx
+      SqlType: int
+  - table: distritos_barrios_codigo_postal
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: barrios_idx
+        path: $barrios
+    - $unwind:
+        includeArrayIndex: barrios.codigo_postal_idx
+        path: $barrios.codigo_postal
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: barrios.codigo_postal
+      MongoType: int
+      SqlName: barrios.codigo_postal
+      SqlType: int
+    - Name: barrios.codigo_postal_idx
+      MongoType: int
+      SqlName: barrios.codigo_postal_idx
+      SqlType: int
+    - Name: barrios_idx
+      MongoType: int
+      SqlName: barrios_idx
+      SqlType: int
+  - table: distritos_barrios_elecciones_votos
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: barrios_idx
+        path: $barrios
+    - $unwind:
+        includeArrayIndex: barrios.elecciones.votos_idx
+        path: $barrios.elecciones.votos
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: barrios.elecciones.votos.partido
+      MongoType: string
+      SqlName: barrios.elecciones.votos.partido
+      SqlType: varchar
+    - Name: barrios.elecciones.votos.total
+      MongoType: string
+      SqlName: barrios.elecciones.votos.total
+      SqlType: varchar
+    - Name: barrios.elecciones.votos_idx
+      MongoType: int
+      SqlName: barrios.elecciones.votos_idx
+      SqlType: int
+    - Name: barrios_idx
+      MongoType: int
+      SqlName: barrios_idx
+      SqlType: int
+  - table: distritos_barrios_padron
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: barrios_idx
+        path: $barrios
+    - $unwind:
+        includeArrayIndex: barrios.padron_idx
+        path: $barrios.padron
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: barrios.padron.cod_edad
+      MongoType: float64
+      SqlName: barrios.padron.cod_edad
+      SqlType: float64
+    - Name: barrios.padron.n_espanoles_hombres
+      MongoType: float64
+      SqlName: barrios.padron.n_espanoles_hombres
+      SqlType: float64
+    - Name: barrios.padron.n_espanoles_mujeres
+      MongoType: float64
+      SqlName: barrios.padron.n_espanoles_mujeres
+      SqlType: float64
+    - Name: barrios.padron.n_extranjeros_hombres
+      MongoType: float64
+      SqlName: barrios.padron.n_extranjeros_hombres
+      SqlType: float64
+    - Name: barrios.padron.n_extranjeros_mujeres
+      MongoType: float64
+      SqlName: barrios.padron.n_extranjeros_mujeres
+      SqlType: float64
+    - Name: barrios.padron_idx
+      MongoType: int
+      SqlName: barrios.padron_idx
+      SqlType: int
+    - Name: barrios_idx
+      MongoType: int
+      SqlName: barrios_idx
+      SqlType: int
+  - table: distritos_barrios_zona_ser_parquimetros
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: barrios_idx
+        path: $barrios
+    - $unwind:
+        includeArrayIndex: barrios.zona_ser.parquimetros_idx
+        path: $barrios.zona_ser.parquimetros
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: barrios.zona_ser.parquimetros.fecha_alta
+      MongoType: string
+      SqlName: barrios.zona_ser.parquimetros.fecha_alta
+      SqlType: varchar
+    - Name: barrios.zona_ser.parquimetros.geo.type
+      MongoType: string
+      SqlName: barrios.zona_ser.parquimetros.geo.type
+      SqlType: varchar
+    - Name: barrios.zona_ser.parquimetros.latitud
+      MongoType: float64
+      SqlName: barrios.zona_ser.parquimetros.latitud
+      SqlType: float64
+    - Name: barrios.zona_ser.parquimetros.longitud
+      MongoType: float64
+      SqlName: barrios.zona_ser.parquimetros.longitud
+      SqlType: float64
+    - Name: barrios.zona_ser.parquimetros.matricula_id
+      MongoType: float64
+      SqlName: barrios.zona_ser.parquimetros.matricula_id
+      SqlType: float64
+    - Name: barrios.zona_ser.parquimetros_idx
+      MongoType: int
+      SqlName: barrios.zona_ser.parquimetros_idx
+      SqlType: int
+    - Name: barrios_idx
+      MongoType: int
+      SqlName: barrios_idx
+      SqlType: int
+  - table: distritos_barrios_zona_ser_parquimetros_geo_coordinates
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: barrios_idx
+        path: $barrios
+    - $unwind:
+        includeArrayIndex: barrios.zona_ser.parquimetros_idx
+        path: $barrios.zona_ser.parquimetros
+    - $unwind:
+        includeArrayIndex: barrios.zona_ser.parquimetros.geo.coordinates_idx
+        path: $barrios.zona_ser.parquimetros.geo.coordinates
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: barrios.zona_ser.parquimetros.geo.coordinates
+      MongoType: float64
+      SqlName: barrios.zona_ser.parquimetros.geo.coordinates
+      SqlType: float64
+    - Name: barrios.zona_ser.parquimetros.geo.coordinates_idx
+      MongoType: int
+      SqlName: barrios.zona_ser.parquimetros.geo.coordinates_idx
+      SqlType: int
+    - Name: barrios.zona_ser.parquimetros_idx
+      MongoType: int
+      SqlName: barrios.zona_ser.parquimetros_idx
+      SqlType: int
+    - Name: barrios_idx
+      MongoType: int
+      SqlName: barrios_idx
+      SqlType: int
+  - table: distritos_barrios_zona_ser_plazas
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: barrios_idx
+        path: $barrios
+    - $unwind:
+        includeArrayIndex: barrios.zona_ser.plazas_idx
+        path: $barrios.zona_ser.plazas
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: barrios.zona_ser.plazas.color
+      MongoType: string
+      SqlName: barrios.zona_ser.plazas.color
+      SqlType: varchar
+    - Name: barrios.zona_ser.plazas.n_plazas_color
+      MongoType: float64
+      SqlName: barrios.zona_ser.plazas.n_plazas_color
+      SqlType: float64
+    - Name: barrios.zona_ser.plazas_idx
+      MongoType: int
+      SqlName: barrios.zona_ser.plazas_idx
+      SqlType: int
+    - Name: barrios_idx
+      MongoType: int
+      SqlName: barrios_idx
+      SqlType: int
+  - table: distritos_barrios_zonas
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: barrios_idx
+        path: $barrios
+    - $unwind:
+        includeArrayIndex: barrios.zonas_idx
+        path: $barrios.zonas
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: barrios.zonas.PK
+      MongoType: float64
+      SqlName: barrios.zonas.PK
+      SqlType: float64
+    - Name: barrios.zonas.codigo_postal
+      MongoType: float64
+      SqlName: barrios.zonas.codigo_postal
+      SqlType: float64
+    - Name: barrios.zonas.descripcion
+      MongoType: string
+      SqlName: barrios.zonas.descripcion
+      SqlType: varchar
+    - Name: barrios.zonas.email
+      MongoType: string
+      SqlName: barrios.zonas.email
+      SqlType: varchar
+    - Name: barrios.zonas.fax
+      MongoType: string
+      SqlName: barrios.zonas.fax
+      SqlType: varchar
+    - Name: barrios.zonas.geo.type
+      MongoType: string
+      SqlName: barrios.zonas.geo.type
+      SqlType: varchar
+    - Name: barrios.zonas.horario
+      MongoType: string
+      SqlName: barrios.zonas.horario
+      SqlType: varchar
+    - Name: barrios.zonas.latitud
+      MongoType: float64
+      SqlName: barrios.zonas.latitud
+      SqlType: float64
+    - Name: barrios.zonas.longitud
+      MongoType: float64
+      SqlName: barrios.zonas.longitud
+      SqlType: float64
+    - Name: barrios.zonas.nombre
+      MongoType: string
+      SqlName: barrios.zonas.nombre
+      SqlType: varchar
+    - Name: barrios.zonas.nombre_via
+      MongoType: string
+      SqlName: barrios.zonas.nombre_via
+      SqlType: varchar
+    - Name: barrios.zonas.telefono
+      MongoType: string
+      SqlName: barrios.zonas.telefono
+      SqlType: varchar
+    - Name: barrios.zonas.transporte
+      MongoType: string
+      SqlName: barrios.zonas.transporte
+      SqlType: varchar
+    - Name: barrios.zonas_idx
+      MongoType: int
+      SqlName: barrios.zonas_idx
+      SqlType: int
+    - Name: barrios_idx
+      MongoType: int
+      SqlName: barrios_idx
+      SqlType: int
+  - table: distritos_barrios_zonas_geo_coordinates
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: barrios_idx
+        path: $barrios
+    - $unwind:
+        includeArrayIndex: barrios.zonas_idx
+        path: $barrios.zonas
+    - $unwind:
+        includeArrayIndex: barrios.zonas.geo.coordinates_idx
+        path: $barrios.zonas.geo.coordinates
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: barrios.zonas.geo.coordinates
+      MongoType: float64
+      SqlName: barrios.zonas.geo.coordinates
+      SqlType: float64
+    - Name: barrios.zonas.geo.coordinates_idx
+      MongoType: int
+      SqlName: barrios.zonas.geo.coordinates_idx
+      SqlType: int
+    - Name: barrios.zonas_idx
+      MongoType: int
+      SqlName: barrios.zonas_idx
+      SqlType: int
+    - Name: barrios_idx
+      MongoType: int
+      SqlName: barrios_idx
+      SqlType: int
+  - table: distritos_barrios_zonas_rol
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: barrios_idx
+        path: $barrios
+    - $unwind:
+        includeArrayIndex: barrios.zonas_idx
+        path: $barrios.zonas
+    - $unwind:
+        includeArrayIndex: barrios.zonas.rol_idx
+        path: $barrios.zonas.rol
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: barrios.zonas.rol
+      MongoType: string
+      SqlName: barrios.zonas.rol
+      SqlType: varchar
+    - Name: barrios.zonas.rol_idx
+      MongoType: int
+      SqlName: barrios.zonas.rol_idx
+      SqlType: int
+    - Name: barrios.zonas_idx
+      MongoType: int
+      SqlName: barrios.zonas_idx
+      SqlType: int
+    - Name: barrios_idx
+      MongoType: int
+      SqlName: barrios_idx
+      SqlType: int
+  - table: distritos_censo_animales_domesticos
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: censo_animales_domesticos_idx
+        path: $censo_animales_domesticos
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: censo_animales_domesticos.ano
+      MongoType: float64
+      SqlName: censo_animales_domesticos.ano
+      SqlType: float64
+    - Name: censo_animales_domesticos.n_especie_canina
+      MongoType: float64
+      SqlName: censo_animales_domesticos.n_especie_canina
+      SqlType: float64
+    - Name: censo_animales_domesticos.n_especie_felina
+      MongoType: float64
+      SqlName: censo_animales_domesticos.n_especie_felina
+      SqlType: float64
+    - Name: censo_animales_domesticos_idx
+      MongoType: int
+      SqlName: censo_animales_domesticos_idx
+      SqlType: int
+  - table: distritos_contenedores
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: contenedores_idx
+        path: $contenedores
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: contenedores.geo.type
+      MongoType: string
+      SqlName: contenedores.geo.type
+      SqlType: varchar
+    - Name: contenedores.latitud
+      MongoType: float64
+      SqlName: contenedores.latitud
+      SqlType: float64
+    - Name: contenedores.linea
+      MongoType: string
+      SqlName: contenedores.linea
+      SqlType: varchar
+    - Name: contenedores.longitud
+      MongoType: float64
+      SqlName: contenedores.longitud
+      SqlType: float64
+    - Name: contenedores.parada
+      MongoType: float64
+      SqlName: contenedores.parada
+      SqlType: float64
+    - Name: contenedores.tipo
+      MongoType: string
+      SqlName: contenedores.tipo
+      SqlType: varchar
+    - Name: contenedores_idx
+      MongoType: int
+      SqlName: contenedores_idx
+      SqlType: int
+  - table: distritos_contenedores_geo_coordinates
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: contenedores_idx
+        path: $contenedores
+    - $unwind:
+        includeArrayIndex: contenedores.geo.coordinates_idx
+        path: $contenedores.geo.coordinates
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: contenedores.geo.coordinates
+      MongoType: float64
+      SqlName: contenedores.geo.coordinates
+      SqlType: float64
+    - Name: contenedores.geo.coordinates_idx
+      MongoType: int
+      SqlName: contenedores.geo.coordinates_idx
+      SqlType: int
+    - Name: contenedores_idx
+      MongoType: int
+      SqlName: contenedores_idx
+      SqlType: int
+  - table: distritos_fuentes_potables
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: fuentes_potables_idx
+        path: $fuentes_potables
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: fuentes_potables.codigo
+      MongoType: string
+      SqlName: fuentes_potables.codigo
+      SqlType: varchar
+    - Name: fuentes_potables.estado
+      MongoType: string
+      SqlName: fuentes_potables.estado
+      SqlType: varchar
+    - Name: fuentes_potables.geo.type
+      MongoType: string
+      SqlName: fuentes_potables.geo.type
+      SqlType: varchar
+    - Name: fuentes_potables.latitud
+      MongoType: float64
+      SqlName: fuentes_potables.latitud
+      SqlType: float64
+    - Name: fuentes_potables.longitud
+      MongoType: float64
+      SqlName: fuentes_potables.longitud
+      SqlType: float64
+    - Name: fuentes_potables_idx
+      MongoType: int
+      SqlName: fuentes_potables_idx
+      SqlType: int
+  - table: distritos_fuentes_potables_geo_coordinates
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: fuentes_potables_idx
+        path: $fuentes_potables
+    - $unwind:
+        includeArrayIndex: fuentes_potables.geo.coordinates_idx
+        path: $fuentes_potables.geo.coordinates
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: fuentes_potables.geo.coordinates
+      MongoType: float64
+      SqlName: fuentes_potables.geo.coordinates
+      SqlType: float64
+    - Name: fuentes_potables.geo.coordinates_idx
+      MongoType: int
+      SqlName: fuentes_potables.geo.coordinates_idx
+      SqlType: int
+    - Name: fuentes_potables_idx
+      MongoType: int
+      SqlName: fuentes_potables_idx
+      SqlType: int
+  - table: distritos_monumentos
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: monumentos_idx
+        path: $monumentos
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: monumentos.CP
+      MongoType: string
+      SqlName: monumentos.CP
+      SqlType: varchar
+    - Name: monumentos.cod
+      MongoType: float64
+      SqlName: monumentos.cod
+      SqlType: float64
+    - Name: monumentos.localizacion
+      MongoType: string
+      SqlName: monumentos.localizacion
+      SqlType: varchar
+    - Name: monumentos.titulo
+      MongoType: string
+      SqlName: monumentos.titulo
+      SqlType: varchar
+    - Name: monumentos_idx
+      MongoType: int
+      SqlName: monumentos_idx
+      SqlType: int
+  - table: distritos_multas
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: multas_idx
+        path: $multas
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: multas.CP
+      MongoType: string
+      SqlName: multas.CP
+      SqlType: varchar
+    - Name: multas.calificacion
+      MongoType: string
+      SqlName: multas.calificacion
+      SqlType: varchar
+    - Name: multas.denunciante
+      MongoType: string
+      SqlName: multas.denunciante
+      SqlType: varchar
+    - Name: multas.fecha
+      MongoType: string
+      SqlName: multas.fecha
+      SqlType: varchar
+    - Name: multas.geo.type
+      MongoType: string
+      SqlName: multas.geo.type
+      SqlType: varchar
+    - Name: multas.hecho
+      MongoType: string
+      SqlName: multas.hecho
+      SqlType: varchar
+    - Name: multas.hora
+      MongoType: string
+      SqlName: multas.hora
+      SqlType: varchar
+    - Name: multas.imp_
+      MongoType: float64
+      SqlName: multas.imp_
+      SqlType: float64
+    - Name: multas.latitud
+      MongoType: float64
+      SqlName: multas.latitud
+      SqlType: float64
+    - Name: multas.longitud
+      MongoType: float64
+      SqlName: multas.longitud
+      SqlType: float64
+    - Name: multas.lugar
+      MongoType: string
+      SqlName: multas.lugar
+      SqlType: varchar
+    - Name: multas.puntos
+      MongoType: float64
+      SqlName: multas.puntos
+      SqlType: float64
+    - Name: multas.vel_circula
+      MongoType: float64
+      SqlName: multas.vel_circula
+      SqlType: float64
+    - Name: multas.vel_limite
+      MongoType: float64
+      SqlName: multas.vel_limite
+      SqlType: float64
+    - Name: multas_idx
+      MongoType: int
+      SqlName: multas_idx
+      SqlType: int
+  - table: distritos_multas_geo_coordinates
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: multas_idx
+        path: $multas
+    - $unwind:
+        includeArrayIndex: multas.geo.coordinates_idx
+        path: $multas.geo.coordinates
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: multas.geo.coordinates
+      MongoType: float64
+      SqlName: multas.geo.coordinates
+      SqlType: float64
+    - Name: multas.geo.coordinates_idx
+      MongoType: int
+      SqlName: multas.geo.coordinates_idx
+      SqlType: int
+    - Name: multas_idx
+      MongoType: int
+      SqlName: multas_idx
+      SqlType: int
+  - table: distritos_radares
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: radares_idx
+        path: $radares
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: radares.CP
+      MongoType: string
+      SqlName: radares.CP
+      SqlType: varchar
+    - Name: radares.cod_radar
+      MongoType: float64
+      SqlName: radares.cod_radar
+      SqlType: float64
+    - Name: radares.geo.type
+      MongoType: string
+      SqlName: radares.geo.type
+      SqlType: varchar
+    - Name: radares.latitud
+      MongoType: float64
+      SqlName: radares.latitud
+      SqlType: float64
+    - Name: radares.longitud
+      MongoType: float64
+      SqlName: radares.longitud
+      SqlType: float64
+    - Name: radares.ubicacion
+      MongoType: string
+      SqlName: radares.ubicacion
+      SqlType: varchar
+    - Name: radares_idx
+      MongoType: int
+      SqlName: radares_idx
+      SqlType: int
+  - table: distritos_radares_geo_coordinates
+    collection: distritos
+    pipeline:
+    - $unwind:
+        includeArrayIndex: radares_idx
+        path: $radares
+    - $unwind:
+        includeArrayIndex: radares.geo.coordinates_idx
+        path: $radares.geo.coordinates
+    columns:
+    - Name: _id
+      MongoType: string
+      SqlName: _id
+      SqlType: varchar
+    - Name: radares.geo.coordinates
+      MongoType: float64
+      SqlName: radares.geo.coordinates
+      SqlType: float64
+    - Name: radares.geo.coordinates_idx
+      MongoType: int
+      SqlName: radares.geo.coordinates_idx
+      SqlType: int
+    - Name: radares_idx
+      MongoType: int
+      SqlName: radares_idx
+      SqlType: int

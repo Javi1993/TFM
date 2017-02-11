@@ -1,0 +1,78 @@
+schema:
+- db: tfm
+  tables:
+  - table: chicago
+    collection: chicago
+    pipeline: []
+    columns:
+    - Name: IUCR
+      MongoType: string
+      SqlName: IUCR
+      SqlType: varchar
+    - Name: _id
+      MongoType: float64
+      SqlName: _id
+      SqlType: float64
+    - Name: arrest
+      MongoType: string
+      SqlName: arrest
+      SqlType: varchar
+    - Name: case_number
+      MongoType: string
+      SqlName: case_number
+      SqlType: varchar
+    - Name: date
+      MongoType: string
+      SqlName: date
+      SqlType: varchar
+    - Name: description
+      MongoType: string
+      SqlName: description
+      SqlType: varchar
+    - Name: district
+      MongoType: string
+      SqlName: district
+      SqlType: varchar
+    - Name: domestic
+      MongoType: string
+      SqlName: domestic
+      SqlType: varchar
+    - Name: geo.type
+      MongoType: string
+      SqlName: geo.type
+      SqlType: varchar
+    - Name: latitud
+      MongoType: float64
+      SqlName: latitud
+      SqlType: float64
+    - Name: longitud
+      MongoType: float64
+      SqlName: longitud
+      SqlType: float64
+    - Name: primary_type
+      MongoType: string
+      SqlName: primary_type
+      SqlType: varchar
+    - Name: year
+      MongoType: float64
+      SqlName: year
+      SqlType: float64
+  - table: chicago_geo_coordinates
+    collection: chicago
+    pipeline:
+    - $unwind:
+        includeArrayIndex: geo.coordinates_idx
+        path: $geo.coordinates
+    columns:
+    - Name: _id
+      MongoType: float64
+      SqlName: _id
+      SqlType: float64
+    - Name: geo.coordinates
+      MongoType: float64
+      SqlName: geo.coordinates
+      SqlType: float64
+    - Name: geo.coordinates_idx
+      MongoType: int
+      SqlName: geo.coordinates_idx
+      SqlType: int
